@@ -1,0 +1,19 @@
+[package]
+name = "p5-tauri-single-template"
+version = "0.1.0"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "1", features = [] }
+
+[dependencies]
+# Tauri core — "wry" enables the WebView renderer
+tauri = { version = "1", features = ["wry"] }
+
+# No WebSocket crates needed — single-window apps communicate entirely
+# through the DOM. The two-window template needs tokio, tungstenite, etc.
+# This app does not.
+
+[features]
+default = []
+custom-protocol = ["tauri/custom-protocol"]

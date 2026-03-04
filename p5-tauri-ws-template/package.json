@@ -1,0 +1,15 @@
+{
+  "name": "p5-tauri-ws-template",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Two-window Tauri + p5.js + WebSocket template",
+  "scripts": {
+    "dev":   "tauri dev",
+    "build": "tauri build",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^1.6.3"
+  }
+}
