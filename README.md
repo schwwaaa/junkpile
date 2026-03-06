@@ -1,14 +1,12 @@
-<p align="center">
-  <img width="45%" height="45%" src="https://github.com/schwwaaa/junkpile/blob/main/assets/schwwaaa-junkpile-logo.jpg?raw=true"/>  
-</p>
+# junkpile
 
-<p align="center"><em>A collection of templates for building native desktop creative applications</em></p> 
+A collection of templates for building native desktop creative applications with **Tauri v1**, **p5.js**, and **GLSL shaders**.
+
+These templates are extracted from real projects. Each one is fully functional, fully commented, and designed to be a working starting point rather than a toy example.
 
 ---
 
 ## Templates
-
-These templates are extracted from real projects. Each one is fully functional, fully commented, and designed to be a working starting point rather than a toy example.
 
 ### [`p5-tauri-single-template`](./p5-tauri-single-template)
 

@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>p5 · MIDI</title>
+  <style>
+    :root { color-scheme: dark; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100vw; height: 100vh; overflow: hidden;
+      background: #0a0a0c; color: #e0e0e8;
+      font-family: 'SF Mono','Fira Code','Consolas',monospace; font-size: 12px;
+    }
+    #app { display: flex; width: 100vw; height: 100vh; }
+    #panel {
+      flex: 0 0 260px; height: 100vh; overflow-y: auto;
+      background: #0d0d0f; border-right: 1px solid #1e1e26;
+      display: flex; flex-direction: column; padding: 12px; gap: 6px;
+    }
+    #panel::-webkit-scrollbar { width: 3px; }
+    #panel::-webkit-scrollbar-thumb { background: #2a2a36; border-radius: 2px; }
+    .panel-title {
+      font-size: 13px; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; color: #7c9fff;
+      padding-bottom: 8px; border-bottom: 1px solid #1e1e26; margin-bottom: 2px;
+    }
+    .section-label {
+      font-size: 9px; font-weight: 700; letter-spacing: 0.2em;
+      text-transform: uppercase; color: #7c9fff;
+      padding: 8px 0 3px; border-top: 1px solid #1e1e26; margin-top: 4px;
+    }
+    select {
+      width: 100%; padding: 7px 8px;
+      background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px; color: #e0e0e8; font-family: inherit; font-size: 10px;
+      cursor: pointer; outline: none;
+    }
+    select:focus { border-color: #7c9fff; }
+    .btn-row { display: flex; gap: 6px; }
+    .btn {
+      flex: 1; padding: 7px;
+      border: 1px solid rgba(124,159,255,0.4); border-radius: 6px;
+      background: rgba(124,159,255,0.08); color: #7c9fff;
+      font-family: inherit; font-size: 10px; letter-spacing: 0.06em;
+      text-transform: uppercase; cursor: pointer; transition: background 0.15s;
+    }
+    .btn:hover { background: rgba(124,159,255,0.18); }
+    .btn.active { background: rgba(255,100,100,0.12); border-color: rgba(255,100,100,0.4); color: #ff8080; }
+    /* MIDI monitor — last N messages */
+    #midi-log {
+      flex: 0 0 auto; max-height: 110px; overflow-y: auto;
+      background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 6px; padding: 5px 7px; font-size: 9px;
+      color: rgba(255,255,255,0.35); line-height: 1.6;
+    }
+    #midi-log::-webkit-scrollbar { width: 2px; }
+    #midi-log::-webkit-scrollbar-thumb { background: #2a2a36; }
+    .log-line { font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .log-cc   { color: #7c9fff; }
+    .log-note { color: #60cfff; }
+    .log-pb   { color: #ffcc44; }
+    /* CC mapping table */
+    #cc-map {
+      background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 6px; overflow: hidden;
+    }
+    .cc-row {
+      display: flex; align-items: center; padding: 4px 8px; gap: 6px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      font-size: 9px;
+    }
+    .cc-row:last-child { border-bottom: none; }
+    .cc-num  { flex: 0 0 28px; color: #7c9fff; font-weight: 700; }
+    .cc-name { flex: 1; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.06em; }
+    .cc-bar-bg { flex: 0 0 50px; height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
+    .cc-bar-fill { height: 100%; width: 0%; background: #7c9fff; transition: width 0.05s linear; }
+    .cc-val { flex: 0 0 28px; text-align: right; color: #7c9fff; font-variant-numeric: tabular-nums; }
+    /* Manual sliders */
+    .param-row {
+      display: flex; align-items: center; gap: 7px;
+      padding: 5px 7px; background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07); border-radius: 6px;
+    }
+    .param-row:hover { border-color: rgba(124,159,255,0.3); }
+    .param-row label {
+      flex: 0 0 90px; font-size: 10px; color: rgba(255,255,255,0.4);
+      letter-spacing: 0.05em; text-transform: uppercase; user-select: none;
+    }
+    input[type=range] {
+      -webkit-appearance: none; flex: 1; height: 2px;
+      background: rgba(255,255,255,0.15); border-radius: 1px; outline: none; cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 10px; height: 10px;
+      border-radius: 50%; background: #7c9fff;
+    }
+    .param-value { flex: 0 0 38px; text-align: right; font-size: 10px; color: #7c9fff; font-variant-numeric: tabular-nums; }
+    .panel-footer {
+      margin-top: auto; padding-top: 10px; font-size: 9px;
+      color: rgba(255,255,255,0.18); text-align: center; border-top: 1px solid #1e1e26;
+    }
+    #canvas-container { flex: 1; position: relative; overflow: hidden; background: #000; }
+    #canvas-container canvas { display: block; width: 100% !important; height: 100% !important; }
+    #no-midi-overlay {
+      position: absolute; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 12px;
+      background: rgba(0,0,0,0.75); color: rgba(255,255,255,0.4); font-size: 13px;
+      pointer-events: none; transition: opacity 0.5s;
+    }
+    #no-midi-overlay.hidden { opacity: 0; }
+    #no-midi-overlay .big { font-size: 36px; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div id="panel">
+    <div class="panel-title">p5 · midi</div>
+
+    <div class="section-label">Device</div>
+    <select id="port-select"><option value="">— refresh to list ports —</option></select>
+    <div class="btn-row">
+      <button class="btn" id="refresh-btn">Refresh</button>
+      <button class="btn" id="connect-btn">Connect</button>
+      <button class="btn" id="disconnect-btn">Disconnect</button>
+    </div>
+    <button class="btn" id="debug-btn" style="opacity:0.5;font-size:9px">Debug: log all ports to console</button>
+
+    <div class="section-label">MIDI Monitor</div>
+    <div id="midi-log"><span style="color:rgba(255,255,255,0.2)">waiting for messages…</span></div>
+
+    <div class="section-label">CC Mapping</div>
+    <!-- These rows are updated live as CC messages arrive.
+         CC numbers are configurable in sketch.js CC_MAP. -->
+    <div id="cc-map">
+      <div class="cc-row" data-cc="1">
+        <span class="cc-num">CC1</span>
+        <span class="cc-name">Hue</span>
+        <div class="cc-bar-bg"><div class="cc-bar-fill" id="cc-fill-1"></div></div>
+        <span class="cc-val" id="cc-val-1">0</span>
+      </div>
+      <div class="cc-row" data-cc="2">
+        <span class="cc-num">CC2</span>
+        <span class="cc-name">Zoom</span>
+        <div class="cc-bar-bg"><div class="cc-bar-fill" id="cc-fill-2"></div></div>
+        <span class="cc-val" id="cc-val-2">0</span>
+      </div>
+      <div class="cc-row" data-cc="3">
+        <span class="cc-num">CC3</span>
+        <span class="cc-name">Speed</span>
+        <div class="cc-bar-bg"><div class="cc-bar-fill" id="cc-fill-3"></div></div>
+        <span class="cc-val" id="cc-val-3">0</span>
+      </div>
+      <div class="cc-row" data-cc="7">
+        <span class="cc-num">CC7</span>
+        <span class="cc-name">Brightness</span>
+        <div class="cc-bar-bg"><div class="cc-bar-fill" id="cc-fill-7"></div></div>
+        <span class="cc-val" id="cc-val-7">0</span>
+      </div>
+      <div class="cc-row" data-cc="10">
+        <span class="cc-num">CC10</span>
+        <span class="cc-name">Distortion</span>
+        <div class="cc-bar-bg"><div class="cc-bar-fill" id="cc-fill-10"></div></div>
+        <span class="cc-val" id="cc-val-10">0</span>
+      </div>
+      <div class="cc-row" data-cc="74">
+        <span class="cc-num">CC74</span>
+        <span class="cc-name">Complexity</span>
+        <div class="cc-bar-bg"><div class="cc-bar-fill" id="cc-fill-74"></div></div>
+        <span class="cc-val" id="cc-val-74">0</span>
+      </div>
+    </div>
+
+    <div class="section-label">Manual Override</div>
+    <div class="param-row">
+      <label for="hue">Hue</label>
+      <input id="hue" type="range" min="0" max="360" step="1" value="180">
+      <span class="param-value" id="hue-val">180</span>
+    </div>
+    <div class="param-row">
+      <label for="zoom">Zoom</label>
+      <input id="zoom" type="range" min="0.5" max="4.0" step="0.05" value="1.5">
+      <span class="param-value" id="zoom-val">1.50</span>
+    </div>
+    <div class="param-row">
+      <label for="speed">Speed</label>
+      <input id="speed" type="range" min="0" max="2" step="0.01" value="0.5">
+      <span class="param-value" id="speed-val">0.50</span>
+    </div>
+    <div class="param-row">
+      <label for="brightness">Brightness</label>
+      <input id="brightness" type="range" min="0" max="2" step="0.01" value="1.0">
+      <span class="param-value" id="brightness-val">1.00</span>
+    </div>
+
+    <div class="panel-footer">p5 · tauri · midi template</div>
+  </div>
+
+  <div id="canvas-container">
+    <div id="no-midi-overlay">
+      <span class="big">🎹</span>
+      <span>Connect a MIDI device to begin</span>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.0/p5.min.js"></script>
+<script src="sketch.js"></script>
+</body>
+</html>
