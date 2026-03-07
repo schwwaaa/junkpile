@@ -2,7 +2,7 @@
   <img width="35%" height="35%" src="https://github.com/schwwaaa/junkpile/blob/main/assets/schwwaaa-junkpile-logo.jpg?raw=true"/>  
 </p>
 
-**Tauri  templates for live visual art.**
+<p align="center"><em>Tauri  templates for live visual art</em></p>
 
 ---
 
