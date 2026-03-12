@@ -1,0 +1,100 @@
+<!doctype html>
+<!--
+  canvas.html — The "canvas" window (visual output)
+  ══════════════════════════════════════════════════════════════════════════════
+
+  PURPOSE
+  ───────
+  This window receives parameter messages over WebSocket and renders a
+  GLSL fragment shader via p5.js, controlled in real time by those parameters.
+
+  ROLE IN THE SYSTEM
+  ──────────────────
+  This window identifies itself to the relay as role="canvas".
+  It RECEIVES parameter messages from the controls window and RENDERS them.
+
+  HOW THE RENDERING WORKS
+  ───────────────────────
+  p5.js in WEBGL mode supports GLSL shaders via createShader().
+  The vertex shader handles geometry (a full-screen quad).
+  The fragment shader handles the per-pixel colour calculation.
+  Parameters received over WebSocket are passed to the shader as "uniforms"
+  — values that are constant across all pixels in a single frame.
+
+  ARCHITECTURE DECISION: WebSocket → params object → uniforms
+  ─────────────────────────────────────────────────────────────
+  Rather than updating uniforms directly on each WebSocket message, we store
+  all received values in a shared `params` object. The p5 draw() loop reads
+  from `params` on each frame. This decouples message arrival from rendering,
+  preventing any frame synchronisation issues.
+
+  HOW TO EXTEND THIS FOR YOUR PROJECT
+  ─────────────────────────────────────
+  1. Add your GLSL code to canvas.js (vert/frag shader strings).
+  2. Add uniform declarations to the fragment shader.
+  3. Pass the params to uniforms in the draw() loop.
+  4. Add the corresponding control in controls.html + controls.js.
+
+  ══════════════════════════════════════════════════════════════════════════════
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Shader Output</title>
+  <style>
+    /* Full-screen, no margins, black background behind the canvas */
+    :root { color-scheme: dark; }
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #000;
+    }
+
+    /* The p5.js canvas element fills the entire window */
+    canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    /* ── Info overlay ──────────────────────────────────────────────────────
+     * Shows WebSocket connection state.
+     * Fades out once connected. You can remove this in production.
+     */
+    #overlay {
+      position: fixed;
+      top: 10px;
+      right: 12px;
+      font-family: 'SF Mono', monospace;
+      font-size: 10px;
+      color: rgba(255,255,255,0.3);
+      pointer-events: none;
+      transition: opacity 1s ease;
+      z-index: 10;
+    }
+    #overlay.hidden { opacity: 0; }
+  </style>
+</head>
+<body>
+
+  <!-- Connection state indicator (top-right corner) -->
+  <div id="overlay">WS: connecting…</div>
+
+  <!-- p5.js loaded from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.0/p5.min.js"></script>
+
+  <!--
+    canvas.js contains:
+      - WebSocket receiver (connects as role="canvas", receives params)
+      - GLSL vertex + fragment shader source strings
+      - p5.js setup() and draw() — creates the shader and passes uniforms
+  -->
+  <script src="canvas.js"></script>
+
+</body>
+</html>

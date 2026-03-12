@@ -1,0 +1,31 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "glsl-ws-template",
+  "version": "0.1.0",
+  "identifier": "com.example.glsl-ws-template",
+  "build": {
+    "beforeBuildCommand": "", "beforeDevCommand": "",
+    "frontendDist": "../src"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "controls", "title": "Controls",
+        "url": "controls.html", "width": 420, "height": 720,
+        "resizable": true, "decorations": true, "x": 40, "y": 60
+      },
+      {
+        "label": "canvas", "title": "Shader Output",
+        "url": "canvas.html", "width": 800, "height": 600,
+        "resizable": true, "decorations": true, "x": 500, "y": 60
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; connect-src ws://127.0.0.1:2727 ws://[::1]:2727; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "icon": ["icons/icon.icns","icons/icon.png","icons/icon.ico"]
+  }
+}

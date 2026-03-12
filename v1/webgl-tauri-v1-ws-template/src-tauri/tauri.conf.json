@@ -1,0 +1,51 @@
+{
+  "$schema": "https://schema.tauri.app/config/1",
+  "build": {
+    "beforeBuildCommand": "",
+    "beforeDevCommand":   "",
+    "devPath":            "../src",
+    "distDir":            "../src"
+  },
+  "package": {
+    "productName": "webgl-ws-template",
+    "version":     "0.1.0"
+  },
+  "tauri": {
+    "windows": [
+      {
+        "label":       "controls",
+        "title":       "Controls",
+        "url":         "controls.html",
+        "width":       420,
+        "height":      680,
+        "resizable":   true,
+        "decorations": true,
+        "x": 40,
+        "y": 60
+      },
+      {
+        "label":       "canvas",
+        "title":       "Shader Output",
+        "url":         "canvas.html",
+        "width":       800,
+        "height":      600,
+        "resizable":   true,
+        "decorations": true,
+        "x": 500,
+        "y": 60
+      }
+    ],
+    "bundle": {
+      "active":     true,
+      "identifier": "com.example.webgl-ws-template",
+      "icon": [
+        "icons/icon.icns",
+        "icons/icon.png",
+        "icons/icon.ico"
+      ]
+    },
+    "security": {
+      "csp": "default-src 'self'; connect-src ws://127.0.0.1:2727 ws://[::1]:2727; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+    }
+  }
+}

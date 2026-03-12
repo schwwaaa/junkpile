@@ -1,0 +1,87 @@
+<!doctype html>
+<!--
+  canvas.html — The "canvas" window (visual output)
+  ══════════════════════════════════════════════════════════════════════════════
+
+  PURPOSE
+  ───────
+  Receives parameter messages over WebSocket and renders a GLSL fragment
+  shader via raw WebGL — no p5.js involved.
+
+  WHAT CHANGED vs. THE p5 VERSION
+  ────────────────────────────────
+  p5 version:                        This version (raw WebGL):
+  ─────────────────────────────────  ────────────────────────────────────────
+  <script src="p5.min.js">           (removed — zero external dependencies)
+  p5 creates <canvas> in JS          <canvas id="glcanvas"> declared here
+  canvas fills window via p5 CSS     canvas sized via CSS + ResizeObserver
+
+  Everything else — WebSocket wiring, params object, GLSL shaders — is the
+  same. The rendering side swaps p5's setup/draw for getContext('webgl') and
+  requestAnimationFrame.
+
+  ══════════════════════════════════════════════════════════════════════════════
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Shader Output</title>
+  <style>
+    :root { color-scheme: dark; }
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #000;
+    }
+
+    /* Canvas fills the entire window */
+    #glcanvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    /* ── Info overlay ──────────────────────────────────────────────────────
+     * Shows WebSocket connection state (top-right corner).
+     * Fades out once connected. Remove in production if desired.
+     */
+    #overlay {
+      position: fixed;
+      top: 10px;
+      right: 12px;
+      font-family: 'SF Mono', monospace;
+      font-size: 10px;
+      color: rgba(255,255,255,0.3);
+      pointer-events: none;
+      transition: opacity 1s ease;
+      z-index: 10;
+    }
+    #overlay.hidden { opacity: 0; }
+  </style>
+</head>
+<body>
+
+  <!-- Connection state indicator -->
+  <div id="overlay">WS: connecting…</div>
+
+  <!--
+    The WebGL canvas — canvas.js grabs this by id and calls getContext('webgl').
+    In the p5 version this element was created dynamically by p5 in setup().
+    Here it lives in HTML so no library is needed.
+  -->
+  <canvas id="glcanvas"></canvas>
+
+  <!--
+    No p5.js script tag — canvas.js manages the WebGL context directly.
+    All shaders, the render loop, WebSocket receiver, and resize logic live
+    in canvas.js.
+  -->
+  <script src="canvas.js"></script>
+
+</body>
+</html>

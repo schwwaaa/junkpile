@@ -1,0 +1,25 @@
+[package]
+name    = "p5-tauri-v2-single-template"
+version = "0.1.0"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+
+# ── v1 vs v2 Cargo differences ────────────────────────────────────────────────
+#
+# v1 required:
+#   tauri = { version = "1", features = ["wry"] }
+#   [features]
+#   custom-protocol = ["tauri/custom-protocol"]   ← manually enabled file serving
+#
+# v2 replaces all of that with:
+#   tauri = { version = "2", features = [] }
+#
+# The Tauri v2 CLI automatically enables the correct internal features
+# (including the built-in asset server / custom protocol) based on
+# tauri.conf.json at build time. You never declare custom-protocol yourself.
+# ──────────────────────────────────────────────────────────────────────────────

@@ -1,0 +1,38 @@
+{
+  "$schema": "https://schema.tauri.app/config/1",
+  "build": {
+    "beforeBuildCommand": "",
+    "beforeDevCommand":   "",
+    "devPath":            "../src",
+    "distDir":            "../src"
+  },
+  "package": {
+    "productName": "webgl-single-template",
+    "version":     "0.1.0"
+  },
+  "tauri": {
+    "windows": [
+      {
+        "label":       "main",
+        "title":       "WebGL · Tauri v1 · Single Window",
+        "url":         "index.html",
+        "width":       1100,
+        "height":      720,
+        "resizable":   true,
+        "decorations": true
+      }
+    ],
+    "bundle": {
+      "active":     true,
+      "identifier": "com.example.webgl-single-template",
+      "icon": [
+        "icons/icon.icns",
+        "icons/icon.png",
+        "icons/icon.ico"
+      ]
+    },
+    "security": {
+      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+    }
+  }
+}

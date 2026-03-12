@@ -1,0 +1,9 @@
+{
+  "name": "glsl-tauri-v1-ws-template",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Two-window Tauri v1 + raw WebGL + external .frag + WebSocket shader hot-swap",
+  "scripts": { "dev": "tauri dev", "build": "tauri build", "tauri": "tauri" },
+  "devDependencies": { "@tauri-apps/cli": "^1.6.3" }
+}

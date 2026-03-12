@@ -1,0 +1,41 @@
+[package]
+name    = "p5-tauri-v2-ws-template"
+version = "0.1.0"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+# Tauri 2 — custom-protocol and wry features are now automatic, no flags needed
+tauri = { version = "2", features = [] }
+
+# JSON serialisation for the hello handshake
+serde      = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Async runtime — unchanged from v1
+tokio = { version = "1", features = ["full"] }
+
+# WebSocket async stream/sink traits — unchanged
+futures-util = "0.3"
+
+# WebSocket server — unchanged
+tokio-tungstenite = "0.21"
+
+# Required by tungstenite even for plain ws:// — unchanged
+tungstenite = { version = "0.21", features = ["rustls-tls-webpki-roots"] }
+
+# Lazy global for the ClientMap — unchanged
+once_cell = "1"
+
+# ── v1 → v2 Cargo changes ────────────────────────────────────────────────────
+#
+# Removed from v1:
+#   tauri = { version = "1", features = ["wry"] }   ← wry is now automatic
+#   [features]
+#   custom-protocol = ["tauri/custom-protocol"]      ← automatic in v2 CLI
+#
+# Everything else (tokio, tungstenite, serde, futures-util, once_cell) is
+# identical — the WebSocket relay logic is pure Rust and version-agnostic.
+# ─────────────────────────────────────────────────────────────────────────────

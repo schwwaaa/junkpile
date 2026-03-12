@@ -1,0 +1,332 @@
+<!doctype html>
+<!--
+  index.html — Single-window Tauri v2 + raw WebGL template
+  ══════════════════════════════════════════════════════════════════════════════
+
+  ARCHITECTURE
+  ────────────
+  Identical two-column layout to the p5 version:
+
+    ┌─────────────────┬──────────────────────────────────────────┐
+    │  Controls panel │           WebGL canvas                   │
+    │  (left column)  │         (fills right side)               │
+    │                 │                                          │
+    │  Sliders and    │   GLSL fragment shader renders here.     │
+    │  toggles that   │   Reads from the `params` object every   │
+    │  write directly │   frame — no WebSocket, no relay.        │
+    │  into `params`  │                                          │
+    └─────────────────┴──────────────────────────────────────────┘
+
+  WHAT CHANGED vs. THE p5 VERSION
+  ────────────────────────────────
+  • No <script src="p5.min.js"> — zero external dependencies
+  • The <canvas> element is declared right here in HTML (p5 created it in JS)
+  • sketch.js now manages the WebGL context directly:
+      canvas.getContext('webgl')  instead of  createCanvas(w, h, WEBGL)
+      gl.drawArrays(...)          instead of  rect(...)
+      requestAnimationFrame(...)  instead of  draw() loop
+  • Everything else — params object, GLSL shaders, slider wiring — is identical
+
+  HOW TO EXTEND
+  ─────────────
+  1. Add a slider in the controls panel below (give it a unique id).
+  2. Add the id to PARAMS or TOGGLES in sketch.js.
+  3. Add a default value to the `params` object in sketch.js.
+  4. Declare the uniform in FRAG_SHADER and pass it in render().
+  That's the entire workflow — four steps, all in JS/HTML.
+
+  ══════════════════════════════════════════════════════════════════════════════
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WebGL · Tauri v2 · Single Window</title>
+  <style>
+    /* ── Reset ──────────────────────────────────────────────────────────── */
+    :root { color-scheme: dark; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #0a0a0c;
+      color: #e0e0e8;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 12px;
+    }
+
+    /* ── Two-column layout ───────────────────────────────────────────────── */
+    #app {
+      display: flex;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    /* ── Controls panel ─────────────────────────────────────────────────── */
+    #panel {
+      flex: 0 0 260px;
+      height: 100vh;
+      overflow-y: auto;
+      background: #0d0d0f;
+      border-right: 1px solid #1e1e26;
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+      gap: 6px;
+    }
+    #panel::-webkit-scrollbar { width: 3px; }
+    #panel::-webkit-scrollbar-thumb { background: #2a2a36; border-radius: 2px; }
+
+    /* ── Panel header ───────────────────────────────────────────────────── */
+    .panel-title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #7c9fff;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #1e1e26;
+      margin-bottom: 2px;
+    }
+
+    /* ── Section labels ─────────────────────────────────────────────────── */
+    .section-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #7c9fff;
+      padding: 8px 0 3px;
+      border-top: 1px solid #1e1e26;
+      margin-top: 4px;
+    }
+    .section-label:first-of-type { border-top: none; margin-top: 0; }
+
+    /* ── Parameter row (slider) ─────────────────────────────────────────── */
+    .param-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 7px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 6px;
+      transition: border-color 0.15s;
+    }
+    .param-row:hover { border-color: rgba(124,159,255,0.3); }
+
+    .param-row label {
+      flex: 0 0 90px;
+      font-size: 10px;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      user-select: none;
+    }
+
+    /* ── Range slider ───────────────────────────────────────────────────── */
+    input[type=range] {
+      -webkit-appearance: none;
+      appearance: none;
+      flex: 1;
+      height: 2px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 1px;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: #7c9fff;
+      transition: background 0.15s, transform 0.1s;
+    }
+    input[type=range]:hover::-webkit-slider-thumb {
+      background: #aac5ff;
+      transform: scale(1.25);
+    }
+    input[type=range]::-moz-range-thumb {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: #7c9fff;
+      border: none;
+    }
+
+    /* ── Value display ───────────────────────────────────────────────────── */
+    .param-value {
+      flex: 0 0 38px;
+      text-align: right;
+      font-size: 10px;
+      color: #7c9fff;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ── Toggle row (checkbox) ───────────────────────────────────────────── */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 7px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 6px;
+    }
+    .toggle-row label {
+      flex: 1;
+      font-size: 10px;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      user-select: none;
+      cursor: pointer;
+    }
+    input[type=checkbox] {
+      accent-color: #7c9fff;
+      width: 13px; height: 13px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    /* ── Footer ─────────────────────────────────────────────────────────── */
+    .panel-footer {
+      margin-top: auto;
+      padding-top: 10px;
+      font-size: 9px;
+      color: rgba(255,255,255,0.18);
+      text-align: center;
+      border-top: 1px solid #1e1e26;
+    }
+
+    /* ── Canvas container ────────────────────────────────────────────────── */
+    /*
+     * KEY DIFFERENCE from p5 version:
+     * The <canvas> is declared here in HTML, not created by p5 in JS.
+     * sketch.js grabs it with document.getElementById('glcanvas') and
+     * calls canvas.getContext('webgl') directly.
+     */
+    #canvas-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      background: #000;
+    }
+    #glcanvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+
+<body>
+<div id="app">
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       CONTROLS PANEL (left column)
+       ══════════════════════════════════════════════════════════════════════ -->
+  <div id="panel">
+
+    <div class="panel-title">WebGL · tauri v2</div>
+
+    <div class="section-label">Color</div>
+
+    <div class="param-row">
+      <label for="hue">Hue Shift</label>
+      <input id="hue" type="range" min="0" max="360" step="1" value="180">
+      <span class="param-value" id="hue-val">180</span>
+    </div>
+
+    <div class="param-row">
+      <label for="saturation">Saturation</label>
+      <input id="saturation" type="range" min="0" max="1" step="0.01" value="0.8">
+      <span class="param-value" id="saturation-val">0.80</span>
+    </div>
+
+    <div class="param-row">
+      <label for="brightness">Brightness</label>
+      <input id="brightness" type="range" min="0" max="2" step="0.01" value="1.0">
+      <span class="param-value" id="brightness-val">1.00</span>
+    </div>
+
+    <div class="section-label">Shape</div>
+
+    <div class="param-row">
+      <label for="zoom">Zoom</label>
+      <input id="zoom" type="range" min="0.5" max="4.0" step="0.05" value="1.5">
+      <span class="param-value" id="zoom-val">1.50</span>
+    </div>
+
+    <div class="param-row">
+      <label for="speed">Speed</label>
+      <input id="speed" type="range" min="0" max="2" step="0.01" value="0.5">
+      <span class="param-value" id="speed-val">0.50</span>
+    </div>
+
+    <div class="param-row">
+      <label for="distortion">Distortion</label>
+      <input id="distortion" type="range" min="0" max="1" step="0.01" value="0.3">
+      <span class="param-value" id="distortion-val">0.30</span>
+    </div>
+
+    <div class="section-label">Pattern</div>
+
+    <div class="param-row">
+      <label for="complexity">Complexity</label>
+      <input id="complexity" type="range" min="1" max="8" step="1" value="4">
+      <span class="param-value" id="complexity-val">4</span>
+    </div>
+
+    <div class="param-row">
+      <label for="symmetry">Symmetry</label>
+      <input id="symmetry" type="range" min="1" max="8" step="1" value="3">
+      <span class="param-value" id="symmetry-val">3</span>
+    </div>
+
+    <div class="param-row">
+      <label for="glow">Glow</label>
+      <input id="glow" type="range" min="0" max="1" step="0.01" value="0.4">
+      <span class="param-value" id="glow-val">0.40</span>
+    </div>
+
+    <div class="section-label">Toggles</div>
+
+    <div class="toggle-row">
+      <label for="invert">Invert Colours</label>
+      <input id="invert" type="checkbox">
+    </div>
+
+    <div class="toggle-row">
+      <label for="pulse">Pulse</label>
+      <input id="pulse" type="checkbox" checked>
+    </div>
+
+    <div class="toggle-row">
+      <label for="rotate">Rotate</label>
+      <input id="rotate" type="checkbox">
+    </div>
+
+    <div class="panel-footer">webgl · tauri v2 · single-window template</div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       CANVAS CONTAINER (right column)
+       The <canvas> lives here in HTML. sketch.js grabs it by id and calls
+       canvas.getContext('webgl') — no p5.js involved at all.
+  ════════════════════════════════════════════════════════════════════════ -->
+  <div id="canvas-container">
+    <canvas id="glcanvas"></canvas>
+  </div>
+
+</div><!-- /#app -->
+
+<!--
+  No p5.js script tag — sketch.js manages the WebGL context directly.
+  All shaders, the render loop, and UI wiring live in sketch.js.
+-->
+<script src="sketch.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,367 @@
+<!doctype html>
+<!--
+  index.html — Single-window Tauri + p5.js template
+  ══════════════════════════════════════════════════════════════════════════════
+
+  ARCHITECTURE
+  ────────────
+  Everything lives in one window. The page is split into two columns:
+
+    ┌─────────────────┬──────────────────────────────────────────┐
+    │  Controls panel │           p5.js canvas                   │
+    │  (left column)  │         (fills right side)               │
+    │                 │                                          │
+    │  Sliders and    │   GLSL fragment shader renders here.     │
+    │  toggles that   │   Reads from the `params` object every   │
+    │  write directly │   frame — no WebSocket, no relay.        │
+    │  into `params`  │                                          │
+    └─────────────────┴──────────────────────────────────────────┘
+
+  HOW PARAMETERS FLOW (vs. the two-window template)
+  ──────────────────────────────────────────────────
+  Two-window:   slider → WebSocket → relay → WebSocket → params → draw()
+  Single-window: slider → params → draw()
+
+  Because controls and canvas share the same JavaScript context, a slider's
+  oninput handler can write directly to the `params` object. The p5 draw()
+  loop reads it on the next frame (~16ms later). No messaging needed.
+
+  FILE OVERVIEW
+  ─────────────
+  index.html  — Layout, controls HTML, loads p5 and sketch.js
+  sketch.js   — The params object, GLSL shaders, and p5 setup/draw
+
+  HOW TO EXTEND
+  ─────────────
+  1. Add a slider in the controls panel below (give it a unique id).
+  2. Add the id to PARAMS or TOGGLES in sketch.js.
+  3. Add a default value to the `params` object in sketch.js.
+  4. Declare the uniform in FRAG_SHADER and pass it in draw().
+  That's the entire workflow — four steps, all in JS/HTML.
+
+  ══════════════════════════════════════════════════════════════════════════════
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>p5 · Tauri · Single Window</title>
+  <style>
+    /* ── Reset ──────────────────────────────────────────────────────────── */
+    :root { color-scheme: dark; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #0a0a0c;
+      color: #e0e0e8;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 12px;
+    }
+
+    /* ── Two-column layout ───────────────────────────────────────────────── */
+    /*
+     * The page is a flex row:
+     *   - #panel  : fixed-width left column (controls)
+     *   - #canvas-container : grows to fill remaining space (p5 canvas)
+     *
+     * p5.js appends its <canvas> element to #canvas-container in setup().
+     */
+    #app {
+      display: flex;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    /* ── Controls panel ─────────────────────────────────────────────────── */
+    #panel {
+      flex: 0 0 260px;           /* fixed width — change this to resize the panel */
+      height: 100vh;
+      overflow-y: auto;
+      background: #0d0d0f;
+      border-right: 1px solid #1e1e26;
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+      gap: 6px;
+    }
+    #panel::-webkit-scrollbar { width: 3px; }
+    #panel::-webkit-scrollbar-thumb { background: #2a2a36; border-radius: 2px; }
+
+    /* ── Panel header ───────────────────────────────────────────────────── */
+    .panel-title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #7c9fff;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #1e1e26;
+      margin-bottom: 2px;
+    }
+
+    /* ── Section labels ─────────────────────────────────────────────────── */
+    .section-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #7c9fff;
+      padding: 8px 0 3px;
+      border-top: 1px solid #1e1e26;
+      margin-top: 4px;
+    }
+    .section-label:first-of-type { border-top: none; margin-top: 0; }
+
+    /* ── Parameter row (slider) ─────────────────────────────────────────── */
+    /*
+     * Each .param-row contains a label, a range slider, and a value display.
+     * The value display is updated by sketch.js whenever the slider moves.
+     */
+    .param-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 7px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 6px;
+      transition: border-color 0.15s;
+    }
+    .param-row:hover { border-color: rgba(124,159,255,0.3); }
+
+    .param-row label {
+      flex: 0 0 90px;
+      font-size: 10px;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      user-select: none;
+    }
+
+    /* ── Range slider ───────────────────────────────────────────────────── */
+    input[type=range] {
+      -webkit-appearance: none;
+      appearance: none;
+      flex: 1;
+      height: 2px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 1px;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: #7c9fff;
+      transition: background 0.15s, transform 0.1s;
+    }
+    input[type=range]:hover::-webkit-slider-thumb {
+      background: #aac5ff;
+      transform: scale(1.25);
+    }
+    input[type=range]::-moz-range-thumb {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: #7c9fff;
+      border: none;
+    }
+
+    /* ── Value display ───────────────────────────────────────────────────── */
+    .param-value {
+      flex: 0 0 38px;
+      text-align: right;
+      font-size: 10px;
+      color: #7c9fff;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ── Toggle row (checkbox) ───────────────────────────────────────────── */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 7px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 6px;
+    }
+    .toggle-row label {
+      flex: 1;
+      font-size: 10px;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      user-select: none;
+      cursor: pointer;
+    }
+    input[type=checkbox] {
+      accent-color: #7c9fff;
+      width: 13px; height: 13px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    /* ── Footer ─────────────────────────────────────────────────────────── */
+    .panel-footer {
+      margin-top: auto;
+      padding-top: 10px;
+      font-size: 9px;
+      color: rgba(255,255,255,0.18);
+      text-align: center;
+      border-top: 1px solid #1e1e26;
+    }
+
+    /* ── Canvas container ────────────────────────────────────────────────── */
+    /*
+     * p5.js creates a <canvas> and appends it to the element whose id is
+     * passed to createCanvas() — or to document.body by default.
+     * We point it at #canvas-container so it fills only the right column.
+     *
+     * In sketch.js setup(): canvas = createCanvas(w, h, WEBGL);
+     *                        canvas.parent('canvas-container');
+     */
+    #canvas-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      background: #000;
+    }
+    #canvas-container canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+    }
+  </style>
+</head>
+
+<body>
+<div id="app">
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       CONTROLS PANEL (left column)
+       ══════════════════════════════════════════════════════════════════════
+
+    ADD YOUR CONTROLS HERE
+    ──────────────────────
+    Each <input> gets a unique id. That id is:
+      • The key used in the `params` object in sketch.js
+      • The label in the PARAMS / TOGGLES array in sketch.js
+
+    Steps to add a new slider parameter:
+      1. Copy a .param-row block, give the <input> a new id (e.g. "myParam")
+      2. Set appropriate min / max / step / value attributes
+      3. Add the id to PARAMS in sketch.js
+      4. Add a default to params{} in sketch.js
+      5. Declare `uniform float u_myParam;` in FRAG_SHADER
+      6. Call shd.setUniform('u_myParam', params.myParam) in draw()
+  ════════════════════════════════════════════════════════════════════════ -->
+  <div id="panel">
+
+    <div class="panel-title">p5 · tauri · template</div>
+
+    <div class="section-label">Color</div>
+
+    <div class="param-row">
+      <label for="hue">Hue Shift</label>
+      <input id="hue" type="range" min="0" max="360" step="1" value="180">
+      <span class="param-value" id="hue-val">180</span>
+    </div>
+
+    <div class="param-row">
+      <label for="saturation">Saturation</label>
+      <input id="saturation" type="range" min="0" max="1" step="0.01" value="0.8">
+      <span class="param-value" id="saturation-val">0.80</span>
+    </div>
+
+    <div class="param-row">
+      <label for="brightness">Brightness</label>
+      <input id="brightness" type="range" min="0" max="2" step="0.01" value="1.0">
+      <span class="param-value" id="brightness-val">1.00</span>
+    </div>
+
+    <div class="section-label">Shape</div>
+
+    <div class="param-row">
+      <label for="zoom">Zoom</label>
+      <input id="zoom" type="range" min="0.5" max="4.0" step="0.05" value="1.5">
+      <span class="param-value" id="zoom-val">1.50</span>
+    </div>
+
+    <div class="param-row">
+      <label for="speed">Speed</label>
+      <input id="speed" type="range" min="0" max="2" step="0.01" value="0.5">
+      <span class="param-value" id="speed-val">0.50</span>
+    </div>
+
+    <div class="param-row">
+      <label for="distortion">Distortion</label>
+      <input id="distortion" type="range" min="0" max="1" step="0.01" value="0.3">
+      <span class="param-value" id="distortion-val">0.30</span>
+    </div>
+
+    <div class="section-label">Pattern</div>
+
+    <div class="param-row">
+      <label for="complexity">Complexity</label>
+      <input id="complexity" type="range" min="1" max="8" step="1" value="4">
+      <span class="param-value" id="complexity-val">4</span>
+    </div>
+
+    <div class="param-row">
+      <label for="symmetry">Symmetry</label>
+      <input id="symmetry" type="range" min="1" max="8" step="1" value="3">
+      <span class="param-value" id="symmetry-val">3</span>
+    </div>
+
+    <div class="param-row">
+      <label for="glow">Glow</label>
+      <input id="glow" type="range" min="0" max="1" step="0.01" value="0.4">
+      <span class="param-value" id="glow-val">0.40</span>
+    </div>
+
+    <div class="section-label">Toggles</div>
+
+    <div class="toggle-row">
+      <label for="invert">Invert Colours</label>
+      <input id="invert" type="checkbox">
+    </div>
+
+    <div class="toggle-row">
+      <label for="pulse">Pulse</label>
+      <input id="pulse" type="checkbox" checked>
+    </div>
+
+    <div class="toggle-row">
+      <label for="rotate">Rotate</label>
+      <input id="rotate" type="checkbox">
+    </div>
+
+    <div class="panel-footer">p5 · tauri · single-window template</div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════
+       CANVAS CONTAINER (right column)
+       p5.js appends its <canvas> element here via canvas.parent()
+  ════════════════════════════════════════════════════════════════════════ -->
+  <div id="canvas-container"></div>
+
+</div><!-- /#app -->
+
+<!-- p5.js from CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.0/p5.min.js"></script>
+
+<!--
+  sketch.js contains:
+    - The `params` object (shared state between controls and shader)
+    - GLSL vertex + fragment shader source strings
+    - p5 setup() and draw()
+    - wireControls() — wires all sliders/checkboxes to write into params
+-->
+<script src="sketch.js"></script>
+
+</body>
+</html>

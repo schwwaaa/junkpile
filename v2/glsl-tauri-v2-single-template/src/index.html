@@ -1,0 +1,299 @@
+<!doctype html>
+<!--
+  index.html — Single-window Tauri + raw WebGL + external GLSL shader
+  ══════════════════════════════════════════════════════════════════════════════
+
+  ARCHITECTURE
+  ────────────
+  Same two-column layout as the inline WebGL template:
+
+    ┌─────────────────┬──────────────────────────────────────────┐
+    │  Controls panel │           WebGL canvas                   │
+    │  (left column)  │         (fills right side)               │
+    │                 │                                          │
+    │  Sliders +      │   Fragment shader loaded from            │
+    │  Load Shader    │   shader.frag via fetch().               │
+    │  file button    │   Recompiles instantly on hot-swap.      │
+    └─────────────────┴──────────────────────────────────────────┘
+
+  KEY DIFFERENCE FROM INLINE WEBGL TEMPLATE
+  ──────────────────────────────────────────
+  A "Load Shader" file picker button is added to the controls panel.
+  Selecting a .frag / .glsl file reads it with FileReader, sends the
+  source to sketch.js's compileAndRun(), and hot-swaps the shader
+  without restarting the app.
+
+  The default shader (src/shader.frag) is loaded automatically at startup.
+
+  ══════════════════════════════════════════════════════════════════════════════
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GLSL · Tauri · Single Window</title>
+  <style>
+    :root { color-scheme: dark; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100vw; height: 100vh;
+      overflow: hidden;
+      background: #0a0a0c;
+      color: #e0e0e8;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 12px;
+    }
+
+    #app { display: flex; width: 100vw; height: 100vh; }
+
+    /* ── Controls panel ─────────────────────────────────────────────────── */
+    #panel {
+      flex: 0 0 260px;
+      height: 100vh;
+      overflow-y: auto;
+      background: #0d0d0f;
+      border-right: 1px solid #1e1e26;
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+      gap: 6px;
+    }
+    #panel::-webkit-scrollbar { width: 3px; }
+    #panel::-webkit-scrollbar-thumb { background: #2a2a36; border-radius: 2px; }
+
+    .panel-title {
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: #7c9fff;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #1e1e26;
+      margin-bottom: 2px;
+    }
+
+    .section-label {
+      font-size: 9px; font-weight: 700;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      color: #7c9fff;
+      padding: 8px 0 3px;
+      border-top: 1px solid #1e1e26;
+      margin-top: 4px;
+    }
+    .section-label:first-of-type { border-top: none; margin-top: 0; }
+
+    .param-row {
+      display: flex; align-items: center; gap: 7px;
+      padding: 5px 7px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 6px;
+      transition: border-color 0.15s;
+    }
+    .param-row:hover { border-color: rgba(124,159,255,0.3); }
+    .param-row label {
+      flex: 0 0 90px; font-size: 10px;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 0.05em; text-transform: uppercase;
+      user-select: none;
+    }
+
+    input[type=range] {
+      -webkit-appearance: none; appearance: none;
+      flex: 1; height: 2px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 1px; outline: none; cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #7c9fff;
+      transition: background 0.15s, transform 0.1s;
+    }
+    input[type=range]:hover::-webkit-slider-thumb { background: #aac5ff; transform: scale(1.25); }
+    input[type=range]::-moz-range-thumb {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #7c9fff; border: none;
+    }
+
+    .param-value {
+      flex: 0 0 38px; text-align: right;
+      font-size: 10px; color: #7c9fff;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .toggle-row {
+      display: flex; align-items: center; gap: 7px;
+      padding: 5px 7px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 6px;
+    }
+    .toggle-row label {
+      flex: 1; font-size: 10px;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 0.05em; text-transform: uppercase;
+      user-select: none; cursor: pointer;
+    }
+    input[type=checkbox] {
+      accent-color: #7c9fff;
+      width: 13px; height: 13px;
+      cursor: pointer; flex-shrink: 0;
+    }
+
+    /* ── Shader loader ───────────────────────────────────────────────────── */
+    /*
+     * The file picker input is hidden. The visible button triggers it.
+     * On file select, FileReader reads the .frag source and passes it to
+     * window.compileAndRun() exposed by sketch.js.
+     */
+    #shader-load-btn {
+      width: 100%;
+      padding: 6px 10px;
+      background: rgba(124,159,255,0.1);
+      border: 1px solid rgba(124,159,255,0.3);
+      border-radius: 6px;
+      color: #7c9fff;
+      font-family: inherit;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    #shader-load-btn:hover {
+      background: rgba(124,159,255,0.18);
+      border-color: rgba(124,159,255,0.5);
+    }
+    #shader-filename {
+      font-size: 9px;
+      color: rgba(255,255,255,0.25);
+      text-align: center;
+      padding: 2px 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .panel-footer {
+      margin-top: auto; padding-top: 10px;
+      font-size: 9px; color: rgba(255,255,255,0.18);
+      text-align: center;
+      border-top: 1px solid #1e1e26;
+    }
+
+    /* ── Canvas container ────────────────────────────────────────────────── */
+    #canvas-container { flex: 1; position: relative; overflow: hidden; background: #000; }
+    #glcanvas { display: block; width: 100%; height: 100%; }
+  </style>
+</head>
+
+<body>
+<div id="app">
+
+  <div id="panel">
+    <div class="panel-title">GLSL · tauri</div>
+
+    <!-- ── Shader loader ──────────────────────────────────────────────────
+         Loads any .frag/.glsl file from disk and hot-swaps the shader.
+         Default: src/shader.frag (loaded automatically at startup).
+    ─────────────────────────────────────────────────────────────────────── -->
+    <div class="section-label">Shader</div>
+    <input type="file" id="shader-file-input" accept=".frag,.glsl,.fs" style="display:none">
+    <button id="shader-load-btn" onclick="document.getElementById('shader-file-input').click()">
+      ⬆ Load .frag file
+    </button>
+    <div id="shader-filename">shader.frag (default)</div>
+
+    <div class="section-label">Color</div>
+    <div class="param-row">
+      <label for="hue">Hue Shift</label>
+      <input id="hue" type="range" min="0" max="360" step="1" value="180">
+      <span class="param-value" id="hue-val">180</span>
+    </div>
+    <div class="param-row">
+      <label for="saturation">Saturation</label>
+      <input id="saturation" type="range" min="0" max="1" step="0.01" value="0.8">
+      <span class="param-value" id="saturation-val">0.80</span>
+    </div>
+    <div class="param-row">
+      <label for="brightness">Brightness</label>
+      <input id="brightness" type="range" min="0" max="2" step="0.01" value="1.0">
+      <span class="param-value" id="brightness-val">1.00</span>
+    </div>
+
+    <div class="section-label">Shape</div>
+    <div class="param-row">
+      <label for="zoom">Zoom</label>
+      <input id="zoom" type="range" min="0.5" max="4.0" step="0.05" value="1.5">
+      <span class="param-value" id="zoom-val">1.50</span>
+    </div>
+    <div class="param-row">
+      <label for="speed">Speed</label>
+      <input id="speed" type="range" min="0" max="2" step="0.01" value="0.5">
+      <span class="param-value" id="speed-val">0.50</span>
+    </div>
+    <div class="param-row">
+      <label for="distortion">Distortion</label>
+      <input id="distortion" type="range" min="0" max="1" step="0.01" value="0.3">
+      <span class="param-value" id="distortion-val">0.30</span>
+    </div>
+
+    <div class="section-label">Pattern</div>
+    <div class="param-row">
+      <label for="complexity">Complexity</label>
+      <input id="complexity" type="range" min="1" max="8" step="1" value="4">
+      <span class="param-value" id="complexity-val">4</span>
+    </div>
+    <div class="param-row">
+      <label for="symmetry">Symmetry</label>
+      <input id="symmetry" type="range" min="1" max="8" step="1" value="3">
+      <span class="param-value" id="symmetry-val">3</span>
+    </div>
+    <div class="param-row">
+      <label for="glow">Glow</label>
+      <input id="glow" type="range" min="0" max="1" step="0.01" value="0.4">
+      <span class="param-value" id="glow-val">0.40</span>
+    </div>
+
+    <div class="section-label">Toggles</div>
+    <div class="toggle-row">
+      <label for="invert">Invert Colours</label>
+      <input id="invert" type="checkbox">
+    </div>
+    <div class="toggle-row">
+      <label for="pulse">Pulse</label>
+      <input id="pulse" type="checkbox" checked>
+    </div>
+    <div class="toggle-row">
+      <label for="rotate">Rotate</label>
+      <input id="rotate" type="checkbox">
+    </div>
+
+    <div class="panel-footer">glsl · tauri · single-window template</div>
+  </div>
+
+  <div id="canvas-container">
+    <canvas id="glcanvas"></canvas>
+  </div>
+
+</div>
+
+<script src="sketch.js"></script>
+<script>
+  // ── Shader file hot-swap ────────────────────────────────────────────────
+  // When the user picks a .frag file, read it and hot-swap the running shader.
+  // compileAndRun() is defined in sketch.js and safe to call at any time.
+  document.getElementById('shader-file-input').addEventListener('change', function() {
+    const file = this.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      document.getElementById('shader-filename').textContent = file.name;
+      compileAndRun(e.target.result); // defined in sketch.js
+    };
+    reader.readAsText(file);
+    this.value = ''; // reset so same file can be reloaded
+  });
+</script>
+</body>
+</html>

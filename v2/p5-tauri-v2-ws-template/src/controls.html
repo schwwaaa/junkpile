@@ -1,0 +1,365 @@
+<!doctype html>
+<!--
+  controls.html — The "controls" window
+  ══════════════════════════════════════════════════════════════════════════════
+
+  PURPOSE
+  ───────
+  This window provides the user interface: sliders and toggles that control
+  the visual parameters displayed in canvas.html.
+
+  When the user moves a slider, a JSON message is sent over WebSocket to the
+  relay, which forwards it to the canvas window. The canvas window reads the
+  message and updates its shader parameters in real time.
+
+  ROLE IN THE SYSTEM
+  ──────────────────
+  This window identifies itself to the relay as role="controls".
+  It SENDS parameter messages and RECEIVES status/echo messages.
+
+  HOW TO EXTEND THIS FOR YOUR PROJECT
+  ─────────────────────────────────────
+  1. Add more <input> sliders with unique IDs (e.g. id="myNewParam").
+  2. Add the id to the PARAMS array in controls.js so it gets wired up.
+  3. Add the corresponding uniform read in canvas.js.
+  That's it — no changes to Rust or the relay needed.
+
+  ══════════════════════════════════════════════════════════════════════════════
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Controls</title>
+  <style>
+    /* ── Base reset ─────────────────────────────────────────────────────── */
+    :root { color-scheme: dark; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background: #0d0d0f;
+      color: #e0e0e8;
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      font-size: 12px;
+      overflow: hidden;
+    }
+
+    /* ── Layout ─────────────────────────────────────────────────────────── */
+    body {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding: 12px;
+      gap: 10px;
+    }
+
+    /* ── Header bar ─────────────────────────────────────────────────────── */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #222;
+    }
+    .title {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #7c9fff;
+    }
+
+    /* ── Connection status pill ─────────────────────────────────────────── */
+    /* 
+     * This pill shows the WebSocket connection state.
+     * Green = connected to relay, Red = disconnected.
+     * If you see "WS: disconnected", the Rust relay hasn't started yet —
+     * this is normal for the first ~100ms after app launch.
+     */
+    #ws-status {
+      font-size: 10px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.4);
+      transition: all 0.3s ease;
+    }
+    #ws-status.connected {
+      color: #5cff9d;
+      border-color: rgba(92,255,157,0.35);
+      background: rgba(92,255,157,0.07);
+    }
+    #ws-status.error {
+      color: #ff6060;
+      border-color: rgba(255,96,96,0.35);
+    }
+
+    /* ── Controls panel ─────────────────────────────────────────────────── */
+    .panel {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding-right: 2px;
+    }
+
+    /* ── Section labels ─────────────────────────────────────────────────── */
+    .section-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #7c9fff;
+      padding: 6px 0 2px;
+      border-top: 1px solid #1e1e26;
+      margin-top: 4px;
+    }
+    .section-label:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+
+    /* ── Individual parameter row ───────────────────────────────────────── */
+    /*
+     * Each .param-row contains:
+     *   - a label (the parameter name)
+     *   - a range slider (the actual input)
+     *   - a value display (updates in real time)
+     *
+     * When the slider moves, controls.js reads its current value and sends
+     * a JSON message: { "type": "param", "name": "<id>", "value": <number> }
+     */
+    .param-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 8px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 6px;
+      transition: border-color 0.15s;
+    }
+    .param-row:hover { border-color: rgba(124,159,255,0.3); }
+
+    .param-row label {
+      flex: 0 0 110px;
+      font-size: 10px;
+      color: rgba(255,255,255,0.45);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      user-select: none;
+    }
+
+    /* ── Range input styling ─────────────────────────────────────────────── */
+    input[type=range] {
+      -webkit-appearance: none;
+      appearance: none;
+      flex: 1;
+      height: 2px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 1px;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: #7c9fff;
+      transition: background 0.15s, transform 0.1s;
+    }
+    input[type=range]:hover::-webkit-slider-thumb {
+      background: #aac5ff;
+      transform: scale(1.2);
+    }
+    input[type=range]::-moz-range-thumb {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: #7c9fff;
+      border: none;
+    }
+
+    /* ── Value display ───────────────────────────────────────────────────── */
+    .param-value {
+      flex: 0 0 42px;
+      text-align: right;
+      font-size: 10px;
+      color: #7c9fff;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ── Toggle (checkbox) row ───────────────────────────────────────────── */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 8px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 6px;
+    }
+    .toggle-row label {
+      flex: 1;
+      font-size: 10px;
+      color: rgba(255,255,255,0.45);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      user-select: none;
+      cursor: pointer;
+    }
+    input[type=checkbox] {
+      accent-color: #7c9fff;
+      width: 13px; height: 13px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    /* ── Footer ─────────────────────────────────────────────────────────── */
+    .footer {
+      font-size: 9px;
+      color: rgba(255,255,255,0.2);
+      text-align: center;
+      padding-top: 6px;
+      border-top: 1px solid #1e1e26;
+    }
+
+    /* Scrollbar styling */
+    .panel::-webkit-scrollbar { width: 3px; }
+    .panel::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+  </style>
+</head>
+
+<body>
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <div class="header">
+    <span class="title">p5 · ws · template</span>
+    <!--
+      WebSocket status pill.
+      JavaScript in controls.js updates this text and CSS class based on the
+      WebSocket connection state. If it stays red, check that the Tauri app
+      is fully started and port 2727 is not blocked.
+    -->
+    <span id="ws-status">WS: connecting…</span>
+  </div>
+
+  <!-- ── Controls panel ─────────────────────────────────────────────────── -->
+  <!--
+    ADD YOUR CONTROLS HERE
+    ───────────────────────
+    Each <input> with an id becomes a parameter.
+    The id is used as the message "name" field sent over WebSocket.
+
+    Steps to add a new parameter:
+      1. Add an <input type="range"> with a unique id here.
+      2. Add the id string to the PARAMS array in controls.js.
+      3. Read `params.<yourId>` in the p5 draw() loop in canvas.js.
+  -->
+  <div class="panel">
+
+    <div class="section-label">Color</div>
+
+    <!-- Hue shift: rotates the colour wheel of the shader output (0–360°) -->
+    <div class="param-row">
+      <label for="hue">Hue Shift</label>
+      <input id="hue" type="range" min="0" max="360" step="1" value="180">
+      <span class="param-value" id="hue-val">180</span>
+    </div>
+
+    <!-- Saturation: 0 = greyscale, 1 = full colour -->
+    <div class="param-row">
+      <label for="saturation">Saturation</label>
+      <input id="saturation" type="range" min="0" max="1" step="0.01" value="0.8">
+      <span class="param-value" id="saturation-val">0.80</span>
+    </div>
+
+    <!-- Brightness multiplier: overall luminance boost/cut -->
+    <div class="param-row">
+      <label for="brightness">Brightness</label>
+      <input id="brightness" type="range" min="0" max="2" step="0.01" value="1.0">
+      <span class="param-value" id="brightness-val">1.00</span>
+    </div>
+
+    <div class="section-label">Shape</div>
+
+    <!-- Zoom: scale of the shader coordinate space (0.5 = zoomed in, 3 = wide) -->
+    <div class="param-row">
+      <label for="zoom">Zoom</label>
+      <input id="zoom" type="range" min="0.5" max="4.0" step="0.05" value="1.5">
+      <span class="param-value" id="zoom-val">1.50</span>
+    </div>
+
+    <!-- Speed: animation speed multiplier (0 = frozen, 2 = double speed) -->
+    <div class="param-row">
+      <label for="speed">Speed</label>
+      <input id="speed" type="range" min="0" max="2" step="0.01" value="0.5">
+      <span class="param-value" id="speed-val">0.50</span>
+    </div>
+
+    <!-- Distortion: warps the UV coordinates for a liquid/glitch effect -->
+    <div class="param-row">
+      <label for="distortion">Distortion</label>
+      <input id="distortion" type="range" min="0" max="1" step="0.01" value="0.3">
+      <span class="param-value" id="distortion-val">0.30</span>
+    </div>
+
+    <div class="section-label">Pattern</div>
+
+    <!-- Complexity: number of layered noise octaves (1 = simple, 8 = complex) -->
+    <div class="param-row">
+      <label for="complexity">Complexity</label>
+      <input id="complexity" type="range" min="1" max="8" step="1" value="4">
+      <span class="param-value" id="complexity-val">4</span>
+    </div>
+
+    <!-- Symmetry: how many mirror axes are applied -->
+    <div class="param-row">
+      <label for="symmetry">Symmetry</label>
+      <input id="symmetry" type="range" min="1" max="8" step="1" value="3">
+      <span class="param-value" id="symmetry-val">3</span>
+    </div>
+
+    <!-- Glow: bloom / radial brightness falloff strength -->
+    <div class="param-row">
+      <label for="glow">Glow</label>
+      <input id="glow" type="range" min="0" max="1" step="0.01" value="0.4">
+      <span class="param-value" id="glow-val">0.40</span>
+    </div>
+
+    <div class="section-label">Toggles</div>
+
+    <!-- Invert: flips the colour palette -->
+    <div class="toggle-row">
+      <label for="invert">Invert Colours</label>
+      <input id="invert" type="checkbox">
+    </div>
+
+    <!-- Pulse: enables a rhythmic brightness pulsation -->
+    <div class="toggle-row">
+      <label for="pulse">Pulse</label>
+      <input id="pulse" type="checkbox" checked>
+    </div>
+
+    <!-- Rotate: enables slow global rotation of the pattern -->
+    <div class="toggle-row">
+      <label for="rotate">Rotate</label>
+      <input id="rotate" type="checkbox">
+    </div>
+
+  </div><!-- /.panel -->
+
+  <!-- ── Footer ─────────────────────────────────────────────────────────── -->
+  <div class="footer">
+    WS relay · ws://127.0.0.1:2727 · role: controls
+  </div>
+
+  <!-- ── Controls logic ────────────────────────────────────────────────────
+    controls.js handles:
+      - Connecting to the WebSocket relay
+      - Wiring all sliders/checkboxes to send messages on change
+      - Updating the value display spans
+  ─────────────────────────────────────────────────────────────────────────── -->
+  <script src="controls.js"></script>
+
+</body>
+</html>
