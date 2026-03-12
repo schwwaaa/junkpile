@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Webcam · Tauri · Single Window</title>
+  <style>
+    :root { color-scheme: dark; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100vw; height: 100vh; overflow: hidden;
+      background: #0a0a0c; color: #e0e0e8;
+      font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px;
+    }
+    #app { display: flex; width: 100vw; height: 100vh; }
+
+    #panel {
+      flex: 0 0 260px; height: 100vh; overflow-y: auto;
+      background: #0d0d0f; border-right: 1px solid #1e1e26;
+      display: flex; flex-direction: column; padding: 12px; gap: 6px;
+    }
+    #panel::-webkit-scrollbar { width: 3px; }
+    #panel::-webkit-scrollbar-thumb { background: #2a2a36; border-radius: 2px; }
+
+    .panel-title {
+      font-size: 13px; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; color: #7c9fff;
+      padding-bottom: 8px; border-bottom: 1px solid #1e1e26; margin-bottom: 2px;
+    }
+    .section-label {
+      font-size: 9px; font-weight: 700; letter-spacing: 0.2em;
+      text-transform: uppercase; color: #7c9fff;
+      padding: 8px 0 3px; border-top: 1px solid #1e1e26; margin-top: 4px;
+    }
+    .param-row {
+      display: flex; align-items: center; gap: 7px; padding: 5px 7px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07); border-radius: 6px;
+      transition: border-color 0.15s;
+    }
+    .param-row:hover { border-color: rgba(124,159,255,0.3); }
+    .param-row label {
+      flex: 0 0 90px; font-size: 10px; color: rgba(255,255,255,0.4);
+      letter-spacing: 0.05em; text-transform: uppercase; user-select: none;
+    }
+    input[type=range] {
+      -webkit-appearance: none; flex: 1; height: 2px;
+      background: rgba(255,255,255,0.15); border-radius: 1px; outline: none; cursor: pointer;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 10px; height: 10px;
+      border-radius: 50%; background: #7c9fff;
+    }
+    input[type=range]:hover::-webkit-slider-thumb { background: #aac5ff; transform: scale(1.25); }
+    .param-value {
+      flex: 0 0 38px; text-align: right; font-size: 10px; color: #7c9fff;
+      font-variant-numeric: tabular-nums;
+    }
+    .toggle-row {
+      display: flex; align-items: center; gap: 7px; padding: 5px 7px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07); border-radius: 6px;
+    }
+    .toggle-row label {
+      flex: 1; font-size: 10px; color: rgba(255,255,255,0.4);
+      letter-spacing: 0.05em; text-transform: uppercase; user-select: none; cursor: pointer;
+    }
+    input[type=checkbox] { accent-color: #7c9fff; width: 13px; height: 13px; cursor: pointer; }
+
+    #cam-btn {
+      width: 100%; padding: 7px 10px;
+      background: rgba(124,159,255,0.12);
+      border: 1px solid rgba(124,159,255,0.35); border-radius: 6px;
+      color: #7c9fff; font-family: inherit; font-size: 10px;
+      letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer;
+      transition: background 0.15s;
+    }
+    #cam-btn:hover { background: rgba(124,159,255,0.22); }
+    #cam-status { font-size: 9px; color: rgba(255,255,255,0.25); text-align: center; padding: 2px 0; }
+    #cam-status.ok  { color: #7fff9f; }
+    #cam-status.err { color: #ff8080; }
+    #cam-select {
+      width: 100%; padding: 5px 7px;
+      background: #111115; border: 1px solid #2a2a36; border-radius: 6px;
+      color: #e0e0e8; font-family: inherit; font-size: 10px; cursor: pointer;
+    }
+
+    .panel-footer {
+      margin-top: auto; padding-top: 10px; font-size: 9px;
+      color: rgba(255,255,255,0.18); text-align: center; border-top: 1px solid #1e1e26;
+    }
+
+    #canvas-container { flex: 1; position: relative; overflow: hidden; background: #000; }
+    #glcanvas { display: block; width: 100%; height: 100%; }
+    #webcam-video { display: none; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div id="panel">
+    <div class="panel-title">Webcam · tauri</div>
+
+    <div class="section-label">Camera</div>
+    <div style="display:flex;gap:5px;align-items:center">
+      <select id="cam-select" style="flex:1" disabled><option value="">Start camera first…</option></select>
+      <button id="cam-refresh" title="Refresh camera list" disabled style="flex:0 0 28px;padding:5px 0;background:rgba(124,159,255,0.04);border:1px solid rgba(124,159,255,0.12);border-radius:6px;color:rgba(124,159,255,0.3);font-size:13px;cursor:not-allowed;line-height:1">↺</button>
+    </div>
+    <button id="cam-btn">▶ Start Camera</button>
+    <div id="cam-status">not started</div>
+
+    <div class="section-label">Effect</div>
+    <div class="param-row">
+      <label for="effect">Mode</label>
+      <input id="effect" type="range" min="0" max="5" step="1" value="0">
+      <span class="param-value" id="effect-val">0</span>
+    </div>
+    <div class="param-row">
+      <label for="distortion">Distort</label>
+      <input id="distortion" type="range" min="0" max="1" step="0.01" value="0.0">
+      <span class="param-value" id="distortion-val">0.00</span>
+    </div>
+    <div class="param-row">
+      <label for="feedback">Feedback</label>
+      <input id="feedback" type="range" min="0" max="0.98" step="0.01" value="0.0">
+      <span class="param-value" id="feedback-val">0.00</span>
+    </div>
+    <div class="param-row">
+      <label for="zoom">Zoom</label>
+      <input id="zoom" type="range" min="0.5" max="3.0" step="0.05" value="1.0">
+      <span class="param-value" id="zoom-val">1.00</span>
+    </div>
+    <div class="param-row">
+      <label for="speed">Warp Spd</label>
+      <input id="speed" type="range" min="0" max="2" step="0.01" value="0.3">
+      <span class="param-value" id="speed-val">0.30</span>
+    </div>
+
+    <div class="section-label">Color</div>
+    <div class="param-row">
+      <label for="hue">Hue Shift</label>
+      <input id="hue" type="range" min="0" max="360" step="1" value="0">
+      <span class="param-value" id="hue-val">0</span>
+    </div>
+    <div class="param-row">
+      <label for="saturation">Saturation</label>
+      <input id="saturation" type="range" min="0" max="2" step="0.01" value="1.0">
+      <span class="param-value" id="saturation-val">1.00</span>
+    </div>
+    <div class="param-row">
+      <label for="brightness">Brightness</label>
+      <input id="brightness" type="range" min="0" max="2" step="0.01" value="1.0">
+      <span class="param-value" id="brightness-val">1.00</span>
+    </div>
+    <div class="param-row">
+      <label for="contrast">Contrast</label>
+      <input id="contrast" type="range" min="0" max="3" step="0.01" value="1.0">
+      <span class="param-value" id="contrast-val">1.00</span>
+    </div>
+
+    <div class="section-label">Toggles</div>
+    <div class="toggle-row">
+      <label for="mirror">Mirror X</label>
+      <input id="mirror" type="checkbox">
+    </div>
+    <div class="toggle-row">
+      <label for="invert">Invert</label>
+      <input id="invert" type="checkbox">
+    </div>
+    <div class="toggle-row">
+      <label for="greyscale">Greyscale</label>
+      <input id="greyscale" type="checkbox">
+    </div>
+
+    <div class="panel-footer">webcam · tauri · single-window template</div>
+  </div>
+
+  <div id="canvas-container">
+    <canvas id="glcanvas"></canvas>
+  </div>
+</div>
+
+<video id="webcam-video" autoplay playsinline muted></video>
+<script src="sketch.js"></script>
+</body>
+</html>

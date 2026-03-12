@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Feedback Output</title>
+  <style>
+    :root { color-scheme: dark; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100vw; height: 100vh; overflow: hidden; background: #000; }
+    #glcanvas { display: block; width: 100vw; height: 100vh; cursor: crosshair; }
+    #ws-dot { position: fixed; bottom: 8px; right: 10px; font-family: monospace; font-size: 9px; color: rgba(255,255,255,0.2); pointer-events: none; transition: opacity 1.5s; z-index: 10; }
+    #ws-dot.hidden { opacity: 0; }
+  </style>
+</head>
+<body>
+  <canvas id="glcanvas"></canvas>
+  <div id="ws-dot">WS…</div>
+  <script src="canvas.js"></script>
+</body>
+</html>
+
+<video id="webcam-video" style="display:none" autoplay playsinline muted></video>

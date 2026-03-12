@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Webcam Output</title>
+  <style>
+    :root { color-scheme: dark; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100vw; height: 100vh; overflow: hidden; background: #000; }
+    #glcanvas { display: block; width: 100vw; height: 100vh; }
+    /* Small WS indicator — bottom-right, fades after connect */
+    #ws-dot {
+      position: fixed; bottom: 8px; right: 10px;
+      font-family: monospace; font-size: 9px;
+      color: rgba(255,255,255,0.2); pointer-events: none;
+      transition: opacity 1.5s ease; z-index: 10;
+    }
+    #ws-dot.hidden { opacity: 0; }
+    #webcam-video { display: none; }
+  </style>
+</head>
+<body>
+  <canvas id="glcanvas"></canvas>
+  <div id="ws-dot">WS…</div>
+  <video id="webcam-video" autoplay playsinline muted></video>
+  <script src="canvas.js"></script>
+</body>
+</html>

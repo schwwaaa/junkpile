@@ -1,0 +1,9 @@
+{
+  "name": "webcam-tauri-v2-single-template",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Single-window Tauri v2 + raw WebGL + webcam as sampler2D uniform",
+  "scripts": { "dev": "tauri dev", "build": "tauri build", "tauri": "tauri" },
+  "devDependencies": { "@tauri-apps/cli": "^2" }
+}

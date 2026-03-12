@@ -1,0 +1,9 @@
+{
+  "name": "webcam-tauri-v1-ws-template",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Two-window Tauri v1 — controls window + webcam canvas window over WebSocket",
+  "scripts": { "dev": "tauri dev", "build": "tauri build", "tauri": "tauri" },
+  "devDependencies": { "@tauri-apps/cli": "^1.6.3" }
+}
