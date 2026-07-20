@@ -1,0 +1,535 @@
+{
+  "schema_version": 1,
+  "example_count": 22,
+  "examples": [
+    {
+      "id": "feedback-tauri-v1-single-template",
+      "path": "v1/feedback-tauri-v1-single-template",
+      "tauri_major": 1,
+      "family": "feedback",
+      "topology": "single-window",
+      "renderer": "raw WebGL 1 + webcam + ping-pong FBO",
+      "window_labels": [
+        "main"
+      ],
+      "rust_dependencies": [
+        "tauri"
+      ],
+      "websocket_port": null,
+      "udp_port": null,
+      "uses_camera": true,
+      "native_input": null,
+      "documentation": "v1/feedback-tauri-v1-single-template/README.md",
+      "review_status": "static-reviewed"
+    },
+    {
+      "id": "feedback-tauri-v1-ws-template",
+      "path": "v1/feedback-tauri-v1-ws-template",
+      "tauri_major": 1,
+      "family": "feedback",
+      "topology": "two-window-websocket",
+      "renderer": "raw WebGL 1 + webcam + ping-pong FBO",
+      "window_labels": [
+        "controls",
+        "canvas"
+      ],
+      "rust_dependencies": [
+        "futures-util",
+        "once_cell",
+        "serde",
+        "serde_json",
+        "tauri",
+        "tokio",
+        "tokio-tungstenite",
+        "tungstenite"
+      ],
+      "websocket_port": 2727,
+      "udp_port": null,
+      "uses_camera": true,
+      "native_input": null,
+      "documentation": "v1/feedback-tauri-v1-ws-template/README.md",
+      "review_status": "static-reviewed"
+    },
+    {
+      "id": "glsl-tauri-v1-single-template",
+      "path": "v1/glsl-tauri-v1-single-template",
+      "tauri_major": 1,
+      "family": "glsl",
+      "topology": "single-window",
+      "renderer": "raw WebGL 1 + external GLSL",
+      "window_labels": [
+        "main"
+      ],
+      "rust_dependencies": [
+        "tauri"
+      ],
+      "websocket_port": null,
+      "udp_port": null,
+      "uses_camera": false,
+      "native_input": null,
+      "documentation": "v1/glsl-tauri-v1-single-template/README.md",
+      "review_status": "static-reviewed"
+    },
+    {
+      "id": "glsl-tauri-v1-ws-template",
+      "path": "v1/glsl-tauri-v1-ws-template",
+      "tauri_major": 1,
+      "family": "glsl",
+      "topology": "two-window-websocket",
+      "renderer": "raw WebGL 1 + external GLSL",
+      "window_labels": [
+        "controls",
+        "canvas"
+      ],
+      "rust_dependencies": [
+        "futures-util",
+        "once_cell",
+        "serde",
+        "serde_json",
+        "tauri",
+        "tokio",
+        "tokio-tungstenite",
+        "tungstenite"
+      ],
+      "websocket_port": 2727,
+      "udp_port": null,
+      "uses_camera": false,
+      "native_input": null,
+      "documentation": "v1/glsl-tauri-v1-ws-template/README.md",
+      "review_status": "static-reviewed"
+    },
+    {
+      "id": "p5-tauri-midi-template",
+      "path": "v1/p5-tauri-midi-template",
+      "tauri_major": 1,
+      "family": "midi",
+      "topology": "single-window",
+      "renderer": "p5.js WebGL",
+      "window_labels": [
+        "main"
+      ],
+      "rust_dependencies": [
+        "midir",
+        "once_cell",
+        "serde",
+        "serde_json",
+        "tauri"
+      ],
+      "websocket_port": null,
+      "udp_port": null,
+      "uses_camera": false,
+      "native_input": "MIDI",
+      "documentation": "v1/p5-tauri-midi-template/README.md",
+      "review_status": "static-reviewed"
+    },
+    {
+      "id": "p5-tauri-osc-template",
+      "path": "v1/p5-tauri-osc-template",
+      "tauri_major": 1,
+      "family": "osc",
+      "topology": "single-window",
+      "renderer": "p5.js WebGL",
+      "window_labels": [
+        "main"
+      ],
+      "rust_dependencies": [
+        "once_cell",
+        "rosc",
+        "serde",
+        "serde_json",
+        "tauri",
+        "tokio"
+      ],
+      "websocket_port": null,
+      "udp_port": 9000,
+      "uses_camera": false,
+      "native_input": "OSC",
+      "documentation": "v1/p5-tauri-osc-template/README.md",
+      "review_status": "static-reviewed"
+    },
+    {
+      "id": "p5-tauri-single-template",
+      "path": "v1/p5-tauri-single-template",
+      "tauri_major": 1,
+      "family": "p5",
+      "topology": "single-window",
+      "renderer": "p5.js WebGL",
+      "window_labels": [
+        "main"
+      ],
+      "rust_dependencies": [
+        "tauri"
+      ],
+      "websocket_port": null,
+      "udp_port": null,
+      "uses_camera": false,
+      "native_input": null,
+      "documentation": "v1/p5-tauri-single-template/README.md",
+      "review_status": "static-reviewed"
+    },
+    {
+      "id": "p5-tauri-ws-template",
+      "path": "v1/p5-tauri-ws-template",
+      "tauri_major": 1,
+      "family": "p5",
+      "topology": "two-window-websocket",
+      "renderer": "p5.js WebGL",
+      "window_labels": [
+        "controls",
+        "canvas"
+      ],
+      "rust_dependencies": [
+        "futures-util",
+        "once_cell",
+        "serde",
+        "serde_json",
+        "tauri",
+        "tokio",
+        "tokio-tungstenite",
+        "tungstenite"
+      ],
+      "websocket_port": 2727,
+      "udp_port": null,
+      "uses_camera": false,
+      "native_input": null,
+      "documentation": "v1/p5-tauri-ws-template/README.md",
+      "review_status": "static-reviewed"
+    },
+    {
+      "id": "webcam-tauri-v1-single-template",
+      "path": "v1/webcam-tauri-v1-single-template",
+      "tauri_major": 1,
+      "family": "webcam",
+      "topology": "single-window",
+      "renderer": "raw WebGL 1 + webcam texture",
+      "window_labels": [
+        "main"
+      ],
+      "rust_dependencies": [
+        "tauri"
+      ],
+      "websocket_port": null,
+      "udp_port": null,
+      "uses_camera": true,
+      "native_input": null,
+      "documentation": "v1/webcam-tauri-v1-single-template/README.md",
+      "review_status": "static-reviewed"
+    },
+    {
+      "id": "webcam-tauri-v1-ws-template",
+      "path": "v1/webcam-tauri-v1-ws-template",
+      "tauri_major": 1,
+      "family": "webcam",
+      "topology": "two-window-websocket",
+      "renderer": "raw WebGL 1 + webcam texture",
+      "window_labels": [
+        "controls",
+        "canvas"
+      ],
+      "rust_dependencies": [
+        "futures-util",
+        "once_cell",
+        "serde",
+        "serde_json",
+        "tauri",
+        "tokio",
+        "tokio-tungstenite",
+        "tungstenite"
+      ],
+      "websocket_port": 2727,
+      "udp_port": null,
+      "uses_camera": true,
+      "native_input": null,
+      "documentation": "v1/webcam-tauri-v1-ws-template/README.md",
+      "review_status": "static-reviewed"
+    },
+    {
+      "id": "webgl-tauri-v1-single-template",
+      "path": "v1/webgl-tauri-v1-single-template",
+      "tauri_major": 1,
+      "family": "webgl",
+      "topology": "single-window",
+      "renderer": "raw WebGL 1",
+      "window_labels": [
+        "main"
+      ],
+      "rust_dependencies": [
+        "tauri"
+      ],
+      "websocket_port": null,
+      "udp_port": null,
+      "uses_camera": false,
+      "native_input": null,
+      "documentation": "v1/webgl-tauri-v1-single-template/README.md",
+      "review_status": "static-reviewed"
+    },
+    {
+      "id": "webgl-tauri-v1-ws-template",
+      "path": "v1/webgl-tauri-v1-ws-template",
+      "tauri_major": 1,
+      "family": "webgl",
+      "topology": "two-window-websocket",
+      "renderer": "raw WebGL 1",
+      "window_labels": [
+        "controls",
+        "canvas"
+      ],
+      "rust_dependencies": [
+        "futures-util",
+        "once_cell",
+        "serde",
+        "serde_json",
+        "tauri",
+        "tokio",
+        "tokio-tungstenite",
+        "tungstenite"
+      ],
+      "websocket_port": 2727,
+      "udp_port": null,
+      "uses_camera": false,
+      "native_input": null,
+      "documentation": "v1/webgl-tauri-v1-ws-template/README.md",
+      "review_status": "static-reviewed"
+    },
+    {
+      "id": "feedback-tauri-v2-single-template",
+      "path": "v2/feedback-tauri-v2-single-template",
+      "tauri_major": 2,
+      "family": "feedback",
+      "topology": "single-window",
+      "renderer": "raw WebGL 1 + webcam + ping-pong FBO",
+      "window_labels": [
+        "main"
+      ],
+      "rust_dependencies": [
+        "tauri"
+      ],
+      "websocket_port": null,
+      "udp_port": null,
+      "uses_camera": true,
+      "native_input": null,
+      "documentation": "v2/feedback-tauri-v2-single-template/README.md",
+      "review_status": "static-reviewed"
+    },
+    {
+      "id": "feedback-tauri-v2-ws-template",
+      "path": "v2/feedback-tauri-v2-ws-template",
+      "tauri_major": 2,
+      "family": "feedback",
+      "topology": "two-window-websocket",
+      "renderer": "raw WebGL 1 + webcam + ping-pong FBO",
+      "window_labels": [
+        "controls",
+        "canvas"
+      ],
+      "rust_dependencies": [
+        "futures-util",
+        "once_cell",
+        "serde",
+        "serde_json",
+        "tauri",
+        "tokio",
+        "tokio-tungstenite",
+        "tungstenite"
+      ],
+      "websocket_port": 2727,
+      "udp_port": null,
+      "uses_camera": true,
+      "native_input": null,
+      "documentation": "v2/feedback-tauri-v2-ws-template/README.md",
+      "review_status": "static-reviewed"
+    },
+    {
+      "id": "glsl-tauri-v2-single-template",
+      "path": "v2/glsl-tauri-v2-single-template",
+      "tauri_major": 2,
+      "family": "glsl",
+      "topology": "single-window",
+      "renderer": "raw WebGL 1 + external GLSL",
+      "window_labels": [
+        "main"
+      ],
+      "rust_dependencies": [
+        "tauri"
+      ],
+      "websocket_port": null,
+      "udp_port": null,
+      "uses_camera": false,
+      "native_input": null,
+      "documentation": "v2/glsl-tauri-v2-single-template/README.md",
+      "review_status": "static-reviewed"
+    },
+    {
+      "id": "glsl-tauri-v2-ws-template",
+      "path": "v2/glsl-tauri-v2-ws-template",
+      "tauri_major": 2,
+      "family": "glsl",
+      "topology": "two-window-websocket",
+      "renderer": "raw WebGL 1 + external GLSL",
+      "window_labels": [
+        "controls",
+        "canvas"
+      ],
+      "rust_dependencies": [
+        "futures-util",
+        "once_cell",
+        "serde",
+        "serde_json",
+        "tauri",
+        "tokio",
+        "tokio-tungstenite",
+        "tungstenite"
+      ],
+      "websocket_port": 2727,
+      "udp_port": null,
+      "uses_camera": false,
+      "native_input": null,
+      "documentation": "v2/glsl-tauri-v2-ws-template/README.md",
+      "review_status": "static-reviewed"
+    },
+    {
+      "id": "p5-tauri-v2-single-template",
+      "path": "v2/p5-tauri-v2-single-template",
+      "tauri_major": 2,
+      "family": "p5",
+      "topology": "single-window",
+      "renderer": "p5.js WebGL",
+      "window_labels": [
+        "main"
+      ],
+      "rust_dependencies": [
+        "tauri"
+      ],
+      "websocket_port": null,
+      "udp_port": null,
+      "uses_camera": false,
+      "native_input": null,
+      "documentation": "v2/p5-tauri-v2-single-template/README.md",
+      "review_status": "static-reviewed"
+    },
+    {
+      "id": "p5-tauri-v2-ws-template",
+      "path": "v2/p5-tauri-v2-ws-template",
+      "tauri_major": 2,
+      "family": "p5",
+      "topology": "two-window-websocket",
+      "renderer": "p5.js WebGL",
+      "window_labels": [
+        "controls",
+        "canvas"
+      ],
+      "rust_dependencies": [
+        "futures-util",
+        "once_cell",
+        "serde",
+        "serde_json",
+        "tauri",
+        "tokio",
+        "tokio-tungstenite",
+        "tungstenite"
+      ],
+      "websocket_port": 2727,
+      "udp_port": null,
+      "uses_camera": false,
+      "native_input": null,
+      "documentation": "v2/p5-tauri-v2-ws-template/README.md",
+      "review_status": "static-reviewed"
+    },
+    {
+      "id": "webcam-tauri-v2-single-template",
+      "path": "v2/webcam-tauri-v2-single-template",
+      "tauri_major": 2,
+      "family": "webcam",
+      "topology": "single-window",
+      "renderer": "raw WebGL 1 + webcam texture",
+      "window_labels": [
+        "main"
+      ],
+      "rust_dependencies": [
+        "tauri"
+      ],
+      "websocket_port": null,
+      "udp_port": null,
+      "uses_camera": true,
+      "native_input": null,
+      "documentation": "v2/webcam-tauri-v2-single-template/README.md",
+      "review_status": "static-reviewed"
+    },
+    {
+      "id": "webcam-tauri-v2-ws-template",
+      "path": "v2/webcam-tauri-v2-ws-template",
+      "tauri_major": 2,
+      "family": "webcam",
+      "topology": "two-window-websocket",
+      "renderer": "raw WebGL 1 + webcam texture",
+      "window_labels": [
+        "controls",
+        "canvas"
+      ],
+      "rust_dependencies": [
+        "futures-util",
+        "once_cell",
+        "serde",
+        "serde_json",
+        "tauri",
+        "tokio",
+        "tokio-tungstenite",
+        "tungstenite"
+      ],
+      "websocket_port": 2727,
+      "udp_port": null,
+      "uses_camera": true,
+      "native_input": null,
+      "documentation": "v2/webcam-tauri-v2-ws-template/README.md",
+      "review_status": "static-reviewed"
+    },
+    {
+      "id": "webgl-tauri-v2-single-template",
+      "path": "v2/webgl-tauri-v2-single-template",
+      "tauri_major": 2,
+      "family": "webgl",
+      "topology": "single-window",
+      "renderer": "raw WebGL 1",
+      "window_labels": [
+        "main"
+      ],
+      "rust_dependencies": [
+        "tauri"
+      ],
+      "websocket_port": null,
+      "udp_port": null,
+      "uses_camera": false,
+      "native_input": null,
+      "documentation": "v2/webgl-tauri-v2-single-template/README.md",
+      "review_status": "static-reviewed"
+    },
+    {
+      "id": "webgl-tauri-v2-ws-template",
+      "path": "v2/webgl-tauri-v2-ws-template",
+      "tauri_major": 2,
+      "family": "webgl",
+      "topology": "two-window-websocket",
+      "renderer": "raw WebGL 1",
+      "window_labels": [
+        "controls",
+        "canvas"
+      ],
+      "rust_dependencies": [
+        "futures-util",
+        "once_cell",
+        "serde",
+        "serde_json",
+        "tauri",
+        "tokio",
+        "tokio-tungstenite",
+        "tungstenite"
+      ],
+      "websocket_port": 2727,
+      "udp_port": null,
+      "uses_camera": false,
+      "native_input": null,
+      "documentation": "v2/webgl-tauri-v2-ws-template/README.md",
+      "review_status": "static-reviewed"
+    }
+  ]
+}
