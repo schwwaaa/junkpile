@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Junkpile wgpu Compute Particles</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <header class="hero">
+    <p class="eyebrow">Native Tauri 2 · wgpu 29 · compute + storage buffers</p>
+    <h1>09 · Compute Particles</h1>
+    <p class="lede">A compute shader updates particle position and velocity directly inside GPU storage memory. A second pipeline reads the same buffer and draws every particle as an instanced quad.</p>
+    <div class="runtime-banner">
+      <div><span>Backend</span><strong id="backend">—</strong></div>
+      <div><span>Adapter</span><strong id="adapter">—</strong></div>
+      <div><span>Resolution</span><strong id="resolution">—</strong></div>
+      <div><span>Surface</span><strong id="surfaceFormat">—</strong></div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <section class="card">
+      <h2>Particle scale</h2>
+      <p class="note top-note">The storage buffer is allocated once. These controls change how many entries the compute and render passes actively process.</p>
+      <div class="preset-grid" id="particlePresets">
+        <button data-count="100000">100K</button>
+        <button data-count="250000" class="active">250K</button>
+        <button data-count="500000">500K</button>
+        <button data-count="1000000">1M</button>
+      </div>
+      <div class="stats compact two">
+        <div class="stat"><span>Active</span><strong id="activeParticles">—</strong></div>
+        <div class="stat"><span>Capacity</span><strong id="maxParticles">—</strong></div>
+        <div class="stat"><span>Storage buffer</span><strong id="bufferSize">—</strong></div>
+        <div class="stat"><span>Dispatch</span><strong id="dispatch">—</strong></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Simulation</h2>
+      <div class="controls">
+        <div class="control"><label for="fieldStrength">Orbit field</label><input id="fieldStrength" type="range" min="0" max="4" step="0.01" value="1.15"><output id="fieldStrengthValue">1.15</output></div>
+        <div class="control"><label for="turbulence">Turbulence</label><input id="turbulence" type="range" min="0" max="3" step="0.01" value="0.72"><output id="turbulenceValue">0.72</output></div>
+        <div class="control"><label for="drag">Drag</label><input id="drag" type="range" min="0.80" max="0.9995" step="0.0005" value="0.965"><output id="dragValue">0.9650</output></div>
+        <div class="control"><label for="speed">Speed</label><input id="speed" type="range" min="0" max="4" step="0.01" value="1"><output id="speedValue">1.00</output></div>
+        <div class="control"><label for="substeps">Substeps</label><input id="substeps" type="range" min="1" max="8" step="1" value="2"><output id="substepsValue">2</output></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Rendering</h2>
+      <div class="controls">
+        <div class="control"><label for="particleSize">Particle size</label><input id="particleSize" type="range" min="0.25" max="8" step="0.05" value="1.8"><output id="particleSizeValue">1.80</output></div>
+        <div class="control"><label for="exposure">Exposure</label><input id="exposure" type="range" min="0" max="4" step="0.01" value="1.15"><output id="exposureValue">1.15</output></div>
+      </div>
+      <div class="row buttons">
+        <button id="pause">Pause</button>
+        <button id="reseed">Reseed particles</button>
+        <button id="reset">Reset controls</button>
+        <button class="primary" id="fullscreen">Toggle fullscreen</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Runtime</h2>
+      <div class="stats">
+        <div class="stat"><span>FPS</span><strong id="fps">—</strong></div>
+        <div class="stat"><span>Frame time</span><strong id="frameTime">—</strong></div>
+        <div class="stat"><span>Particle updates</span><strong id="updatesPerSecond">—</strong></div>
+        <div class="stat"><span>Frames</span><strong id="frameCount">—</strong></div>
+      </div>
+      <p id="status" class="status">starting renderer</p>
+      <p class="error-text" id="lastError"></p>
+    </section>
+
+    <section class="card wide">
+      <h2>What this example proves</h2>
+      <div class="flow">
+        <div><b>1</b><span>WGSL compute shader</span><small>Updates velocity and position in parallel.</small></div>
+        <i>→</i>
+        <div><b>2</b><span>Storage buffer</span><small>Particle state remains on the GPU.</small></div>
+        <i>→</i>
+        <div><b>3</b><span>Instanced render pass</span><small>One six-vertex quad is expanded per particle.</small></div>
+        <i>→</i>
+        <div><b>4</b><span>Native surface</span><small>Metal, Vulkan, or DX12 presents the result.</small></div>
+      </div>
+    </section>
+
+    <section class="card wide">
+      <h2>Device limits</h2>
+      <div class="stats limit-stats">
+        <div class="stat"><span>Device type</span><strong id="deviceType">—</strong></div>
+        <div class="stat"><span>Driver</span><strong id="driver">—</strong></div>
+        <div class="stat"><span>Storage binding limit</span><strong id="storageLimit">—</strong></div>
+        <div class="stat"><span>Maximum buffer</span><strong id="maxBuffer">—</strong></div>
+        <div class="stat"><span>Workgroup size</span><strong id="workgroupSize">—</strong></div>
+        <div class="stat"><span>Workgroup dimension limit</span><strong id="workgroupLimit">—</strong></div>
+      </div>
+      <p class="note">A one-million-particle buffer uses roughly 30.5 MiB because each particle stores position, velocity, and color in 32 bytes. The active count is automatically clamped to the selected GPU's reported limits.</p>
+    </section>
+  </div>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

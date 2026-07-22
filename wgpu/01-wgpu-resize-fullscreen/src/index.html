@@ -1,0 +1,13 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>wgpu resize and fullscreen</title><link rel="stylesheet" href="style.css"></head><body><main>
+<section class="hero"><p class="eyebrow">native-wgpu · example 01</p><h1>Resize + Fullscreen</h1><p class="lede">A resolution-aware WGSL test pattern plus the window lifecycle work every later visual needs: resize, HiDPI physical dimensions, minimize protection, fullscreen, and surface reconfiguration.</p></section>
+<div class="grid"><section class="card"><h2>Window presets</h2><div class="row"><button data-size="960x540">960 × 540</button><button data-size="1280x720">1280 × 720</button><button data-size="1920x1080">1920 × 1080</button><button class="primary" id="fullscreen">Toggle fullscreen</button></div><p class="note">The renderer uses physical pixels. The test grid should remain geometrically stable as the surface changes.</p></section>
+<section class="card"><h2>Live surface</h2><div class="stats"><div class="stat"><span>Backend</span><strong id="backend">—</strong></div><div class="stat"><span>Adapter</span><strong id="adapterName">—</strong></div><div class="stat"><span>Resolution</span><strong id="resolution">—</strong></div><div class="stat"><span>Surface format</span><strong id="surfaceFormat">—</strong></div><div class="stat"><span>FPS</span><strong id="fps">—</strong></div><div class="stat"><span>Frame time</span><strong id="frameTime">—</strong></div></div></section>
+<section class="card"><h2>Lifecycle</h2><div class="diagram">WindowEvent::Resized
+         ↓
+RenderCommand::Resize
+         ↓
+Surface::configure
+         ↓
+next native frame</div></section>
+<section class="card"><h2>Runtime</h2><div class="stats"><div class="stat"><span>Frames</span><strong id="frameCount">—</strong></div><div class="stat"><span>Last error</span><strong id="lastError">—</strong></div></div><p id="status" class="status">starting renderer</p></section></div>
+</main><script src="app.js"></script></body></html>

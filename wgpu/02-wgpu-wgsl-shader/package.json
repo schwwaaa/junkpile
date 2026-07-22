@@ -1,0 +1,15 @@
+{
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  },
+  "name": "02-wgpu-wgsl-shader",
+  "description": "Native WGSL fullscreen shader example"
+}

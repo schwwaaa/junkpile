@@ -1,0 +1,34 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Junkpile wgpu 3D Particle Volume",
+  "version": "0.1.0",
+  "identifier": "com.schwwaaa.junkpile.wgpu.particles.volume3d",
+  "build": {
+    "beforeBuildCommand": "",
+    "beforeDevCommand": "",
+    "frontendDist": "../src"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "controls",
+        "title": "Junkpile wgpu 3D Particle Volume · Controls",
+        "url": "index.html",
+        "width": 900,
+        "height": 980,
+        "minWidth": 470,
+        "minHeight": 680,
+        "resizable": true,
+        "decorations": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "icon": ["icons/icon.png", "icons/icon.ico"]
+  }
+}

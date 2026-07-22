@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Junkpile 21 · glTF Scene Loader</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">JUNKPILE · NATIVE WGPU EXAMPLE 21</p>
+        <h1>glTF Scene Loader</h1>
+        <p class="lede">Load complete <strong>.gltf</strong> and <strong>.glb</strong> scenes into native Metal, Vulkan, or DX12 rendering.</p>
+      </div>
+      <div class="build">BUILD 21.1 · VERTEX LAYOUT FIX</div>
+    </header>
+
+    <section class="panel source-panel">
+      <div class="panel-heading">
+        <div>
+          <p class="kicker">Scene source</p>
+          <h2 id="sceneName">Junkpile sample scene</h2>
+        </div>
+        <span id="status" class="status">starting renderer…</span>
+      </div>
+      <p id="sourcePath" class="path">bundled://sample-scene.glb</p>
+      <div class="button-row">
+        <button id="openScene" class="primary">Open glTF / GLB</button>
+        <button id="sampleScene">Reload sample</button>
+        <button id="fullscreen">Renderer fullscreen</button>
+      </div>
+      <p class="hint">External <code>.gltf</code> files may reference neighboring <code>.bin</code> and image files. Keep those files together.</p>
+    </section>
+
+    <div class="two-column">
+      <section class="panel">
+        <div class="panel-heading compact">
+          <div><p class="kicker">Scene graph</p><h2>Imported structure</h2></div>
+          <span id="loading" class="pill">ready</span>
+        </div>
+        <div class="stat-grid scene-stats">
+          <div><span>Nodes</span><strong id="nodeCount">—</strong></div>
+          <div><span>Meshes</span><strong id="meshCount">—</strong></div>
+          <div><span>Primitives</span><strong id="primitiveCount">—</strong></div>
+          <div><span>Materials</span><strong id="materialCount">—</strong></div>
+          <div><span>Textures</span><strong id="textureCount">—</strong></div>
+          <div><span>Cameras</span><strong id="cameraCount">—</strong></div>
+          <div><span>Animations</span><strong id="animationCount">—</strong></div>
+          <div><span>Skins</span><strong id="skinCount">—</strong></div>
+          <div><span>Vertices</span><strong id="vertexCount">—</strong></div>
+          <div><span>Triangles</span><strong id="triangleCount">—</strong></div>
+        </div>
+        <div class="bounds">
+          <span>Bounds</span>
+          <code id="bounds">—</code>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading compact">
+          <div><p class="kicker">Interactive camera</p><h2>Orbit controller</h2></div>
+          <button id="resetCamera" class="small">Reset</button>
+        </div>
+        <div id="orbitPad" class="orbit-pad" tabindex="0" aria-label="Orbit camera control">
+          <div class="orbit-ring ring-one"></div>
+          <div class="orbit-ring ring-two"></div>
+          <div id="orbitCursor" class="orbit-cursor"></div>
+          <p>Drag to orbit<br><span>Wheel to dolly</span></p>
+        </div>
+        <div class="readout" id="cameraReadout">—</div>
+      </section>
+    </div>
+
+    <section class="panel controls-panel">
+      <div class="panel-heading compact">
+        <div><p class="kicker">Camera</p><h2>Framing and movement</h2></div>
+      </div>
+      <div class="control-grid">
+        <label>Yaw <output id="cameraYawValue">28°</output><input id="cameraYaw" type="range" min="-180" max="180" value="28" step="1"></label>
+        <label>Pitch <output id="cameraPitchValue">18°</output><input id="cameraPitch" type="range" min="-85" max="85" value="18" step="1"></label>
+        <label>Distance <output id="cameraDistanceValue">4.20</output><input id="cameraDistance" type="range" min="1.25" max="12" value="4.2" step="0.01"></label>
+        <label>Field of view <output id="cameraFovValue">52°</output><input id="cameraFov" type="range" min="18" max="100" value="52" step="1"></label>
+        <label>Auto orbit <output id="autoOrbitValue">4.0°/s</output><input id="autoOrbit" type="range" min="-45" max="45" value="4" step="0.1"></label>
+      </div>
+    </section>
+
+    <div class="two-column">
+      <section class="panel controls-panel">
+        <div class="panel-heading compact"><div><p class="kicker">Lighting</p><h2>Material response</h2></div></div>
+        <div class="control-stack">
+          <label>Light azimuth <output id="lightAzimuthValue">42°</output><input id="lightAzimuth" type="range" min="-180" max="180" value="42" step="1"></label>
+          <label>Light elevation <output id="lightElevationValue">38°</output><input id="lightElevation" type="range" min="-80" max="80" value="38" step="1"></label>
+          <label>Light intensity <output id="lightIntensityValue">1.25</output><input id="lightIntensity" type="range" min="0" max="4" value="1.25" step="0.01"></label>
+          <label>Exposure <output id="exposureValue">1.15</output><input id="exposure" type="range" min="0.1" max="3" value="1.15" step="0.01"></label>
+          <label>Background <output id="backgroundValue">0.035</output><input id="background" type="range" min="0" max="0.25" value="0.035" step="0.001"></label>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading compact"><div><p class="kicker">Inspection</p><h2>GPU view mode</h2></div></div>
+        <div class="mode-grid" id="viewModes">
+          <button data-view="lit" class="active">Lit PBR</button>
+          <button data-view="normals">Normals</button>
+          <button data-view="uv">UV coordinates</button>
+          <button data-view="materials">Material IDs</button>
+        </div>
+        <label class="toggle"><input id="backfaceCulling" type="checkbox" checked><span>Backface culling</span></label>
+        <p class="hint">Disable culling when diagnosing reversed winding or incomplete two-sided assets.</p>
+      </section>
+    </div>
+
+    <section class="panel diagnostics">
+      <div class="panel-heading compact"><div><p class="kicker">Runtime</p><h2>Renderer diagnostics</h2></div></div>
+      <div class="diagnostic-grid">
+        <div><span>Backend</span><strong id="backend">—</strong></div>
+        <div><span>Adapter</span><strong id="adapter">—</strong></div>
+        <div><span>Resolution</span><strong id="resolution">—</strong></div>
+        <div><span>Surface</span><strong id="surfaceFormat">—</strong></div>
+        <div><span>Depth</span><strong id="depthFormat">—</strong></div>
+        <div><span>FPS</span><strong id="fps">—</strong></div>
+        <div><span>Frame time</span><strong id="frameTime">—</strong></div>
+        <div><span>Frames</span><strong id="frameCount">—</strong></div>
+      </div>
+      <div class="error-line"><span>Last error</span><code id="lastError">none</code></div>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

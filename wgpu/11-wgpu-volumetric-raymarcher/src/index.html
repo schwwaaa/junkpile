@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>wgpu volumetric raymarcher</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <p class="eyebrow">native-wgpu · example 11</p>
+      <h1>Volumetric Raymarcher</h1>
+      <p class="lede">Construct animated three-dimensional worlds from signed-distance functions. Every output pixel casts a camera ray, advances through procedural space, estimates a surface normal, then adds lighting, shadows, ambient occlusion, fog, glow, HDR post-processing, and native high-resolution output.</p>
+      <div class="runtime-banner">
+        <div><span>Backend</span><strong id="backend">—</strong></div>
+        <div><span>Adapter</span><strong id="adapter">—</strong></div>
+        <div><span>Internal</span><strong id="internalResolution">—</strong></div>
+        <div><span>Performance</span><strong id="performance">—</strong></div>
+      </div>
+    </section>
+
+    <div class="grid">
+      <section class="card wide">
+        <h2>Procedural scene</h2>
+        <p class="note top-note">Each scene is assembled mathematically inside WGSL. No model file, polygon mesh, or WebGL canvas is used.</p>
+        <div class="preset-grid scene-grid">
+          <button type="button" data-scene="0" class="active">SDF Sculpture</button>
+          <button type="button" data-scene="1">Oscillator Tunnel</button>
+          <button type="button" data-scene="2">Finite Lattice</button>
+          <button type="button" data-scene="3">Soft Organism</button>
+        </div>
+        <div class="flow">
+          <div><b>1</b><span>Camera ray</span><small>One ray for every internal pixel</small></div><i>→</i>
+          <div><b>2</b><span>Distance field</span><small>Sphere, box, torus, capsule and repetition</small></div><i>→</i>
+          <div><b>3</b><span>Ray march</span><small>Advance by the estimated safe distance</small></div><i>→</i>
+          <div><b>4</b><span>Surface lighting</span><small>Normals, AO, soft shadow and fog</small></div><i>→</i>
+          <div><b>5</b><span>HDR present</span><small>Bloom, tone map, chromatic shift</small></div>
+        </div>
+      </section>
+
+      <section class="card wide">
+        <h2>Internal definition</h2>
+        <div class="preset-grid">
+          <button type="button" data-resolution="window" class="active">Window</button>
+          <button type="button" data-resolution="1080p">1080p</button>
+          <button type="button" data-resolution="4k">4K UHD</button>
+          <button type="button" data-resolution="8k">8K UHD</button>
+        </div>
+        <p class="warning">Raymarching cost scales with both pixel count and ray steps. Begin at Window or 1080p. An 8K frame contains 33.18 million rays before shadow, normal and ambient-occlusion samples are considered.</p>
+        <div class="controls three-column-controls">
+          <div class="control"><label for="render_scale">Render scale</label><input id="render_scale" data-param="render_scale" data-format="percent" type="range" min="0.125" max="1" step="0.125" value="1"><output>100%</output></div>
+          <div class="control"><label for="max_steps">Ray steps</label><input id="max_steps" data-param="max_steps" data-decimals="0" type="range" min="24" max="320" step="8" value="128"><output>128</output></div>
+          <div class="control"><label for="max_distance">Max distance</label><input id="max_distance" data-param="max_distance" data-decimals="1" type="range" min="3" max="40" step="0.5" value="12"><output>12.0</output></div>
+          <div class="control"><label for="epsilon">Surface epsilon</label><input id="epsilon" data-param="epsilon" data-decimals="4" type="range" min="0.0002" max="0.01" step="0.0001" value="0.0015"><output>0.0015</output></div>
+          <div class="control"><label for="shadow_softness">Shadow softness</label><input id="shadow_softness" data-param="shadow_softness" data-decimals="1" type="range" min="1" max="64" step="0.5" value="18"><output>18.0</output></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Geometry field</h2>
+        <div class="controls">
+          <div class="control"><label for="shape_scale">Shape scale</label><input id="shape_scale" data-param="shape_scale" data-decimals="2" type="range" min="0.25" max="2.5" step="0.01" value="1"><output>1.00</output></div>
+          <div class="control"><label for="twist">Twist</label><input id="twist" data-param="twist" data-decimals="2" type="range" min="0" max="4" step="0.01" value="0.75"><output>0.75</output></div>
+          <div class="control"><label for="repetition">Repetition</label><input id="repetition" data-param="repetition" data-decimals="2" type="range" min="0.35" max="2.5" step="0.01" value="1.1"><output>1.10</output></div>
+          <div class="control"><label for="morph">Morph/blend</label><input id="morph" data-param="morph" data-decimals="2" type="range" min="0" max="1.5" step="0.01" value="0.55"><output>0.55</output></div>
+          <div class="control"><label for="speed">Motion speed</label><input id="speed" data-param="speed" data-decimals="2" type="range" min="0" max="4" step="0.01" value="1"><output>1.00</output></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Light and atmosphere</h2>
+        <div class="controls">
+          <div class="control"><label for="fog_density">Fog</label><input id="fog_density" data-param="fog_density" data-decimals="3" type="range" min="0" max="0.35" step="0.001" value="0.055"><output>0.055</output></div>
+          <div class="control"><label for="glow">Volume glow</label><input id="glow" data-param="glow" data-decimals="2" type="range" min="0" max="3" step="0.01" value="0.7"><output>0.70</output></div>
+          <div class="control"><label for="ao_strength">AO strength</label><input id="ao_strength" data-param="ao_strength" data-decimals="2" type="range" min="0" max="3" step="0.01" value="1"><output>1.00</output></div>
+          <div class="control"><label for="exposure">Exposure</label><input id="exposure" data-param="exposure" data-decimals="2" type="range" min="0" max="4" step="0.01" value="1.05"><output>1.05</output></div>
+        </div>
+        <label class="switch-row"><input id="shadows" type="checkbox" checked><span><strong>Soft shadows</strong><small>Casts a second ray from the surface toward the light.</small></span></label>
+        <label class="switch-row"><input id="ambient_occlusion" type="checkbox" checked><span><strong>Ambient occlusion</strong><small>Samples the field around the surface normal.</small></span></label>
+      </section>
+
+      <section class="card">
+        <h2>Camera</h2>
+        <div class="controls">
+          <div class="control"><label for="camera_yaw">Yaw</label><input id="camera_yaw" data-param="camera_yaw" data-suffix="°" data-decimals="0" type="range" min="-180" max="180" step="1" value="28"><output>28°</output></div>
+          <div class="control"><label for="camera_pitch">Pitch</label><input id="camera_pitch" data-param="camera_pitch" data-suffix="°" data-decimals="0" type="range" min="-85" max="85" step="1" value="12"><output>12°</output></div>
+          <div class="control"><label for="camera_distance">Distance</label><input id="camera_distance" data-param="camera_distance" data-decimals="2" type="range" min="1.5" max="12" step="0.01" value="3.4"><output>3.40</output></div>
+          <div class="control"><label for="camera_fov">Field of view</label><input id="camera_fov" data-param="camera_fov" data-suffix="°" data-decimals="0" type="range" min="20" max="110" step="1" value="52"><output>52°</output></div>
+          <div class="control"><label for="auto_orbit">Auto orbit</label><input id="auto_orbit" data-param="auto_orbit" data-suffix="°/s" data-decimals="1" type="range" min="-45" max="45" step="0.5" value="5"><output>5.0°/s</output></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>HDR post-process</h2>
+        <div class="controls">
+          <div class="control"><label for="bloom">Bloom</label><input id="bloom" data-param="bloom" data-decimals="2" type="range" min="0" max="2" step="0.01" value="0.38"><output>0.38</output></div>
+          <div class="control"><label for="chromatic">Chromatic shift</label><input id="chromatic" data-param="chromatic" data-decimals="2" type="range" min="0" max="4" step="0.01" value="0.35"><output>0.35</output></div>
+          <div class="control"><label for="vignette">Vignette</label><input id="vignette" data-param="vignette" data-decimals="2" type="range" min="0" max="1" step="0.01" value="0.32"><output>0.32</output></div>
+        </div>
+        <div class="row buttons">
+          <button type="button" id="paused">Pause</button>
+          <button type="button" id="reset">Reset</button>
+          <button type="button" id="fullscreen" class="primary">Fullscreen</button>
+        </div>
+      </section>
+
+      <section class="card wide">
+        <h2>Runtime diagnostics</h2>
+        <div class="stats limit-stats">
+          <div class="stat"><span>Scene</span><strong id="sceneName">—</strong></div>
+          <div class="stat"><span>Window</span><strong id="windowResolution">—</strong></div>
+          <div class="stat"><span>Definition</span><strong id="megapixels">—</strong></div>
+          <div class="stat"><span>HDR target</span><strong id="targetMemory">—</strong></div>
+          <div class="stat"><span>Pixel rate</span><strong id="pixelRate">—</strong></div>
+          <div class="stat"><span>Maximum SDF budget</span><strong id="sdfBudget">—</strong></div>
+          <div class="stat"><span>FPS</span><strong id="fps">—</strong></div>
+          <div class="stat"><span>Frame time</span><strong id="frameTime">—</strong></div>
+          <div class="stat"><span>Max texture dimension</span><strong id="maxDimension">—</strong></div>
+          <div class="stat"><span>Device type</span><strong id="deviceType">—</strong></div>
+          <div class="stat"><span>Driver</span><strong id="driver">—</strong></div>
+          <div class="stat"><span>Surface format</span><strong id="surfaceFormat">—</strong></div>
+        </div>
+        <p id="status" class="status">starting renderer</p>
+        <p class="error-text" id="lastError"></p>
+      </section>
+    </div>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

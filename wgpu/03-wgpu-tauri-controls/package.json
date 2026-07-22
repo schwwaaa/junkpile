@@ -1,0 +1,15 @@
+{
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  },
+  "name": "03-wgpu-tauri-controls",
+  "description": "Native wgpu renderer with validated Tauri HTML controls"
+}

@@ -1,0 +1,24 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>wgpu ping-pong feedback</title><link rel="stylesheet" href="style.css"></head><body><main>
+<section class="hero"><p class="eyebrow">native-wgpu · example 05</p><h1>Ping-Pong Feedback</h1><p class="lede">Two floating-point render textures alternate between read and write roles every frame. This is the native-GPU foundation for feedback, datamosh-style accumulation, trails, recursive transforms, and visual instruments.</p></section>
+<div class="grid"><section class="card" style="grid-column:1/-1"><h2>Feedback controls</h2><div class="controls">
+<div class="control"><label for="decay">Decay</label><input id="decay" data-param="decay" type="range" min="0" max="0.9995" step="0.0001" value="0.965"><output>0.9650</output></div>
+<div class="control"><label for="zoom">Frame zoom</label><input id="zoom" data-param="zoom" type="range" min="0.95" max="1.05" step="0.0005" value="1.006"><output>1.006</output></div>
+<div class="control"><label for="rotation">Rotation</label><input id="rotation" data-param="rotation" type="range" min="-0.05" max="0.05" step="0.0005" value="0.003"><output>0.003</output></div>
+<div class="control"><label for="shift_x">Shift X</label><input id="shift_x" data-param="shift_x" type="range" min="-0.05" max="0.05" step="0.0005" value="0"><output>0.000</output></div>
+<div class="control"><label for="shift_y">Shift Y</label><input id="shift_y" data-param="shift_y" type="range" min="-0.05" max="0.05" step="0.0005" value="0"><output>0.000</output></div>
+<div class="control"><label for="injection">Injection</label><input id="injection" data-param="injection" type="range" min="0" max="2" step="0.001" value="0.34"><output>0.340</output></div>
+<div class="control"><label for="gain">Gain</label><input id="gain" data-param="gain" type="range" min="0" max="3" step="0.001" value="0.75"><output>0.750</output></div>
+<div class="control"><label for="saturation">Saturation</label><input id="saturation" data-param="saturation" type="range" min="0" max="2" step="0.001" value="1"><output>1.000</output></div>
+<div class="control"><label for="source_scale">Source scale</label><input id="source_scale" data-param="source_scale" type="range" min="0.2" max="8" step="0.01" value="2"><output>2.000</output></div></div>
+<div class="row" style="margin-top:14px"><button class="primary" id="clear">Clear feedback</button><button id="reset">Reset</button><button id="fullscreen">Fullscreen</button></div></section>
+<section class="card"><h2>Frame graph</h2><div class="diagram">texture A ──sample──┐
+                    ▼
+             feedback pass
+                    │
+                    ▼
+texture B ◄──write──┘
+
+next frame: A ⇄ B
+current output → surface</div></section>
+<section class="card"><h2>Renderer</h2><div class="stats"><div class="stat"><span>Backend</span><strong id="backend">—</strong></div><div class="stat"><span>Adapter</span><strong id="adapterName">—</strong></div><div class="stat"><span>Resolution</span><strong id="resolution">—</strong></div><div class="stat"><span>Feedback format</span><strong id="feedbackFormat">—</strong></div><div class="stat"><span>One target</span><strong id="targetMemory">—</strong></div><div class="stat"><span>Ping-pong total</span><strong id="feedbackMemory">—</strong></div><div class="stat"><span>FPS</span><strong id="fps">—</strong></div><div class="stat"><span>Frame time</span><strong id="frameTime">—</strong></div></div><p id="status" class="status">starting renderer</p></section></div>
+</main><script src="app.js"></script></body></html>

@@ -1,0 +1,12 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>wgpu WGSL shader</title><link rel="stylesheet" href="style.css"></head><body><main>
+<section class="hero"><p class="eyebrow">native-wgpu · example 02</p><h1>WGSL Shader</h1><p class="lede">The first complete native visual: a fullscreen triangle, uniform buffer, WGSL fragment shader, and domain-warped fractal rendered directly through Metal, Vulkan, or DX12.</p></section>
+<div class="grid"><section class="card"><h2>Playback</h2><div class="row"><button class="primary" id="pause">Pause</button><button id="reset">Reset time</button><button id="fullscreen">Toggle fullscreen</button></div><p class="note">The HTML window only sends small control messages. Time and rendering stay in Rust.</p></section>
+<section class="card"><h2>GPU</h2><div class="stats"><div class="stat"><span>Backend</span><strong id="backend">—</strong></div><div class="stat"><span>Adapter</span><strong id="adapterName">—</strong></div><div class="stat"><span>Resolution</span><strong id="resolution">—</strong></div><div class="stat"><span>FPS</span><strong id="fps">—</strong></div><div class="stat"><span>Frame time</span><strong id="frameTime">—</strong></div><div class="stat"><span>Format</span><strong id="surfaceFormat">—</strong></div></div></section>
+<section class="card"><h2>Pipeline</h2><div class="diagram">vertex_index
+    ↓ fullscreen triangle
+WGSL fragment shader
+    ↓ native render pass
+SurfaceTexture
+    ↓ SurfaceTexture::present()</div></section>
+<section class="card"><h2>Runtime</h2><div class="stats"><div class="stat"><span>Frames</span><strong id="frameCount">—</strong></div><div class="stat"><span>Last error</span><strong id="lastError">—</strong></div></div><p id="status" class="status">starting renderer</p></section></div>
+</main><script src="app.js"></script></body></html>

@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Junkpile wgpu 3D Particle Volume</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <header class="hero">
+    <p class="eyebrow">Native Tauri 2 · wgpu 29 · compute + perspective + depth</p>
+    <h1>10 · 3D Particle Volume</h1>
+    <p class="lede">A true XYZ particle simulation with an orbit camera, perspective projection, camera-facing billboards, a Depth32Float buffer, Z-axis forces, depth tinting, and fog. Slide Z depth to zero to collapse the same particle system back into a flat plane.</p>
+    <div class="runtime-banner">
+      <div><span>Backend</span><strong id="backend">—</strong></div>
+      <div><span>Adapter</span><strong id="adapter">—</strong></div>
+      <div><span>Resolution</span><strong id="resolution">—</strong></div>
+      <div><span>Render mode</span><strong id="depthMode">—</strong></div>
+    </div>
+  </header>
+
+  <div class="grid">
+    <section class="card">
+      <h2>Particle scale</h2>
+      <div class="preset-grid">
+        <button data-count="100000">100K</button>
+        <button data-count="250000" class="active">250K</button>
+        <button data-count="500000">500K</button>
+        <button data-count="1000000">1M</button>
+      </div>
+      <div class="stats compact two">
+        <div class="stat"><span>Active</span><strong id="activeParticles">—</strong></div>
+        <div class="stat"><span>Capacity</span><strong id="maxParticles">—</strong></div>
+        <div class="stat"><span>Particle stride</span><strong id="particleStride">—</strong></div>
+        <div class="stat"><span>Storage buffer</span><strong id="bufferSize">—</strong></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Z volume presets</h2>
+      <p class="note top-note">These presets change only the Z dimension and related depth cues. The same XYZ particle data remains on the GPU.</p>
+      <div class="preset-grid volume-presets">
+        <button data-volume-preset="flat">Flat XY</button>
+        <button data-volume-preset="shallow">Shallow</button>
+        <button data-volume-preset="sphere" class="active">Sphere</button>
+        <button data-volume-preset="deep">Deep</button>
+      </div>
+      <p class="readout" id="volumeReadout">—</p>
+    </section>
+
+    <section class="card">
+      <h2>3D simulation</h2>
+      <div class="controls">
+        <div class="control"><label for="fieldStrength">Orbit field</label><input id="fieldStrength" type="range" min="0" max="4" step="0.01" value="0.82"><output id="fieldStrengthValue">0.82</output></div>
+        <div class="control"><label for="turbulence">Turbulence</label><input id="turbulence" type="range" min="0" max="3" step="0.01" value="0.48"><output id="turbulenceValue">0.48</output></div>
+        <div class="control"><label for="zForce">Z force</label><input id="zForce" type="range" min="0" max="3" step="0.01" value="0.58"><output id="zForceValue">0.58</output></div>
+        <div class="control"><label for="depthScale">Z depth</label><input id="depthScale" type="range" min="0" max="3" step="0.01" value="1"><output id="depthScaleValue">1.00</output></div>
+        <div class="control"><label for="drag">Drag</label><input id="drag" type="range" min="0.80" max="0.9995" step="0.0005" value="0.972"><output id="dragValue">0.9720</output></div>
+        <div class="control"><label for="speed">Speed</label><input id="speed" type="range" min="0" max="4" step="0.01" value="1"><output id="speedValue">1.00</output></div>
+        <div class="control"><label for="substeps">Substeps</label><input id="substeps" type="range" min="1" max="8" step="1" value="2"><output id="substepsValue">2</output></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Orbit camera</h2>
+      <div class="camera-presets">
+        <button data-camera-preset="front">Front</button>
+        <button data-camera-preset="threeQuarter">Three-quarter</button>
+        <button data-camera-preset="top">Top</button>
+        <button data-camera-preset="close">Close</button>
+      </div>
+      <div class="controls camera-controls">
+        <div class="control"><label for="cameraYaw">Yaw</label><input id="cameraYaw" type="range" min="-180" max="180" step="1" value="22"><output id="cameraYawValue">22°</output></div>
+        <div class="control"><label for="cameraPitch">Pitch</label><input id="cameraPitch" type="range" min="-85" max="85" step="1" value="14"><output id="cameraPitchValue">14°</output></div>
+        <div class="control"><label for="cameraDistance">Distance</label><input id="cameraDistance" type="range" min="1.25" max="10" step="0.05" value="3.2"><output id="cameraDistanceValue">3.20</output></div>
+        <div class="control"><label for="cameraFov">FOV</label><input id="cameraFov" type="range" min="20" max="110" step="1" value="55"><output id="cameraFovValue">55°</output></div>
+        <div class="control"><label for="autoOrbit">Auto orbit</label><input id="autoOrbit" type="range" min="-45" max="45" step="0.5" value="7"><output id="autoOrbitValue">7.0°/s</output></div>
+      </div>
+      <p class="readout" id="cameraReadout">—</p>
+    </section>
+
+    <section class="card">
+      <h2>3D rendering</h2>
+      <div class="controls">
+        <div class="control"><label for="particleSize">World size</label><input id="particleSize" type="range" min="0.0005" max="0.05" step="0.0005" value="0.0065"><output id="particleSizeValue">0.0065</output></div>
+        <div class="control"><label for="exposure">Exposure</label><input id="exposure" type="range" min="0" max="4" step="0.01" value="0.92"><output id="exposureValue">0.92</output></div>
+        <div class="control"><label for="fogDensity">Depth fog</label><input id="fogDensity" type="range" min="0" max="1.5" step="0.01" value="0.14"><output id="fogDensityValue">0.14</output></div>
+      </div>
+      <label class="switch-row" for="depthOcclusion">
+        <input id="depthOcclusion" type="checkbox">
+        <span><strong>Depth occlusion</strong><small>Enable true nearest-surface depth writes instead of additive volumetric accumulation.</small></span>
+      </label>
+      <div class="row buttons">
+        <button id="pause">Pause</button>
+        <button id="reseed">Reseed</button>
+        <button id="reset">Reset controls</button>
+        <button class="primary" id="fullscreen">Toggle fullscreen</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Runtime</h2>
+      <div class="stats">
+        <div class="stat"><span>FPS</span><strong id="fps">—</strong></div>
+        <div class="stat"><span>Frame time</span><strong id="frameTime">—</strong></div>
+        <div class="stat"><span>Particle updates</span><strong id="updatesPerSecond">—</strong></div>
+        <div class="stat"><span>Dispatch</span><strong id="dispatch">—</strong></div>
+        <div class="stat"><span>Surface</span><strong id="surfaceFormat">—</strong></div>
+        <div class="stat"><span>Depth target</span><strong id="depthFormat">—</strong></div>
+      </div>
+      <p id="status" class="status">starting renderer</p>
+      <p class="error-text" id="lastError"></p>
+    </section>
+
+    <section class="card wide">
+      <h2>What turns a 2D particle field into 3D</h2>
+      <div class="flow five">
+        <div><b>1</b><span>XYZ storage</span><small>Each particle stores vec3 position and velocity.</small></div>
+        <i>→</i>
+        <div><b>2</b><span>3D compute field</span><small>Forces update X, Y, and Z on the GPU.</small></div>
+        <i>→</i>
+        <div><b>3</b><span>View transform</span><small>An orbit camera converts world space to camera space.</small></div>
+        <i>→</i>
+        <div><b>4</b><span>Perspective</span><small>Near particles project larger than distant particles.</small></div>
+        <i>→</i>
+        <div><b>5</b><span>Depth buffer</span><small>Depth32Float can enforce real front-to-back occlusion.</small></div>
+      </div>
+    </section>
+
+    <section class="card wide">
+      <h2>Device limits</h2>
+      <div class="stats limit-stats">
+        <div class="stat"><span>Device type</span><strong id="deviceType">—</strong></div>
+        <div class="stat"><span>Driver</span><strong id="driver">—</strong></div>
+        <div class="stat"><span>Storage binding limit</span><strong id="storageLimit">—</strong></div>
+        <div class="stat"><span>Maximum buffer</span><strong id="maxBuffer">—</strong></div>
+        <div class="stat"><span>Workgroup limit</span><strong id="workgroupLimit">—</strong></div>
+        <div class="stat"><span>Frames</span><strong id="frameCount">—</strong></div>
+      </div>
+      <p class="note">Each 3D particle occupies 48 bytes: vec4 position, vec4 velocity, and vec4 color. The buffer capacity is clamped to the selected GPU's storage, buffer, and dispatch limits.</p>
+    </section>
+  </div>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

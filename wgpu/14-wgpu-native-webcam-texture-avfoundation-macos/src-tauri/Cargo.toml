@@ -1,0 +1,23 @@
+[package]
+name = "junkpile_14_wgpu_native_webcam_texture"
+version = "0.1.0"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "=2.6.3", features = [] }
+cc = "1.2"
+
+[dependencies]
+bytemuck = { version = "1.24", features = ["derive"] }
+pollster = "0.4"
+serde = { version = "1", features = ["derive"] }
+tauri = { version = "=2.11.5", features = ["unstable"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+wgpu = { version = "=29.0.4", features = ["vulkan-portability"] }
+
+[target.'cfg(not(target_os = "macos"))'.dependencies]
+nokhwa = { version = "=0.10.11", default-features = false, features = ["input-native", "decoding"] }
+wgpu = "=29.0.4"
+
+[workspace]

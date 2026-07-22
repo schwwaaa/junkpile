@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Junkpile wgpu OSC Network Control</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <section class="hero">
+    <p class="eyebrow">Native input system · Example 18</p>
+    <h1>OSC Network Control</h1>
+    <p class="lede">Receive OSC 1.0 messages and nested bundles over UDP, inspect every address and argument, learn mappings into a normalized parameter registry, and feed structured network activity into a native wgpu renderer.</p>
+    <div class="runtime-banner">
+      <div><span>Listener</span><strong id="runtimeListener">Starting…</strong></div>
+      <div><span>Last sender</span><strong id="runtimeSender">—</strong></div>
+      <div><span>Learn</span><strong id="runtimeLearn">Idle</strong></div>
+      <div><span>GPU</span><strong id="runtimeGpu">Starting…</strong></div>
+    </div>
+  </section>
+
+  <section class="grid">
+    <article class="card wide">
+      <div class="card-title-row">
+        <div>
+          <h2>UDP listener</h2>
+          <p class="note top-note">Use <code>0.0.0.0</code> to accept OSC from this computer and other devices on the network. Use <code>127.0.0.1</code> for local-only testing.</p>
+        </div>
+        <span class="chip" id="connectionChip">STARTING</span>
+      </div>
+      <div class="listener-row">
+        <label for="bindHost">Bind host</label>
+        <input id="bindHost" value="0.0.0.0" autocomplete="off">
+        <label for="bindPort">UDP port</label>
+        <input id="bindPort" type="number" min="1" max="65535" value="9000">
+        <button type="button" class="primary" id="bindButton">Bind / restart</button>
+        <button type="button" id="stopButton">Stop</button>
+      </div>
+      <div class="stats four compact">
+        <div class="stat"><span>Messages / sec</span><strong id="messageRate">0.0</strong></div>
+        <div class="stat"><span>Total messages</span><strong id="totalMessages">0</strong></div>
+        <div class="stat"><span>Bundles</span><strong id="bundleCount">0</strong></div>
+        <div class="stat"><span>Decode errors</span><strong id="decodeErrors">0</strong></div>
+      </div>
+      <p class="error-text" id="oscError"></p>
+    </article>
+
+    <article class="card wide">
+      <div class="card-title-row">
+        <div>
+          <h2>Parameter registry</h2>
+          <p class="note top-note">Click Learn, then send an OSC message containing a numeric argument. The first numeric argument becomes the mapping source.</p>
+        </div>
+        <div class="row">
+          <button type="button" id="cancelLearn">Cancel learn</button>
+          <button type="button" id="resetParameters">Reset values</button>
+        </div>
+      </div>
+      <div id="parameterRegistry" class="parameter-registry"></div>
+    </article>
+
+    <article class="card wide">
+      <div class="card-title-row">
+        <div>
+          <h2>OSC mappings</h2>
+          <p class="note top-note">Input ranges may be arbitrary: map 0–127, −1–1, sensor units, or normalized 0–1 data into renderer parameters.</p>
+        </div>
+        <div class="row">
+          <button type="button" id="starterMappings">Load starter addresses</button>
+          <button type="button" id="saveMappings">Save in browser</button>
+          <button type="button" id="loadMappings">Load saved</button>
+          <button type="button" class="danger-button" id="clearMappings">Clear</button>
+        </div>
+      </div>
+      <div class="mapping-head osc-mapping-grid">
+        <span>Target</span><span>OSC address</span><span>Arg</span><span>Input min</span><span>Input max</span><span>Output min</span><span>Output max</span><span>Smoothing</span><span>Invert</span><span></span>
+      </div>
+      <div id="mappingList" class="mapping-list"></div>
+      <p class="error-text" id="mappingStatus"></p>
+    </article>
+
+    <article class="card wide">
+      <div class="card-title-row">
+        <div>
+          <h2>Message monitor</h2>
+          <p class="note top-note">Messages inside nested OSC bundles are flattened for monitoring while retaining their bundle depth.</p>
+        </div>
+        <button type="button" id="clearHistory">Clear monitor</button>
+      </div>
+      <div class="monitor-head osc-monitor-grid">
+        <span>Address</span><span>Types</span><span>Arguments</span><span>Sender</span><span>Depth</span>
+      </div>
+      <div id="messageMonitor" class="message-monitor"></div>
+    </article>
+
+    <article class="card">
+      <h2>Renderer status</h2>
+      <div class="stats two">
+        <div class="stat"><span>FPS</span><strong id="rendererFps">—</strong></div>
+        <div class="stat"><span>Frame time</span><strong id="rendererFrameTime">—</strong></div>
+        <div class="stat"><span>Surface</span><strong id="rendererSize">—</strong></div>
+        <div class="stat"><span>Active address lanes</span><strong id="activeSignals">0</strong></div>
+      </div>
+      <p class="note" id="rendererAdapter">Waiting for renderer…</p>
+      <p class="error-text" id="rendererError"></p>
+      <button type="button" id="fullscreenButton">Toggle renderer fullscreen</button>
+    </article>
+
+    <article class="card">
+      <h2>Quick test addresses</h2>
+      <pre class="address-list">/hue 0.25
+/zoom 0.6
+/rotation 0.8
+/field 0.7
+/turbulence 0.4
+/trail 0.85
+/exposure 0.55
+/pulse_decay 0.65</pre>
+      <div class="test-row">
+        <input id="testAddress" value="/hue" aria-label="Test OSC address">
+        <input id="testValue" type="number" step="0.01" value="0.25" aria-label="Test OSC value">
+        <button type="button" id="sendTest">Send loopback test</button>
+      </div>
+      <p class="note">Max/MSP: use <code>udpsend 127.0.0.1 9000</code>. TouchOSC: set the host to this computer’s IP and the port to 9000.</p>
+    </article>
+
+    <article class="card wide">
+      <h2>Signal flow</h2>
+      <div class="flow">
+        <div><b>1</b><span>Network source</span><small>Max/MSP, TouchOSC, Pure Data, SuperCollider, sensors, or another computer.</small></div>
+        <i>→</i>
+        <div><b>2</b><span>UDP + OSC decoder</span><small>Rust receives datagrams and recursively expands messages and bundles.</small></div>
+        <i>→</i>
+        <div><b>3</b><span>Parameter registry</span><small>Address, argument index, ranges, inversion, and smoothing normalize the data.</small></div>
+        <i>→</i>
+        <div><b>4</b><span>wgpu renderer</span><small>Uniforms plus 32 address-activity lanes drive Metal, Vulkan, or DX12.</small></div>
+      </div>
+    </article>
+  </section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>wgpu compute fluid feedback</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <p class="eyebrow">native-wgpu · example 12</p>
+      <h1>Compute Fluid Feedback</h1>
+      <p class="lede">A real GPU fluid pipeline built from storage textures and WGSL compute passes. Velocity is advected, curled, pressure-projected, and used to transport HDR dye. The visual result can feed back into itself while the underlying velocity, pressure, divergence, and curl fields remain inspectable.</p>
+      <div class="runtime-banner">
+        <div><span>Backend</span><strong id="backend">—</strong></div>
+        <div><span>Adapter</span><strong id="adapter">—</strong></div>
+        <div><span>Fluid grid</span><strong id="simulationResolution">—</strong></div>
+        <div><span>Performance</span><strong id="performance">—</strong></div>
+      </div>
+    </section>
+
+    <div class="grid">
+      <section class="card wide">
+        <h2>Fluid signal chain</h2>
+        <div class="flow">
+          <div><b>1</b><span>Velocity advection</span><small>Backtrace through the previous velocity field</small></div><i>→</i>
+          <div><b>2</b><span>Curl + vorticity</span><small>Restore rotating motion lost to numerical diffusion</small></div><i>→</i>
+          <div><b>3</b><span>Pressure projection</span><small>Divergence and iterative Jacobi pressure solve</small></div><i>→</i>
+          <div><b>4</b><span>Dye transport</span><small>Move HDR color through the projected flow</small></div><i>→</i>
+          <div><b>5</b><span>Feedback + present</span><small>Recursive dye history, bloom, tone mapping, native output</small></div>
+        </div>
+      </section>
+
+      <section class="card wide">
+        <h2>Simulation definition</h2>
+        <p class="note top-note">The square fluid grid controls simulation detail. It is independent from the output definition. Eight RGBA16F field textures are maintained on the GPU.</p>
+        <div class="preset-grid" id="simulationPresets">
+          <button type="button" data-simulation-size="128">128²</button>
+          <button type="button" data-simulation-size="256">256²</button>
+          <button type="button" data-simulation-size="512" class="active">512²</button>
+          <button type="button" data-simulation-size="1024">1024²</button>
+          <button type="button" data-simulation-size="2048">2048²</button>
+        </div>
+        <p class="warning">A 2048² fluid uses roughly 256 MiB for its eight field textures before the output target and driver allocations. Increase pressure iterations and substeps carefully because every added pass touches the complete grid.</p>
+        <div class="controls three-column-controls">
+          <div class="control"><label for="pressure_iterations">Pressure iterations</label><input id="pressure_iterations" data-param="pressure_iterations" data-decimals="0" type="range" min="4" max="80" step="2" value="24"><output>24</output></div>
+          <div class="control"><label for="substeps">Substeps</label><input id="substeps" data-param="substeps" data-decimals="0" type="range" min="1" max="4" step="1" value="1"><output>1</output></div>
+          <div class="control"><label for="simulation_speed">Simulation speed</label><input id="simulation_speed" data-param="simulation_speed" data-decimals="2" type="range" min="0" max="4" step="0.01" value="1"><output>1.00</output></div>
+        </div>
+      </section>
+
+      <section class="card wide">
+        <h2>Output definition</h2>
+        <div class="preset-grid">
+          <button type="button" data-resolution="window" class="active">Window</button>
+          <button type="button" data-resolution="1080p">1080p</button>
+          <button type="button" data-resolution="4k">4K UHD</button>
+          <button type="button" data-resolution="8k">8K UHD</button>
+        </div>
+        <div class="controls three-column-controls">
+          <div class="control"><label for="render_scale">Render scale</label><input id="render_scale" data-param="render_scale" data-format="percent" type="range" min="0.125" max="1" step="0.125" value="1"><output>100%</output></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Emitter architecture</h2>
+        <div class="preset-grid scene-grid">
+          <button type="button" data-emitter="0" class="active">Orbit</button>
+          <button type="button" data-emitter="1">Twin vortices</button>
+          <button type="button" data-emitter="2">Rain</button>
+          <button type="button" data-emitter="3">Lattice</button>
+        </div>
+        <div class="controls">
+          <div class="control"><label for="force">Force</label><input id="force" data-param="force" data-decimals="2" type="range" min="0" max="8" step="0.01" value="2.2"><output>2.20</output></div>
+          <div class="control"><label for="radius">Radius</label><input id="radius" data-param="radius" data-decimals="3" type="range" min="0.005" max="0.25" step="0.001" value="0.055"><output>0.055</output></div>
+          <div class="control"><label for="dye_amount">Dye amount</label><input id="dye_amount" data-param="dye_amount" data-decimals="2" type="range" min="0" max="10" step="0.01" value="2.6"><output>2.60</output></div>
+          <div class="control"><label for="emitter_speed">Emitter speed</label><input id="emitter_speed" data-param="emitter_speed" data-decimals="2" type="range" min="0" max="4" step="0.01" value="0.75"><output>0.75</output></div>
+          <div class="control"><label for="injector_x">Injector X</label><input id="injector_x" data-param="injector_x" data-format="percent" type="range" min="0.02" max="0.98" step="0.01" value="0.5"><output>50%</output></div>
+          <div class="control"><label for="injector_y">Injector Y</label><input id="injector_y" data-param="injector_y" data-format="percent" type="range" min="0.02" max="0.98" step="0.01" value="0.5"><output>50%</output></div>
+        </div>
+        <div class="row buttons"><button type="button" id="burst" class="primary">Impulse burst</button></div>
+      </section>
+
+      <section class="card">
+        <h2>Fluid behavior</h2>
+        <div class="controls">
+          <div class="control"><label for="velocity_dissipation">Velocity retention</label><input id="velocity_dissipation" data-param="velocity_dissipation" data-decimals="3" type="range" min="0.80" max="1" step="0.001" value="0.994"><output>0.994</output></div>
+          <div class="control"><label for="dye_dissipation">Dye retention</label><input id="dye_dissipation" data-param="dye_dissipation" data-decimals="3" type="range" min="0.80" max="1" step="0.001" value="0.998"><output>0.998</output></div>
+          <div class="control"><label for="viscosity">Viscosity / diffusion</label><input id="viscosity" data-param="viscosity" data-decimals="2" type="range" min="0" max="1" step="0.01" value="0.08"><output>0.08</output></div>
+          <div class="control"><label for="vorticity">Vorticity confinement</label><input id="vorticity" data-param="vorticity" data-decimals="1" type="range" min="0" max="80" step="0.5" value="28"><output>28.0</output></div>
+          <div class="control"><label for="feedback">Dye feedback</label><input id="feedback" data-param="feedback" data-decimals="2" type="range" min="0" max="1" step="0.01" value="0.18"><output>0.18</output></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Palette</h2>
+        <div class="preset-grid scene-grid">
+          <button type="button" data-palette="0" class="active">Cyan / Magenta</button>
+          <button type="button" data-palette="1">Inferno</button>
+          <button type="button" data-palette="2">Acid</button>
+          <button type="button" data-palette="3">Monochrome</button>
+        </div>
+        <div class="controls">
+          <div class="control"><label for="exposure">Exposure</label><input id="exposure" data-param="exposure" data-decimals="2" type="range" min="0" max="4" step="0.01" value="1.1"><output>1.10</output></div>
+          <div class="control"><label for="bloom">Bloom</label><input id="bloom" data-param="bloom" data-decimals="2" type="range" min="0" max="2" step="0.01" value="0.55"><output>0.55</output></div>
+          <div class="control"><label for="contrast">Contrast</label><input id="contrast" data-param="contrast" data-decimals="2" type="range" min="0.25" max="2.5" step="0.01" value="1.05"><output>1.05</output></div>
+          <div class="control"><label for="vignette">Vignette</label><input id="vignette" data-param="vignette" data-decimals="2" type="range" min="0" max="1" step="0.01" value="0.22"><output>0.22</output></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Field inspection</h2>
+        <p class="note top-note">The same simulation can be viewed as dye, velocity, pressure, divergence, or curl. These are the actual GPU fields—not reconstructed overlays.</p>
+        <div class="preset-grid scene-grid">
+          <button type="button" data-view="0" class="active">Dye</button>
+          <button type="button" data-view="1">Velocity</button>
+          <button type="button" data-view="2">Pressure</button>
+          <button type="button" data-view="3">Divergence</button>
+          <button type="button" data-view="4">Curl</button>
+        </div>
+        <div class="row buttons">
+          <button type="button" id="paused">Pause</button>
+          <button type="button" id="resetFluid">Clear fluid</button>
+          <button type="button" id="resetParams">Reset controls</button>
+          <button type="button" id="fullscreen" class="primary">Fullscreen</button>
+        </div>
+      </section>
+
+      <section class="card wide">
+        <h2>Runtime diagnostics</h2>
+        <div class="stats limit-stats">
+          <div class="stat"><span>Emitter</span><strong id="emitterName">—</strong></div>
+          <div class="stat"><span>Palette</span><strong id="paletteName">—</strong></div>
+          <div class="stat"><span>View</span><strong id="viewName">—</strong></div>
+          <div class="stat"><span>Output</span><strong id="outputResolution">—</strong></div>
+          <div class="stat"><span>Window</span><strong id="windowResolution">—</strong></div>
+          <div class="stat"><span>Workgroups</span><strong id="workgroups">—</strong></div>
+          <div class="stat"><span>Compute passes / frame</span><strong id="computePasses">—</strong></div>
+          <div class="stat"><span>Cell updates / second</span><strong id="cellUpdates">—</strong></div>
+          <div class="stat"><span>Fluid fields</span><strong id="fieldMemory">—</strong></div>
+          <div class="stat"><span>HDR output</span><strong id="outputMemory">—</strong></div>
+          <div class="stat"><span>Estimated GPU targets</span><strong id="totalMemory">—</strong></div>
+          <div class="stat"><span>Max texture dimension</span><strong id="maxDimension">—</strong></div>
+          <div class="stat"><span>Device type</span><strong id="deviceType">—</strong></div>
+          <div class="stat"><span>Driver</span><strong id="driver">—</strong></div>
+          <div class="stat"><span>Surface format</span><strong id="surfaceFormat">—</strong></div>
+        </div>
+        <p id="status" class="status">starting renderer</p>
+        <p class="error-text" id="lastError"></p>
+      </section>
+    </div>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+[package]
+name = "junkpile_18_wgpu_osc_network_control"
+version = "0.1.0"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "=2.6.3", features = [] }
+
+[dependencies]
+bytemuck = { version = "1.24", features = ["derive", "min_const_generics"] }
+pollster = "0.4"
+rosc = "=0.11.4"
+serde = { version = "1", features = ["derive"] }
+tauri = { version = "=2.11.5", features = ["unstable"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+wgpu = { version = "=29.0.4", features = ["vulkan-portability"] }
+
+[target.'cfg(not(target_os = "macos"))'.dependencies]
+wgpu = "=29.0.4"
+
+[workspace]

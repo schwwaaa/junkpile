@@ -1,0 +1,19 @@
+{
+  "name": "10-wgpu-3d-particle-volume",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Native Tauri 2 and wgpu XYZ compute particle volume",
+  "scripts": {
+    "dev": "tauri dev",
+    "dev:metal": "node scripts/run-backend.mjs metal",
+    "dev:vulkan": "node scripts/run-backend.mjs vulkan",
+    "dev:dx12": "node scripts/run-backend.mjs dx12",
+    "dev:gl": "node scripts/run-backend.mjs gl",
+    "build": "tauri build",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}

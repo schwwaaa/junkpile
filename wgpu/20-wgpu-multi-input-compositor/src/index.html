@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Junkpile 20 · Multi-Input Compositor</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main>
+    <header class="hero">
+      <div>
+        <p class="eyebrow">JUNKPILE · NATIVE WGPU SYSTEMS</p>
+        <h1>20 · Multi-Input Compositor</h1>
+        <p class="lede">Webcam, decoded video, audio analysis, MIDI, OSC, and gestures converge in one native HDR feedback graph.</p>
+      </div>
+      <div class="build">BUILD 20.1 · VIDEO AUDIO + TRANSPORT</div>
+    </header>
+
+    <section class="metrics" aria-label="Live status">
+      <article><span>Renderer</span><strong id="metric-renderer">0 FPS</strong></article>
+      <article><span>Camera</span><strong id="metric-camera">offline</strong></article>
+      <article><span>Video</span><strong id="metric-video">not loaded</strong></article>
+      <article><span>Audio</span><strong id="metric-audio">stopped</strong></article>
+      <article><span>MIDI</span><strong id="metric-midi">disconnected</strong></article>
+      <article><span>OSC</span><strong id="metric-osc">starting</strong></article>
+    </section>
+
+    <section class="panel">
+      <div class="panel-heading">
+        <div><p class="section-number">01</p><h2>Media sources</h2></div>
+        <span>GPU texture inputs</span>
+      </div>
+      <div class="two-column">
+        <div class="subpanel">
+          <h3>Native webcam</h3>
+          <label>Camera<select id="camera-select"></select></label>
+          <label>Profile<select id="camera-profile">
+            <option value="lowLatency">Low latency</option>
+            <option value="balanced">Balanced 720p</option>
+            <option value="speed">Maximum frame rate</option>
+            <option value="quality">Maximum definition</option>
+          </select></label>
+          <div class="button-row">
+            <button id="camera-refresh">Refresh</button>
+            <button id="camera-start" class="primary">Start</button>
+            <button id="camera-stop">Stop</button>
+          </div>
+          <p class="readout" id="camera-readout">Waiting for camera permission…</p>
+        </div>
+        <div class="subpanel video-subpanel">
+          <h3>Native video decoder</h3>
+          <div class="button-row">
+            <button id="video-open" class="primary">Open video…</button>
+            <button id="video-step-back" title="Previous frame">◀│</button>
+            <button id="video-play">Play</button>
+            <button id="video-pause">Pause</button>
+            <button id="video-step-forward" title="Next frame">│▶</button>
+            <button id="video-stop">Stop</button>
+          </div>
+          <div class="transport">
+            <input id="video-timeline" type="range" min="0" max="1" step="0.001" value="0" aria-label="Video timeline" />
+            <div class="transport-meta">
+              <span id="video-time">00:00.000 / 00:00.000</span>
+              <span id="video-state">not loaded</span>
+            </div>
+          </div>
+          <div class="inline-fields video-options">
+            <label>Playback rate<select id="video-rate">
+              <option value="0.25">0.25×</option>
+              <option value="0.5">0.5×</option>
+              <option value="1" selected>1×</option>
+              <option value="1.5">1.5×</option>
+              <option value="2">2×</option>
+              <option value="4">4×</option>
+            </select></label>
+            <label>Decoder<select id="video-decode-mode">
+              <option value="software">Software</option>
+              <option value="auto">Hardware auto</option>
+            </select></label>
+          </div>
+          <label class="check"><input id="video-loop" type="checkbox" checked /> Loop at end</label>
+          <p class="readout" id="video-readout">FFmpeg source not loaded.</p>
+          <p class="readout audio-track-readout" id="video-audio-readout">Video audio track not inspected.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-heading">
+        <div><p class="section-number">02</p><h2>Control and analysis inputs</h2></div>
+        <span>Rust input threads</span>
+      </div>
+      <div class="three-column">
+        <div class="subpanel">
+          <h3>Audio FFT</h3>
+          <label>FFT source<select id="audio-source">
+            <option value="microphone">Microphone / input</option>
+            <option value="video">Video-file audio</option>
+            <option value="mix">Microphone + video audio</option>
+          </select></label>
+          <div id="microphone-controls">
+            <label>Microphone / input device<select id="audio-select"></select></label>
+            <div class="button-row">
+              <button id="audio-refresh">Refresh</button>
+              <button id="audio-start" class="primary">Start microphone</button>
+              <button id="audio-stop">Stop microphone</button>
+            </div>
+          </div>
+          <label class="check preview-check"><input id="video-audio-preview" type="checkbox" checked /> Preview video-file audio through the default output</label>
+          <p class="safety-note">Microphone audio is never sent to the speakers. In mixed mode, only the video track is audible.</p>
+          <p class="readout" id="audio-readout">RMS 0.000 · Bass 0.000</p>
+        </div>
+        <div class="subpanel">
+          <h3>MIDI registry</h3>
+          <label>Input<select id="midi-select"></select></label>
+          <div class="button-row">
+            <button id="midi-refresh">Refresh</button>
+            <button id="midi-connect" class="primary">Connect</button>
+            <button id="midi-disconnect">Disconnect</button>
+          </div>
+          <p class="readout" id="midi-readout">Starter mappings load on connect.</p>
+        </div>
+        <div class="subpanel">
+          <h3>OSC network</h3>
+          <div class="inline-fields">
+            <label>Host<input id="osc-host" value="0.0.0.0" /></label>
+            <label>Port<input id="osc-port" type="number" value="9000" min="1" max="65535" /></label>
+          </div>
+          <div class="button-row">
+            <button id="osc-bind" class="primary">Bind</button>
+            <button id="osc-test">Test /hue</button>
+            <button id="osc-stop">Stop</button>
+          </div>
+          <p class="readout" id="osc-readout">Listening startup pending.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-heading">
+        <div><p class="section-number">03</p><h2>Compositor and feedback graph</h2></div>
+        <span>HDR multipass renderer</span>
+      </div>
+      <div class="control-grid">
+        <label>Compositing mode<select id="compositor-mode">
+          <option value="blend">Blend</option>
+          <option value="difference">Difference</option>
+          <option value="multiply">Multiply</option>
+          <option value="lumaKey">Luma key</option>
+        </select></label>
+        <label>Source mix <output id="sourceMix-value">0.50</output><input data-param="sourceMix" id="sourceMix" type="range" min="0" max="1" step="0.001" value="0.5" /></label>
+        <label>Feedback <output id="feedback-value">0.72</output><input data-param="feedback" id="feedback" type="range" min="0" max="0.995" step="0.001" value="0.72" /></label>
+        <label>Displacement <output id="displacement-value">0.035</output><input data-param="displacement" id="displacement" type="range" min="0" max="0.25" step="0.001" value="0.035" /></label>
+        <label>RGB separation <output id="chroma-value">0.006</output><input data-param="chroma" id="chroma" type="range" min="0" max="0.05" step="0.001" value="0.006" /></label>
+        <label>Exposure <output id="exposure-value">1.20</output><input data-param="exposure" id="exposure" type="range" min="0.1" max="5" step="0.01" value="1.2" /></label>
+        <label>Contrast <output id="contrast-value">1.05</output><input data-param="contrast" id="contrast" type="range" min="0.25" max="2.5" step="0.01" value="1.05" /></label>
+        <label>Audio gain <output id="audioGain-value">1.00</output><input data-param="audioGain" id="audioGain" type="range" min="0" max="4" step="0.01" value="1" /></label>
+        <label>Gesture gain <output id="gestureGain-value">1.00</output><input data-param="gestureGain" id="gestureGain" type="range" min="0" max="4" step="0.01" value="1" /></label>
+      </div>
+      <div class="button-row footer-buttons">
+        <button id="reset-compositor">Reset graph</button>
+        <button id="renderer-fullscreen" class="primary">Renderer fullscreen</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-heading">
+        <div><p class="section-number">04</p><h2>Gesture injection</h2></div>
+        <span id="pointer-status">Pointer bridge ready</span>
+      </div>
+      <div class="gesture-toolbar">
+        <label>Tool<select id="gesture-tool">
+          <option value="0">Attractor</option>
+          <option value="1">Repulsor</option>
+          <option value="2">Vortex</option>
+          <option value="3">Erase</option>
+        </select></label>
+        <button id="gesture-clear">Clear gesture history</button>
+        <span id="gesture-count">0 local events</span>
+      </div>
+      <canvas id="gesture-pad" aria-label="Draw gestures that influence the native compositor"></canvas>
+    </section>
+
+    <section class="panel diagnostics">
+      <div class="panel-heading">
+        <div><p class="section-number">05</p><h2>Diagnostics</h2></div>
+        <span>Source registry + GPU graph</span>
+      </div>
+      <dl>
+        <div><dt>WebView bridge</dt><dd id="diag-bridge">checking</dd></div>
+        <div><dt>Backend</dt><dd id="diag-backend">—</dd></div>
+        <div><dt>Adapter</dt><dd id="diag-adapter">—</dd></div>
+        <div><dt>Render target</dt><dd id="diag-render">—</dd></div>
+        <div><dt>Camera uploads</dt><dd id="diag-camera">0</dd></div>
+        <div><dt>Video uploads</dt><dd id="diag-video">0</dd></div>
+        <div><dt>Audio sequence</dt><dd id="diag-audio">0</dd></div>
+        <div><dt>FFT source</dt><dd id="diag-audio-source">microphone</dd></div>
+        <div><dt>Video audio output</dt><dd id="diag-video-audio">not loaded</dd></div>
+        <div><dt>Audio buffer</dt><dd id="diag-audio-buffer">0 ms</dd></div>
+        <div><dt>MIDI messages</dt><dd id="diag-midi">0</dd></div>
+        <div><dt>OSC messages</dt><dd id="diag-osc">0</dd></div>
+        <div><dt>Gesture events</dt><dd id="diag-gesture">0</dd></div>
+        <div><dt>Last error</dt><dd id="diag-error">none</dd></div>
+      </dl>
+    </section>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

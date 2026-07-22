@@ -1,0 +1,24 @@
+[package]
+name = "junkpile_21_wgpu_gltf_scene_loader"
+version = "0.1.0"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "=2.6.3", features = [] }
+
+[dependencies]
+bytemuck = { version = "1.24", features = ["derive"] }
+glam = "0.30"
+gltf = { version = "1.4", features = ["import", "names"] }
+pollster = "0.4"
+rfd = "0.17"
+serde = { version = "1", features = ["derive"] }
+tauri = { version = "=2.11.5", features = ["unstable"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+wgpu = { version = "=29.0.4", features = ["vulkan-portability"] }
+
+[target.'cfg(not(target_os = "macos"))'.dependencies]
+wgpu = "=29.0.4"
+
+[workspace]

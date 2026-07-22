@@ -1,0 +1,19 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>wgpu Tauri controls</title><link rel="stylesheet" href="style.css"></head><body><main>
+<section class="hero"><p class="eyebrow">native-wgpu · example 03</p><h1>Tauri Controls</h1><p class="lede">The reusable application pattern: vanilla HTML controls invoke validated Rust commands, commands enter a bounded renderer queue, and the next native GPU frame receives updated uniforms.</p></section>
+<div class="grid"><section class="card" style="grid-column:1/-1"><h2>Shader parameters</h2><div class="controls"><div class="control"><label for="speed">Speed</label><input id="speed" data-param="speed" type="range" min="0" max="4" step="0.01" value="1"><output>1.00</output></div>
+<div class="control"><label for="zoom">Zoom</label><input id="zoom" data-param="zoom" type="range" min="0.2" max="6" step="0.01" value="1"><output>1.00</output></div>
+<div class="control"><label for="distortion">Distortion</label><input id="distortion" data-param="distortion" type="range" min="0" max="1" step="0.01" value="0.45"><output>0.45</output></div>
+<div class="control"><label for="hue">Hue</label><input id="hue" data-param="hue" type="range" min="0" max="360" step="1" value="205"><output>205°</output></div>
+<div class="control"><label for="brightness">Brightness</label><input id="brightness" data-param="brightness" type="range" min="0" max="2.5" step="0.01" value="1"><output>1.00</output></div>
+<div class="control"><label for="saturation">Saturation</label><input id="saturation" data-param="saturation" type="range" min="0" max="1" step="0.01" value="0.82"><output>0.82</output></div>
+<div class="control"><label for="glow">Glow</label><input id="glow" data-param="glow" type="range" min="0" max="2" step="0.01" value="0.75"><output>0.75</output></div>
+<div class="control"><label for="complexity">Complexity</label><input id="complexity" data-param="complexity" type="range" min="1" max="8" step="1" value="5"><output>5</output></div></div><div class="row" style="margin-top:14px"><button class="primary" id="pause">Pause</button><button id="pulse">Pulse off</button><button id="reset">Reset parameters</button><button id="fullscreen">Fullscreen</button></div></section>
+<section class="card"><h2>Message path</h2><div class="diagram">HTML input
+   ↓ invoke(set_param)
+validated Rust command
+   ↓ bounded channel
+renderer state
+   ↓ queue.write_buffer
+GPU uniform buffer</div></section>
+<section class="card"><h2>Renderer</h2><div class="stats"><div class="stat"><span>Backend</span><strong id="backend">—</strong></div><div class="stat"><span>Adapter</span><strong id="adapterName">—</strong></div><div class="stat"><span>Resolution</span><strong id="resolution">—</strong></div><div class="stat"><span>FPS</span><strong id="fps">—</strong></div><div class="stat"><span>Frame time</span><strong id="frameTime">—</strong></div><div class="stat"><span>Frames</span><strong id="frameCount">—</strong></div></div><p id="status" class="status">starting renderer</p></section></div>
+</main><script src="app.js"></script></body></html>

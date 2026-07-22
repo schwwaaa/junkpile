@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>wgpu backend lab</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <section class="hero">
+    <p class="eyebrow">native-wgpu · example 08</p>
+    <h1>Backend Lab</h1>
+    <p class="lede">Enumerate the GPU adapters wgpu can see, inspect their limits and features, and run the same WGSL workload through Metal, Vulkan, or DX12. Backend choice happens before the renderer starts, so changing it requires a restart.</p>
+  </section>
+
+  <section class="runtime-banner">
+    <div><span>Active backend</span><strong id="activeBackend">—</strong></div>
+    <div><span>Active adapter</span><strong id="activeAdapter">—</strong></div>
+    <div><span>Surface</span><strong id="surfaceFormat">—</strong></div>
+    <div><span>Resolution</span><strong id="resolution">—</strong></div>
+  </section>
+
+  <div class="grid">
+    <section class="card wide">
+      <h2>Launch a backend</h2>
+      <p class="note top-note">These scripts set <code>WGPU_BACKEND</code> before Tauri creates the wgpu instance.</p>
+      <div class="commands">
+        <div><span>Automatic native choice</span><code>npm run dev</code></div>
+        <div><span>Metal — macOS</span><code>npm run dev:metal</code></div>
+        <div><span>Vulkan — Windows/Linux; MoltenVK path on macOS</span><code>npm run dev:vulkan</code></div>
+        <div><span>Direct3D 12 — Windows</span><code>npm run dev:dx12</code></div>
+        <div><span>OpenGL/GLES comparison path</span><code>npm run dev:gl</code></div>
+      </div>
+      <div class="stats compact">
+        <div class="stat"><span>WGPU_BACKEND</span><strong id="backendEnvironment">—</strong></div>
+        <div class="stat"><span>WGPU_ADAPTER_NAME</span><strong id="adapterEnvironment">—</strong></div>
+        <div class="stat"><span>Requested set</span><strong id="requestedBackends">—</strong></div>
+        <div class="stat"><span>Compiled set</span><strong id="compiledBackends">—</strong></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Identical workload</h2>
+      <div class="controls">
+        <div class="control"><label for="complexity">Octaves</label><input id="complexity" type="range" min="1" max="12" step="1" value="6"><output id="complexityValue">6</output></div>
+        <div class="control"><label for="layers">Layers</label><input id="layers" type="range" min="1" max="8" step="1" value="4"><output id="layersValue">4</output></div>
+        <div class="control"><label for="speed">Speed</label><input id="speed" type="range" min="0" max="4" step="0.01" value="1"><output id="speedValue">1.00</output></div>
+        <div class="control"><label for="exposure">Exposure</label><input id="exposure" type="range" min="0" max="4" step="0.01" value="1.35"><output id="exposureValue">1.35</output></div>
+      </div>
+      <div class="row buttons">
+        <button id="pause">Pause</button>
+        <button id="reset">Reset</button>
+        <button class="primary" id="fullscreen">Toggle fullscreen</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Runtime</h2>
+      <div class="stats">
+        <div class="stat"><span>FPS</span><strong id="fps">—</strong></div>
+        <div class="stat"><span>Frame time</span><strong id="frameTime">—</strong></div>
+        <div class="stat"><span>Frames</span><strong id="frameCount">—</strong></div>
+        <div class="stat"><span>Last error</span><strong id="lastError">—</strong></div>
+      </div>
+      <p id="status" class="status">starting renderer</p>
+    </section>
+
+    <section class="card wide">
+      <h2>Surface capabilities</h2>
+      <div class="cap-grid">
+        <div><span>Formats</span><code id="surfaceFormats">—</code></div>
+        <div><span>Present modes</span><code id="presentModes">—</code></div>
+        <div><span>Alpha modes</span><code id="alphaModes">—</code></div>
+      </div>
+    </section>
+
+    <section class="card wide">
+      <div class="section-heading">
+        <div><h2>Enumerated adapters</h2><p class="note">One physical GPU may appear more than once when several backends expose it.</p></div>
+        <strong id="adapterCount" class="count">0</strong>
+      </div>
+      <div id="adapterList" class="adapter-list"></div>
+    </section>
+  </div>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

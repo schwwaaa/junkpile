@@ -1,0 +1,34 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Junkpile wgpu Backend Lab",
+  "version": "0.1.0",
+  "identifier": "com.schwwaaa.junkpile.wgpu.backend.lab",
+  "build": {
+    "beforeBuildCommand": "",
+    "beforeDevCommand": "",
+    "frontendDist": "../src"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "controls",
+        "title": "Junkpile wgpu Backend Lab · Controls",
+        "url": "index.html",
+        "width": 900,
+        "height": 900,
+        "minWidth": 460,
+        "minHeight": 650,
+        "resizable": true,
+        "decorations": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "icon": ["icons/icon.png", "icons/icon.ico"]
+  }
+}

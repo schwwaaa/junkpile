@@ -1,0 +1,17 @@
+[package]
+name = "junkpile_01_wgpu_resize_fullscreen"
+version = "0.1.0"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+bytemuck = { version = "1.24", features = ["derive"] }
+pollster = "0.4"
+serde = { version = "1", features = ["derive"] }
+tauri = { version = "2", features = ["unstable"] }
+wgpu = "29.0.3"
+
+# Keep this standalone example isolated from Cargo workspaces in parent directories.
+[workspace]

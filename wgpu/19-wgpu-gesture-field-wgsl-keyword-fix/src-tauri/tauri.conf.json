@@ -1,0 +1,22 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Junkpile 19 Gesture Field",
+  "version": "0.1.0",
+  "identifier": "com.schwwaaa.junkpile.gesturefield",
+  "build": {
+    "frontendDist": "../src"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "controls",
+        "title": "19 · wgpu Gesture Field Controls",
+        "width": 520,
+        "height": 900,
+        "resizable": true
+      }
+    ],
+    "security": { "csp": null }
+  },
+  "bundle": { "active": false }
+}

@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Junkpile wgpu MIDI Parameter Registry</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <p class="eyebrow">Example 17 · native MIDI input</p>
+      <h1>MIDI Parameter Registry</h1>
+      <p class="lede">CoreMIDI, WinMM or ALSA messages enter Rust through midir, pass through a learnable mapping registry, then drive smoothed renderer parameters and a 128-note GPU buffer.</p>
+      <div class="runtime-banner">
+        <div><span>MIDI</span><strong id="runtimeMidi">Disconnected</strong></div>
+        <div><span>GPU backend</span><strong id="runtimeBackend">—</strong></div>
+        <div><span>Renderer</span><strong id="runtimeRenderer">—</strong></div>
+        <div><span>Learn state</span><strong id="runtimeLearn">Idle</strong></div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="card wide">
+        <div class="card-title-row">
+          <div>
+            <h2>Native MIDI source</h2>
+            <p class="note top-note">Connect a hardware controller, keyboard, IAC Bus, Max/MSP, Pure Data, or another virtual MIDI source.</p>
+          </div>
+          <span class="chip" id="connectionChip">OFFLINE</span>
+        </div>
+        <div class="device-row">
+          <label for="midiPort">Input port</label>
+          <select id="midiPort"></select>
+          <button id="refreshPorts" type="button">Refresh</button>
+          <button id="connectMidi" class="primary" type="button">Connect</button>
+          <button id="disconnectMidi" type="button">Disconnect</button>
+        </div>
+        <div class="stats compact four">
+          <div class="stat"><span>Messages / second</span><strong id="messageRate">0.0</strong></div>
+          <div class="stat"><span>Total messages</span><strong id="totalMessages">0</strong></div>
+          <div class="stat"><span>Active notes</span><strong id="activeNotes">0</strong></div>
+          <div class="stat"><span>Registry mappings</span><strong id="mappingCount">0</strong></div>
+        </div>
+        <p id="midiError" class="error-text"></p>
+      </article>
+
+      <article class="card wide">
+        <div class="card-title-row">
+          <div>
+            <h2>Renderer parameter registry</h2>
+            <p class="note top-note">Move a slider manually, or click Learn and move one MIDI control. Each target accepts normalized values from 0 to 1.</p>
+          </div>
+          <div class="row">
+            <button id="cancelLearn" type="button">Cancel learn</button>
+            <button id="resetParameters" type="button">Reset parameters</button>
+            <button id="rendererFullscreen" type="button">Renderer fullscreen</button>
+          </div>
+        </div>
+        <div id="parameterRegistry" class="parameter-registry"></div>
+      </article>
+
+      <article class="card wide">
+        <div class="card-title-row">
+          <div>
+            <h2>MIDI mappings</h2>
+            <p class="note top-note">Mappings are evaluated in Rust. Min/max remap the incoming value, invert reverses it, and smoothing controls temporal response.</p>
+          </div>
+          <div class="row">
+            <button id="starterMappings" type="button">Load starter map</button>
+            <button id="saveMappings" type="button">Save in browser</button>
+            <button id="loadMappings" type="button">Load saved</button>
+            <button id="clearMappings" type="button">Clear</button>
+          </div>
+        </div>
+        <div class="mapping-head" aria-hidden="true">
+          <span>Target</span><span>Source</span><span>Min</span><span>Max</span><span>Smoothing</span><span>Invert</span><span></span>
+        </div>
+        <div id="mappingList" class="mapping-list"></div>
+        <p id="mappingStatus" class="note"></p>
+      </article>
+
+      <article class="card">
+        <h2>Continuous MIDI state</h2>
+        <div class="meter-grid">
+          <div class="meter"><span>Pitch bend</span><div><i id="pitchBar"></i></div><strong id="pitchValue">0.000</strong></div>
+          <div class="meter"><span>Pressure</span><div><i id="pressureBar"></i></div><strong id="pressureValue">0.000</strong></div>
+        </div>
+        <p class="note">Note On/Off messages always update the 128-note GPU buffer, even when no explicit parameter mapping exists.</p>
+      </article>
+
+      <article class="card">
+        <h2>GPU diagnostics</h2>
+        <div class="stats two">
+          <div class="stat"><span>Render FPS</span><strong id="renderFps">0.0</strong></div>
+          <div class="stat"><span>Frame time</span><strong id="frameTime">0.0 ms</strong></div>
+          <div class="stat"><span>GPU surface</span><strong id="gpuSurface">—</strong></div>
+          <div class="stat"><span>MIDI sequence</span><strong id="midiSequence">0</strong></div>
+        </div>
+      </article>
+
+      <article class="card wide">
+        <h2>MIDI message monitor</h2>
+        <div class="monitor-head" aria-hidden="true"><span>Type</span><span>Channel</span><span>Data</span><span>Value</span><span>Raw bytes</span></div>
+        <div id="messageMonitor" class="message-monitor"></div>
+      </article>
+
+      <article class="card wide">
+        <h2>Signal path</h2>
+        <div class="flow">
+          <div><b>1</b><span>midir callback</span><small>CoreMIDI, WinMM or ALSA native messages</small></div>
+          <i>→</i>
+          <div><b>2</b><span>Rust registry</span><small>MIDI learn, source matching, ranges and inversion</small></div>
+          <i>→</i>
+          <div><b>3</b><span>Smoothed state</span><small>Eight normalized parameters plus 128 note velocities</small></div>
+          <i>→</i>
+          <div><b>4</b><span>wgpu surface</span><small>Uniform and storage-buffer updates through Metal, Vulkan or DX12</small></div>
+        </div>
+      </article>
+    </section>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

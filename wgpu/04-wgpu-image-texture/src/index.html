@@ -1,0 +1,18 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>wgpu image texture</title><link rel="stylesheet" href="style.css"></head><body><main>
+<section class="hero"><p class="eyebrow">native-wgpu · example 04</p><h1>Image Texture</h1><p class="lede">Decode a real PNG in Rust, upload its pixels to native GPU memory, sample it in WGSL, and compare image fit and sampler behavior without WebGL or a browser canvas.</p></section>
+<div class="grid"><section class="card" style="grid-column:1/-1"><h2>Texture controls</h2><div class="controls">
+<div class="control"><label for="zoom">Zoom</label><input id="zoom" data-param="zoom" type="range" min="0.1" max="8" step="0.01" value="1"><output>1.00</output></div>
+<div class="control"><label for="rotation">Rotation</label><input id="rotation" data-param="rotation" type="range" min="-3.1416" max="3.1416" step="0.01" value="0"><output>0.00 rad</output></div>
+<div class="control"><label for="exposure">Exposure</label><input id="exposure" data-param="exposure" type="range" min="0" max="4" step="0.01" value="1"><output>1.00</output></div>
+<div class="control"><label for="gamma">Gamma</label><input id="gamma" data-param="gamma" type="range" min="0.25" max="3" step="0.01" value="1"><output>1.00</output></div>
+<div class="control"><label for="saturation">Saturation</label><input id="saturation" data-param="saturation" type="range" min="0" max="2" step="0.01" value="1"><output>1.00</output></div></div>
+<div class="row" style="margin-top:14px"><select id="fit"><option value="contain">Contain</option><option value="cover">Cover</option><option value="stretch">Stretch</option></select><select id="filter"><option value="linear">Linear filtering</option><option value="nearest">Nearest filtering</option></select><button id="reset">Reset</button><button id="fullscreen">Fullscreen</button></div></section>
+<section class="card"><h2>Upload path</h2><div class="diagram">embedded PNG
+   ↓ image crate
+RGBA8 CPU pixels
+   ↓ queue.write_texture
+sRGB GPU texture
+   ↓ textureSample
+WGSL fragment shader</div></section>
+<section class="card"><h2>Renderer</h2><div class="stats"><div class="stat"><span>Backend</span><strong id="backend">—</strong></div><div class="stat"><span>Adapter</span><strong id="adapterName">—</strong></div><div class="stat"><span>Window</span><strong id="resolution">—</strong></div><div class="stat"><span>Source</span><strong id="sourceResolution">—</strong></div><div class="stat"><span>Filter</span><strong id="filterState">—</strong></div><div class="stat"><span>Fit</span><strong id="fitState">—</strong></div><div class="stat"><span>FPS</span><strong id="fps">—</strong></div><div class="stat"><span>Frame time</span><strong id="frameTime">—</strong></div></div><p id="status" class="status">starting renderer</p></section></div>
+</main><script src="app.js"></script></body></html>

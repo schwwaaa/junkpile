@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Native Webcam Texture</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">JUNKPILE · INPUT SYSTEMS · 14</p>
+      <h1>Native Webcam Texture</h1>
+      <p>Camera hardware → direct AVFoundation capture → BGRA CVPixelBuffer → wgpu texture → WGSL processing.</p>
+    </header>
+
+    <section class="status-grid" aria-label="System status">
+      <article><span>Permission</span><strong id="permission">pending</strong></article>
+      <article><span>Camera</span><strong id="camera-state">waiting</strong></article>
+      <article><span>Capture</span><strong id="capture-format">—</strong></article>
+      <article><span>GPU</span><strong id="gpu">—</strong></article>
+      <article><span>Capture FPS</span><strong id="capture-fps">0</strong></article>
+      <article><span>Render FPS</span><strong id="render-fps">0</strong></article>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title"><h2>Native camera</h2><span id="camera-count">0 devices</span></div>
+      <div class="three-col">
+        <label>Device<select id="camera-select"><option value="">Waiting for permission…</option></select></label>
+        <label>Capture profile<select id="profile"><option value="lowLatency" selected>Low latency · target 640×480 at 30 FPS</option><option value="balanced">Balanced · target 1280×720 at 30 FPS</option><option value="speed">Maximum native frame rate</option><option value="quality">Maximum native definition</option></select></label>
+        <label>Processing<select id="mode"><option value="clean">Clean source</option><option value="edge">Edge extraction</option><option value="lumaWarp">Luma displacement</option><option value="rgbSplit">RGB separation</option><option value="posterize">Posterize</option><option value="blocks">Pixel blocks</option><option value="scanlines">Scanlines</option></select></label>
+      </div>
+      <div class="button-row">
+        <button id="refresh" type="button">Refresh devices</button>
+        <button id="start" class="primary" type="button">Start selected</button>
+        <button id="stop" type="button">Stop camera</button>
+        <button id="fullscreen" type="button">Renderer fullscreen</button>
+      </div>
+      <p id="error" class="error" role="status"></p>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title"><h2>Texture mapping</h2><span>GPU-side</span></div>
+      <div class="four-col">
+        <label>Fit<select id="fit"><option value="cover">Cover</option><option value="contain">Contain</option><option value="stretch">Stretch</option></select></label>
+        <label>Filter<select id="filter"><option value="linear">Linear</option><option value="nearest">Nearest</option></select></label>
+        <label>Rotation<select id="rotation"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></label>
+        <label class="check"><input id="mirror" type="checkbox" checked> Mirror camera</label>
+      </div>
+      <div id="sliders" class="sliders"></div>
+      <div class="button-row"><button id="reset" type="button">Reset visual parameters</button></div>
+    </section>
+
+    <section class="panel diagnostics">
+      <div class="panel-title"><h2>Diagnostics</h2><span>capture and upload boundary</span></div>
+      <dl>
+        <div><dt>Native backend</dt><dd id="native-backend">—</dd></div>
+        <div><dt>Selected camera</dt><dd id="selected-camera">—</dd></div>
+        <div><dt>Source format</dt><dd id="source-format">—</dd></div>
+        <div><dt>Callback interval</dt><dd id="capture-wait">0 ms</dd></div>
+        <div><dt>BGRA row copy</dt><dd id="decode-time">0 ms</dd></div>
+        <div><dt>Native formats found</dt><dd id="format-candidates">0</dd></div>
+        <div><dt>Reused frame buffers</dt><dd id="recycled-buffers">0</dd></div>
+        <div><dt>Captured frames</dt><dd id="decoded-frames">0</dd></div>
+        <div><dt>Capture errors</dt><dd id="decode-errors">0</dd></div>
+        <div><dt>Dropped by AVFoundation</dt><dd id="capture-drops">0</dd></div>
+        <div><dt>Uploaded frames</dt><dd id="uploaded-frames">0</dd></div>
+        <div><dt>Skipped before upload</dt><dd id="dropped-frames">0</dd></div>
+        <div><dt>Latest frame age</dt><dd id="frame-age">0 ms</dd></div>
+        <div><dt>Render target</dt><dd id="render-target">—</dd></div>
+        <div><dt>GPU surface</dt><dd id="surface-format">—</dd></div>
+      </dl>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

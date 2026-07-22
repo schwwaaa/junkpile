@@ -1,0 +1,1 @@
+{"name":"06-wgpu-multipass-render-graph","private":true,"version":"0.1.0","type":"module","description":"Native wgpu source, blur, bloom, and composite render graph","scripts":{"dev":"tauri dev","build":"tauri build","tauri":"tauri"},"devDependencies":{"@tauri-apps/cli":"^2"}}

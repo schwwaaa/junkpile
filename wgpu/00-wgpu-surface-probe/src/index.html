@@ -1,0 +1,18 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>wgpu surface probe</title><link rel="stylesheet" href="style.css"></head>
+<body><main>
+<section class="hero"><p class="eyebrow">native-wgpu · example 00</p><h1>Surface Probe</h1><p class="lede">The smallest proof that Tauri can own the application while wgpu presents directly to a separate native Metal, Vulkan, or DX12 surface. The renderer window contains no WebView and no WebGL canvas.</p></section>
+<div class="grid">
+<section class="card"><h2>Renderer path</h2><div class="diagram">Tauri raw Window
+      ↓ raw handles
+wgpu Surface
+      ↓
+Metal · Vulkan · DX12</div><p class="note">The slowly changing color is a native GPU surface clear. No shader pipeline is required yet.</p></section>
+<section class="card"><h2>Live adapter report</h2><div class="stats">
+<div class="stat"><span>Backend</span><strong id="backend">—</strong></div><div class="stat"><span>Adapter</span><strong id="adapterName">—</strong></div>
+<div class="stat"><span>Device type</span><strong id="deviceType">—</strong></div><div class="stat"><span>Surface format</span><strong id="surfaceFormat">—</strong></div>
+<div class="stat"><span>Driver</span><strong id="driver">—</strong></div><div class="stat"><span>Driver info</span><strong id="driverInfo">—</strong></div>
+<div class="stat"><span>Resolution</span><strong id="resolution">—</strong></div><div class="stat"><span>FPS</span><strong id="fps">—</strong></div>
+</div></section>
+<section class="card"><h2>Window</h2><div class="row"><button class="primary" id="fullscreen">Toggle fullscreen</button></div><p class="note">Resize the native renderer window. Its surface will be reconfigured automatically.</p></section>
+<section class="card"><h2>Runtime</h2><div class="stats"><div class="stat"><span>Frame time</span><strong id="frameTime">—</strong></div><div class="stat"><span>Frames</span><strong id="frameCount">—</strong></div><div class="stat"><span>Last error</span><strong id="lastError">—</strong></div></div><p id="status" class="status">starting renderer</p></section>
+</div></main><script src="app.js"></script></body></html>

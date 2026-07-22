@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Junkpile 22 · Skeletal Pose Lab</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">JUNKPILE · NATIVE WGPU EXAMPLE 22</p>
+        <h1>Skeletal Pose Lab</h1>
+        <p class="lede">Load a skinned glTF character, play skeletal animation, inspect joint weights, and layer a manual pose on top of the animated rig.</p>
+      </div>
+      <div class="build">BUILD 22.1 · LINE DEPTH-BIAS FIX</div>
+    </header>
+
+    <section class="panel source-panel">
+      <div class="panel-heading">
+        <div><p class="kicker">Character source</p><h2 id="sceneName">Junkpile skinned sample</h2></div>
+        <span id="status" class="status">starting renderer…</span>
+      </div>
+      <p id="sourcePath" class="path">bundled://sample-skinned.glb</p>
+      <div class="button-row">
+        <button id="openScene" class="primary">Open glTF / GLB</button>
+        <button id="sampleScene">Reload skinned sample</button>
+        <button id="fullscreen">Renderer fullscreen</button>
+      </div>
+      <p class="hint">The loader reads <code>JOINTS_0</code>, <code>WEIGHTS_0</code>, skins, inverse-bind matrices, and translation/rotation/scale animation channels.</p>
+    </section>
+
+    <div class="two-column">
+      <section class="panel">
+        <div class="panel-heading compact">
+          <div><p class="kicker">Rig structure</p><h2>Imported character</h2></div>
+          <span id="loading" class="pill">ready</span>
+        </div>
+        <div class="stat-grid scene-stats">
+          <div><span>Nodes</span><strong id="nodeCount">—</strong></div>
+          <div><span>Meshes</span><strong id="meshCount">—</strong></div>
+          <div><span>Skins</span><strong id="skinCount">—</strong></div>
+          <div><span>Joints</span><strong id="jointCount">—</strong></div>
+          <div><span>Animations</span><strong id="animationCount">—</strong></div>
+          <div><span>Channels</span><strong id="channelCount">—</strong></div>
+          <div><span>Vertices</span><strong id="vertexCount">—</strong></div>
+          <div><span>Weighted vertices</span><strong id="weightedVertexCount">—</strong></div>
+          <div><span>Triangles</span><strong id="triangleCount">—</strong></div>
+          <div><span>Bone segments</span><strong id="boneSegmentCount">—</strong></div>
+        </div>
+        <div class="bounds"><span>Bounds</span><code id="bounds">—</code></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading compact">
+          <div><p class="kicker">Interactive camera</p><h2>Orbit controller</h2></div>
+          <button id="resetCamera" class="small">Reset</button>
+        </div>
+        <div id="orbitPad" class="orbit-pad" tabindex="0" aria-label="Orbit camera control">
+          <div class="orbit-ring ring-one"></div><div class="orbit-ring ring-two"></div>
+          <div id="orbitCursor" class="orbit-cursor"></div>
+          <p>Drag to orbit<br><span>Wheel to dolly</span></p>
+        </div>
+        <div class="readout" id="cameraReadout">—</div>
+      </section>
+    </div>
+
+    <section class="panel transport-panel">
+      <div class="panel-heading compact">
+        <div><p class="kicker">Animation</p><h2>Clip transport and pose blending</h2></div>
+        <span id="animationState" class="pill">playing</span>
+      </div>
+      <div class="transport-grid">
+        <label class="select-label">Clip<select id="animationSelect"></select></label>
+        <div class="transport-buttons">
+          <button id="playPause" class="primary">Pause</button>
+          <button id="restartAnimation">Restart</button>
+          <label class="toggle compact-toggle"><input id="animationLoop" type="checkbox" checked><span>Loop</span></label>
+        </div>
+      </div>
+      <label class="timeline-label">
+        <span>Timeline <output id="animationTimeValue">0.00 / 0.00 s</output></span>
+        <input id="animationTime" type="range" min="0" max="0" value="0" step="0.001">
+      </label>
+      <div class="control-grid compact-controls">
+        <label>Playback speed <output id="animationSpeedValue">1.00×</output><input id="animationSpeed" type="range" min="-2" max="2" value="1" step="0.05"></label>
+        <label>Animation blend <output id="animationBlendValue">100%</output><input id="animationBlend" type="range" min="0" max="1" value="1" step="0.01"></label>
+      </div>
+      <p class="hint">Manual joint rotation is applied after the sampled animation, so the interface can pose an already-moving character.</p>
+    </section>
+
+    <div class="two-column pose-layout">
+      <section class="panel pose-panel">
+        <div class="panel-heading compact">
+          <div><p class="kicker">Manual pose</p><h2>Selected joint</h2></div>
+          <button id="resetJoint" class="small">Reset joint</button>
+        </div>
+        <label class="select-label">Joint<select id="jointSelect"></select></label>
+        <div class="joint-meta">
+          <div><span>Node</span><strong id="jointNode">—</strong></div>
+          <div><span>Parent</span><strong id="jointParent">—</strong></div>
+          <div><span>Skin slot</span><strong id="jointSlot">—</strong></div>
+        </div>
+        <div class="control-stack joint-controls">
+          <label>Rotate X <output id="jointXValue">0°</output><input id="jointX" type="range" min="-180" max="180" value="0" step="1"></label>
+          <label>Rotate Y <output id="jointYValue">0°</output><input id="jointY" type="range" min="-180" max="180" value="0" step="1"></label>
+          <label>Rotate Z <output id="jointZValue">0°</output><input id="jointZ" type="range" min="-180" max="180" value="0" step="1"></label>
+        </div>
+        <div class="button-row preset-row">
+          <button data-pose="wave">Wave</button>
+          <button data-pose="s_curve">S-curve</button>
+          <button data-pose="twist">Twist</button>
+          <button id="resetPose">Reset all</button>
+        </div>
+      </section>
+
+      <section class="panel inspection-panel">
+        <div class="panel-heading compact"><div><p class="kicker">Skin inspection</p><h2>GPU view mode</h2></div></div>
+        <div class="mode-grid" id="viewModes">
+          <button data-view="lit" class="active">Lit material</button>
+          <button data-view="weights">Selected weight</button>
+          <button data-view="joints">Strongest joint</button>
+          <button data-view="normals">Normals</button>
+        </div>
+        <label class="toggle"><input id="showSkeleton" type="checkbox" checked><span>Skeleton overlay</span></label>
+        <label class="toggle"><input id="backfaceCulling" type="checkbox" checked><span>Backface culling</span></label>
+        <p class="hint">Select a joint, then switch to <strong>Selected weight</strong> to see exactly where that joint influences the mesh.</p>
+      </section>
+    </div>
+
+    <section class="panel controls-panel">
+      <div class="panel-heading compact"><div><p class="kicker">Camera</p><h2>Framing and movement</h2></div></div>
+      <div class="control-grid">
+        <label>Yaw <output id="cameraYawValue">28°</output><input id="cameraYaw" type="range" min="-180" max="180" value="28" step="1"></label>
+        <label>Pitch <output id="cameraPitchValue">12°</output><input id="cameraPitch" type="range" min="-85" max="85" value="12" step="1"></label>
+        <label>Distance <output id="cameraDistanceValue">4.80</output><input id="cameraDistance" type="range" min="1.25" max="16" value="4.8" step="0.01"></label>
+        <label>Field of view <output id="cameraFovValue">50°</output><input id="cameraFov" type="range" min="18" max="100" value="50" step="1"></label>
+        <label>Auto orbit <output id="autoOrbitValue">0.0°/s</output><input id="autoOrbit" type="range" min="-45" max="45" value="0" step="0.1"></label>
+      </div>
+    </section>
+
+    <section class="panel controls-panel">
+      <div class="panel-heading compact"><div><p class="kicker">Lighting</p><h2>Material response</h2></div></div>
+      <div class="control-grid">
+        <label>Light azimuth <output id="lightAzimuthValue">38°</output><input id="lightAzimuth" type="range" min="-180" max="180" value="38" step="1"></label>
+        <label>Light elevation <output id="lightElevationValue">42°</output><input id="lightElevation" type="range" min="-80" max="80" value="42" step="1"></label>
+        <label>Light intensity <output id="lightIntensityValue">1.45</output><input id="lightIntensity" type="range" min="0" max="5" value="1.45" step="0.01"></label>
+        <label>Exposure <output id="exposureValue">1.12</output><input id="exposure" type="range" min="0.1" max="4" value="1.12" step="0.01"></label>
+        <label>Background <output id="backgroundValue">0.025</output><input id="background" type="range" min="0" max="0.3" value="0.025" step="0.001"></label>
+      </div>
+    </section>
+
+    <section class="panel diagnostics">
+      <div class="panel-heading compact"><div><p class="kicker">Runtime</p><h2>Renderer diagnostics</h2></div></div>
+      <div class="diagnostic-grid">
+        <div><span>Backend</span><strong id="backend">—</strong></div>
+        <div><span>Adapter</span><strong id="adapter">—</strong></div>
+        <div><span>Resolution</span><strong id="resolution">—</strong></div>
+        <div><span>Surface</span><strong id="surfaceFormat">—</strong></div>
+        <div><span>Depth</span><strong id="depthFormat">—</strong></div>
+        <div><span>FPS</span><strong id="fps">—</strong></div>
+        <div><span>Frame time</span><strong id="frameTime">—</strong></div>
+        <div><span>Frames</span><strong id="frameCount">—</strong></div>
+      </div>
+      <div class="error-line"><span>Last error</span><code id="lastError">none</code></div>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

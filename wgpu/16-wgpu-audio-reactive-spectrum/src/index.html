@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Junkpile wgpu Audio Reactive Spectrum</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <p class="eyebrow">Example 16 · native audio input</p>
+      <h1>Audio Reactive Spectrum</h1>
+      <p class="lede">Native microphone or line input enters Rust through CPAL, becomes mono samples, FFT spectra, envelopes, transients, and frequency bands, then reaches wgpu as a GPU storage buffer.</p>
+      <div class="runtime-banner">
+        <div><span>Audio</span><strong id="runtimeAudio">Stopped</strong></div>
+        <div><span>GPU backend</span><strong id="runtimeBackend">—</strong></div>
+        <div><span>Renderer</span><strong id="runtimeRenderer">—</strong></div>
+        <div><span>Active view</span><strong id="runtimeMode">Spectrum bars</strong></div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="card wide">
+        <h2>Native audio source</h2>
+        <p class="note top-note">Starting input may trigger the operating system microphone-permission prompt. Headphones are recommended when using a built-in microphone near speakers.</p>
+        <div class="device-row">
+          <label for="audioDevice">Input device</label>
+          <select id="audioDevice"></select>
+          <button id="refreshDevices" type="button">Refresh</button>
+          <button id="startAudio" class="primary" type="button">Start input</button>
+          <button id="stopAudio" type="button">Stop</button>
+        </div>
+        <div class="stats compact four">
+          <div class="stat"><span>Host</span><strong id="audioHost">—</strong></div>
+          <div class="stat"><span>Format</span><strong id="audioFormat">—</strong></div>
+          <div class="stat"><span>Sample rate</span><strong id="sampleRate">—</strong></div>
+          <div class="stat"><span>Channels</span><strong id="channels">—</strong></div>
+        </div>
+        <p id="audioError" class="error-text"></p>
+      </article>
+
+      <article class="card">
+        <h2>FFT and envelope analysis</h2>
+        <div class="select-control">
+          <label for="fftSize">FFT size</label>
+          <select id="fftSize">
+            <option value="1024">1024 · faster response</option>
+            <option value="2048" selected>2048 · balanced</option>
+            <option value="4096">4096 · more definition</option>
+            <option value="8192">8192 · maximum frequency detail</option>
+          </select>
+        </div>
+        <div class="controls">
+          <div class="control"><label for="inputGain">Input gain</label><input id="inputGain" type="range" min="0.05" max="8" step="0.01" value="1"><output for="inputGain">1.00</output></div>
+          <div class="control"><label for="smoothing">Smoothing</label><input id="smoothing" type="range" min="0" max="0.98" step="0.01" value="0.82"><output for="smoothing">0.82</output></div>
+          <div class="control"><label for="gate">Noise gate</label><input id="gate" type="range" min="0" max="0.2" step="0.001" value="0.015"><output for="gate">0.015</output></div>
+          <div class="control"><label for="transientSensitivity">Transient threshold</label><input id="transientSensitivity" type="range" min="0.001" max="0.12" step="0.001" value="0.02"><output for="transientSensitivity">0.020</output></div>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2>Analysis meters</h2>
+        <div class="meter-grid">
+          <div class="meter"><span>RMS</span><div><i id="rmsBar"></i></div><strong id="rmsValue">0.000</strong></div>
+          <div class="meter"><span>Peak</span><div><i id="peakBar"></i></div><strong id="peakValue">0.000</strong></div>
+          <div class="meter"><span>Bass</span><div><i id="bassBar"></i></div><strong id="bassValue">0.000</strong></div>
+          <div class="meter"><span>Low-mid</span><div><i id="lowMidBar"></i></div><strong id="lowMidValue">0.000</strong></div>
+          <div class="meter"><span>High-mid</span><div><i id="highMidBar"></i></div><strong id="highMidValue">0.000</strong></div>
+          <div class="meter"><span>Treble</span><div><i id="trebleBar"></i></div><strong id="trebleValue">0.000</strong></div>
+        </div>
+        <div class="stats compact two">
+          <div class="stat"><span>Spectral centroid</span><strong id="centroid">0 Hz</strong></div>
+          <div class="stat"><span>Transient</span><strong id="transient">0.000</strong></div>
+        </div>
+      </article>
+
+      <article class="card wide">
+        <h2>GPU visualization</h2>
+        <div class="mode-grid" role="group" aria-label="Visualization mode">
+          <button type="button" data-mode="0" class="active">Spectrum bars</button>
+          <button type="button" data-mode="1">Radial spectrum</button>
+          <button type="button" data-mode="2">Oscilloscope</button>
+          <button type="button" data-mode="3">Spectral field</button>
+        </div>
+        <div class="controls visual-controls">
+          <div class="control"><label for="spectrumGain">Spectrum gain</label><input id="spectrumGain" type="range" min="0.1" max="8" step="0.05" value="1.8"><output for="spectrumGain">1.80</output></div>
+          <div class="control"><label for="waveformGain">Waveform gain</label><input id="waveformGain" type="range" min="0.1" max="5" step="0.05" value="1"><output for="waveformGain">1.00</output></div>
+          <div class="control"><label for="exposure">Exposure</label><input id="exposure" type="range" min="0.1" max="4" step="0.05" value="1.15"><output for="exposure">1.15</output></div>
+          <div class="control"><label for="hue">Hue</label><input id="hue" type="range" min="0" max="1" step="0.001" value="0.58"><output for="hue">0.580</output></div>
+          <div class="control"><label for="lineWidth">Line width</label><input id="lineWidth" type="range" min="0.5" max="12" step="0.1" value="2"><output for="lineWidth">2.0</output></div>
+          <div class="control"><label for="zoom">Zoom</label><input id="zoom" type="range" min="0.4" max="3" step="0.01" value="1"><output for="zoom">1.00</output></div>
+          <div class="control"><label for="rotation">Rotation</label><input id="rotation" type="range" min="-3.1416" max="3.1416" step="0.01" value="0"><output for="rotation">0.00</output></div>
+        </div>
+        <div class="row buttons">
+          <button id="resetVisual" type="button">Reset visual parameters</button>
+          <button id="rendererFullscreen" type="button">Renderer fullscreen</button>
+        </div>
+      </article>
+
+      <article class="card wide">
+        <h2>Diagnostics</h2>
+        <div class="stats diagnostics">
+          <div class="stat"><span>Audio callbacks</span><strong id="callbackCount">0</strong></div>
+          <div class="stat"><span>Captured samples</span><strong id="capturedSamples">0</strong></div>
+          <div class="stat"><span>Dropped chunks</span><strong id="droppedChunks">0</strong></div>
+          <div class="stat"><span>Stream errors</span><strong id="streamErrors">0</strong></div>
+          <div class="stat"><span>Analysis FPS</span><strong id="analysisFps">0.0</strong></div>
+          <div class="stat"><span>Render FPS</span><strong id="renderFps">0.0</strong></div>
+          <div class="stat"><span>GPU surface</span><strong id="gpuSurface">—</strong></div>
+          <div class="stat"><span>Audio sequence</span><strong id="audioSequence">0</strong></div>
+        </div>
+      </article>
+
+      <article class="card wide">
+        <h2>Signal path</h2>
+        <div class="flow">
+          <div><b>1</b><span>CPAL input</span><small>CoreAudio, WASAPI, ALSA or the active native host</small></div>
+          <i>→</i>
+          <div><b>2</b><span>Rust analysis</span><small>Mono conversion, Hann window, FFT, bands and transients</small></div>
+          <i>→</i>
+          <div><b>3</b><span>GPU buffer</span><small>256 spectrum bins and 512 waveform samples</small></div>
+          <i>→</i>
+          <div><b>4</b><span>wgpu surface</span><small>WGSL visualization through Metal, Vulkan or DX12</small></div>
+        </div>
+      </article>
+    </section>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

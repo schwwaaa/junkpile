@@ -1,0 +1,16 @@
+{
+  "name": "20-wgpu-multi-input-compositor",
+  "version": "0.1.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tauri dev",
+    "dev:metal": "node scripts/run-backend.mjs metal",
+    "dev:vulkan": "node scripts/run-backend.mjs vulkan",
+    "dev:dx12": "node scripts/run-backend.mjs dx12",
+    "build": "tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.11.0"
+  }
+}

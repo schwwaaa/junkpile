@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Native Video Decoder</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">JUNKPILE · INPUT SYSTEMS · 15</p>
+      <h1>Native Video Decoder</h1>
+      <p>Video file → FFmpeg decoder process → packed BGRA frames → latest-frame boundary → wgpu texture → WGSL processing.</p>
+    </header>
+
+    <section class="status-grid" aria-label="System status">
+      <article><span>FFmpeg</span><strong id="ffmpeg-state">checking</strong></article>
+      <article><span>Playback</span><strong id="playback-state">no file</strong></article>
+      <article><span>Source</span><strong id="source-format">—</strong></article>
+      <article><span>GPU</span><strong id="gpu">—</strong></article>
+      <article><span>Decode FPS</span><strong id="decode-fps">0</strong></article>
+      <article><span>Render FPS</span><strong id="render-fps">0</strong></article>
+      <article><span>Processing</span><strong id="processing-state">Clean source</strong></article>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title"><h2>Video transport</h2><span id="file-name">No video loaded</span></div>
+      <div class="three-col">
+        <label>Decode path<select id="decode-mode"><option value="software" selected>Software · dependable baseline</option><option value="auto">FFmpeg hardware auto</option></select></label>
+        <label>Playback rate<select id="rate"><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="1.5">1.5×</option><option value="2">2×</option><option value="4">4×</option></select></label>
+        <label>Processing<select id="mode"><option value="clean">Clean source</option><option value="edge">Edge extraction</option><option value="lumaWarp">Luma displacement</option><option value="rgbSplit">RGB separation</option><option value="posterize">Posterize</option><option value="blocks">Pixel blocks</option><option value="scanlines">Scanlines</option></select></label>
+      </div>
+      <div class="button-row">
+        <button id="open" class="primary" type="button">Open video…</button>
+        <button id="play" type="button">Play</button>
+        <button id="pause" type="button">Pause</button>
+        <button id="stop" type="button">Stop</button>
+        <button id="step-back" type="button">Previous frame</button>
+        <button id="step-forward" type="button">Next frame</button>
+        <button id="fullscreen" type="button">Renderer fullscreen</button>
+      </div>
+      <label class="timeline-label" for="timeline"><span>Timeline</span><output id="time-display">00:00.000 / 00:00.000</output></label>
+      <input id="timeline" type="range" min="0" max="1" step="0.001" value="0">
+      <div class="transport-options">
+        <label class="check"><input id="loop" type="checkbox" checked> Loop at end</label>
+        <span id="codec-line">Codec and duration appear after opening a file.</span>
+      </div>
+      <p id="error" class="error" role="status"></p>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title"><h2>Texture mapping and shader processing</h2><span>GPU-side</span></div>
+      <div class="four-col">
+        <label>Fit<select id="fit"><option value="cover">Cover</option><option value="contain">Contain</option><option value="stretch">Stretch</option></select></label>
+        <label>Filter<select id="filter"><option value="linear">Linear</option><option value="nearest">Nearest</option></select></label>
+        <label>Rotation<select id="rotation"><option value="0">0°</option><option value="90">90°</option><option value="180">180°</option><option value="270">270°</option></select></label>
+        <label class="check"><input id="mirror" type="checkbox"> Mirror video</label>
+      </div>
+      <div class="control-section">
+        <div class="control-section-title">
+          <h3>Global image controls</h3>
+          <span>Always active</span>
+        </div>
+        <div id="global-sliders" class="sliders"></div>
+      </div>
+      <div class="control-section effect-control-section">
+        <div class="control-section-title">
+          <h3 id="active-effect-name">Clean source</h3>
+          <span id="effect-control-hint">Choose a processing mode to reveal its controls.</span>
+        </div>
+        <div id="effect-sliders" class="sliders effect-sliders"></div>
+        <p id="no-effect-controls" class="inactive-effect-note">No effect-specific parameters are active while Clean source is selected.</p>
+      </div>
+      <div class="button-row"><button id="reset" type="button">Reset visual parameters</button></div>
+    </section>
+
+    <section class="panel diagnostics">
+      <div class="panel-title"><h2>Diagnostics</h2><span>decode, publish, upload, render</span></div>
+      <dl>
+        <div><dt>FFmpeg version</dt><dd id="ffmpeg-version">—</dd></div>
+        <div><dt>File path</dt><dd id="file-path">—</dd></div>
+        <div><dt>Source codec</dt><dd id="codec">—</dd></div>
+        <div><dt>Source pixel format</dt><dd id="pixel-format">—</dd></div>
+        <div><dt>Source definition</dt><dd id="source-definition">—</dd></div>
+        <div><dt>Source frame rate</dt><dd id="source-fps">0</dd></div>
+        <div><dt>Decode mode</dt><dd id="active-decode-mode">software</dd></div>
+        <div><dt>Raw-frame read</dt><dd id="decode-time">0 ms</dd></div>
+        <div><dt>Delivered frames</dt><dd id="delivered-frames">0</dd></div>
+        <div><dt>Decoder restarts</dt><dd id="decoder-restarts">0</dd></div>
+        <div><dt>Uploaded frames</dt><dd id="uploaded-frames">0</dd></div>
+        <div><dt>Skipped before upload</dt><dd id="skipped-frames">0</dd></div>
+        <div><dt>Latest frame age</dt><dd id="frame-age">0 ms</dd></div>
+        <div><dt>Render target</dt><dd id="render-target">—</dd></div>
+        <div><dt>GPU surface</dt><dd id="surface-format">—</dd></div>
+      </dl>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
