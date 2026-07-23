@@ -1,0 +1,15 @@
+{
+  "name": "14-tauri-v1-canvas-recorder",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Tauri v1 WebGL canvas recording with MediaRecorder, optional microphone audio, and native file export",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^1.6.3"
+  }
+}

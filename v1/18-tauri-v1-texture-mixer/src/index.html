@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>18 · Tauri v1 · Texture Mixer</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main id="app">
+    <aside id="controls" aria-label="Texture mixer controls">
+      <header class="panel-header">
+        <div class="eyebrow">Junkpile · Tauri v1 essentials</div>
+        <h1>18 · Texture Mixer</h1>
+        <p>Two image/video textures → transforms → blend mode → procedural mask → native export</p>
+      </header>
+
+      <section class="control-section source-section">
+        <div class="section-heading"><span>Media inputs</span><button id="swap-layers" class="compact-button" type="button">Swap A ↔ B</button></div>
+
+        <article class="source-card source-a" data-layer="a">
+          <div class="source-card-header">
+            <span class="layer-badge">A</span>
+            <strong id="source-a-name">Generated gradient</strong>
+            <span id="source-a-state" class="status-pill">Image</span>
+          </div>
+          <label class="file-button" for="source-a-input">Choose image or video</label>
+          <input id="source-a-input" type="file" accept="image/*,video/*" hidden>
+          <div id="drop-a" class="drop-zone compact-drop" tabindex="0">
+            <strong>Drop media into Layer A</strong>
+            <span>PNG · JPEG · WebP · GIF · MP4 · MOV · WebM</span>
+          </div>
+          <div class="source-meta">
+            <span id="source-a-size">1024 × 1024</span>
+            <span id="source-a-time">Still frame</span>
+          </div>
+          <div class="transport-row">
+            <button id="source-a-play" type="button" disabled>Play</button>
+            <label for="source-a-speed">Speed</label>
+            <input id="source-a-speed" type="range" min="0.25" max="2" step="0.05" value="1" disabled>
+            <output id="source-a-speed-output">1.00×</output>
+          </div>
+        </article>
+
+        <article class="source-card source-b" data-layer="b">
+          <div class="source-card-header">
+            <span class="layer-badge">B</span>
+            <strong id="source-b-name">Generated signal</strong>
+            <span id="source-b-state" class="status-pill warm-pill">Image</span>
+          </div>
+          <label class="file-button warm-button" for="source-b-input">Choose image or video</label>
+          <input id="source-b-input" type="file" accept="image/*,video/*" hidden>
+          <div id="drop-b" class="drop-zone compact-drop" tabindex="0">
+            <strong>Drop media into Layer B</strong>
+            <span>Images and videos can be mixed freely</span>
+          </div>
+          <div class="source-meta">
+            <span id="source-b-size">1024 × 1024</span>
+            <span id="source-b-time">Still frame</span>
+          </div>
+          <div class="transport-row">
+            <button id="source-b-play" type="button" disabled>Play</button>
+            <label for="source-b-speed">Speed</label>
+            <input id="source-b-speed" type="range" min="0.25" max="2" step="0.05" value="1" disabled>
+            <output id="source-b-speed-output">1.00×</output>
+          </div>
+        </article>
+      </section>
+
+      <section class="control-section">
+        <div class="section-heading"><span>Layer transform</span><span id="active-layer-label">Editing Layer A</span></div>
+        <div class="layer-tabs" role="tablist" aria-label="Active layer">
+          <button id="edit-layer-a" class="layer-tab active" type="button" role="tab" aria-selected="true">Layer A</button>
+          <button id="edit-layer-b" class="layer-tab" type="button" role="tab" aria-selected="false">Layer B</button>
+        </div>
+        <div class="select-row">
+          <label for="fit-mode">Fit mode</label>
+          <select id="fit-mode">
+            <option value="0">Contain</option>
+            <option value="1" selected>Cover</option>
+            <option value="2">Stretch</option>
+          </select>
+        </div>
+        <div class="control-row">
+          <label for="layer-opacity">Opacity</label>
+          <input id="layer-opacity" type="range" min="0" max="1" step="0.001" value="1">
+          <output id="layer-opacity-output">1.000</output>
+        </div>
+        <div class="control-row">
+          <label for="layer-zoom">Zoom</label>
+          <input id="layer-zoom" type="range" min="0.1" max="5" step="0.01" value="1">
+          <output id="layer-zoom-output">1.00</output>
+        </div>
+        <div class="control-row">
+          <label for="layer-pan-x">Pan X</label>
+          <input id="layer-pan-x" type="range" min="-1" max="1" step="0.001" value="0">
+          <output id="layer-pan-x-output">0.000</output>
+        </div>
+        <div class="control-row">
+          <label for="layer-pan-y">Pan Y</label>
+          <input id="layer-pan-y" type="range" min="-1" max="1" step="0.001" value="0">
+          <output id="layer-pan-y-output">0.000</output>
+        </div>
+        <div class="control-row">
+          <label for="layer-rotation">Rotation</label>
+          <input id="layer-rotation" type="range" min="-180" max="180" step="1" value="0">
+          <output id="layer-rotation-output">0°</output>
+        </div>
+        <div class="toggle-grid">
+          <label class="toggle"><input id="layer-mirror-x" type="checkbox"><span>Mirror X</span></label>
+          <label class="toggle"><input id="layer-mirror-y" type="checkbox"><span>Mirror Y</span></label>
+        </div>
+        <button id="reset-layer" type="button">Reset active layer</button>
+      </section>
+
+      <section class="control-section">
+        <div class="section-heading"><span>Blend</span><span id="blend-label">Screen</span></div>
+        <div class="select-row">
+          <label for="blend-mode">Mode</label>
+          <select id="blend-mode">
+            <option value="0">Normal</option>
+            <option value="1">Add</option>
+            <option value="2">Multiply</option>
+            <option value="3" selected>Screen</option>
+            <option value="4">Overlay</option>
+            <option value="5">Hard light</option>
+            <option value="6">Difference</option>
+            <option value="7">Exclusion</option>
+            <option value="8">Lighten</option>
+            <option value="9">Darken</option>
+            <option value="10">Color dodge</option>
+          </select>
+        </div>
+        <div class="control-row">
+          <label for="mix-amount">Mix</label>
+          <input id="mix-amount" type="range" min="0" max="1" step="0.001" value="0.65">
+          <output id="mix-amount-output">0.650</output>
+        </div>
+        <div class="toggle-grid">
+          <label class="toggle wide-toggle"><input id="auto-crossfade" type="checkbox"><span>Auto crossfade</span></label>
+          <label class="toggle wide-toggle"><input id="freeze-videos" type="checkbox"><span>Freeze videos</span></label>
+        </div>
+        <div class="control-row">
+          <label for="crossfade-speed">Crossfade speed</label>
+          <input id="crossfade-speed" type="range" min="0.05" max="2" step="0.01" value="0.35">
+          <output id="crossfade-speed-output">0.35</output>
+        </div>
+      </section>
+
+      <section class="control-section">
+        <div class="section-heading"><span>Mask</span><span id="mask-label">Linear</span></div>
+        <div class="select-row">
+          <label for="mask-mode">Mode</label>
+          <select id="mask-mode">
+            <option value="0">None</option>
+            <option value="1" selected>Linear</option>
+            <option value="2">Radial</option>
+            <option value="3">Layer A luminance</option>
+            <option value="4">Layer B luminance</option>
+            <option value="5">Checker</option>
+            <option value="6">Stripes</option>
+            <option value="7">Animated noise</option>
+          </select>
+        </div>
+        <div class="control-row">
+          <label for="mask-position">Threshold</label>
+          <input id="mask-position" type="range" min="0" max="1" step="0.001" value="0.5">
+          <output id="mask-position-output">0.500</output>
+        </div>
+        <div class="control-row">
+          <label for="mask-feather">Feather</label>
+          <input id="mask-feather" type="range" min="0.001" max="0.5" step="0.001" value="0.12">
+          <output id="mask-feather-output">0.120</output>
+        </div>
+        <div class="control-row">
+          <label for="mask-scale">Scale</label>
+          <input id="mask-scale" type="range" min="0.2" max="40" step="0.1" value="6">
+          <output id="mask-scale-output">6.0</output>
+        </div>
+        <div class="control-row">
+          <label for="mask-angle">Angle</label>
+          <input id="mask-angle" type="range" min="-180" max="180" step="1" value="0">
+          <output id="mask-angle-output">0°</output>
+        </div>
+        <div class="control-row">
+          <label for="mask-center-x">Center X</label>
+          <input id="mask-center-x" type="range" min="0" max="1" step="0.001" value="0.5">
+          <output id="mask-center-x-output">0.500</output>
+        </div>
+        <div class="control-row">
+          <label for="mask-center-y">Center Y</label>
+          <input id="mask-center-y" type="range" min="0" max="1" step="0.001" value="0.5">
+          <output id="mask-center-y-output">0.500</output>
+        </div>
+        <label class="toggle wide-toggle"><input id="mask-invert" type="checkbox"><span>Invert mask</span></label>
+      </section>
+
+      <section class="control-section">
+        <div class="section-heading"><span>View and presets</span></div>
+        <div class="select-row">
+          <label for="view-mode">Preview</label>
+          <select id="view-mode">
+            <option value="0" selected>Composite</option>
+            <option value="1">Layer A</option>
+            <option value="2">Layer B</option>
+            <option value="3">Mask</option>
+          </select>
+        </div>
+        <div class="select-row">
+          <label for="background-mode">Background</label>
+          <select id="background-mode">
+            <option value="0">Transparent</option>
+            <option value="1">Black</option>
+            <option value="2">White</option>
+            <option value="3" selected>Checker</option>
+          </select>
+        </div>
+        <div class="select-row">
+          <label for="preview-scale">Preview scale</label>
+          <select id="preview-scale">
+            <option value="0.5">50%</option>
+            <option value="0.75">75%</option>
+            <option value="1" selected>100%</option>
+          </select>
+        </div>
+        <div class="preset-grid">
+          <button type="button" data-preset="ghost">Ghost screen</button>
+          <button type="button" data-preset="cut">Hard cut</button>
+          <button type="button" data-preset="print">Print mask</button>
+          <button type="button" data-preset="signal">Signal noise</button>
+        </div>
+      </section>
+
+      <section class="control-section export-section">
+        <div class="section-heading"><span>Export current frame</span><span id="export-state">Ready</span></div>
+        <div class="select-row">
+          <label for="export-size">Dimensions</label>
+          <select id="export-size">
+            <option value="preview">Preview resolution</option>
+            <option value="1920x1080" selected>1920 × 1080</option>
+            <option value="3840x2160">3840 × 2160</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+        <div id="custom-export-row" class="dimension-row hidden">
+          <input id="export-width" type="number" min="64" max="8192" step="1" value="1920" aria-label="Export width">
+          <span>×</span>
+          <input id="export-height" type="number" min="64" max="8192" step="1" value="1080" aria-label="Export height">
+        </div>
+        <div class="select-row">
+          <label for="export-format">Format</label>
+          <select id="export-format">
+            <option value="png" selected>PNG</option>
+            <option value="jpeg">JPEG</option>
+          </select>
+        </div>
+        <div class="control-row" id="jpeg-quality-row">
+          <label for="jpeg-quality">JPEG quality</label>
+          <input id="jpeg-quality" type="range" min="0.1" max="1" step="0.01" value="0.92">
+          <output id="jpeg-quality-output">92%</output>
+        </div>
+        <button id="save-frame" class="primary-button full-button" type="button">Save composited frame</button>
+        <p class="microcopy">Video inputs export their current decoded frame. The selected background is included.</p>
+      </section>
+
+      <footer class="panel-footer">
+        <span id="fps-label">0 fps</span>
+        <span id="render-size">0 × 0</span>
+        <span>WebGL 1 · two textures</span>
+      </footer>
+    </aside>
+
+    <section id="stage" aria-label="Texture mixer preview">
+      <canvas id="gl-canvas"></canvas>
+      <div id="drop-overlay" class="drop-overlay hidden">Drop into a Layer A or Layer B card</div>
+      <div class="stage-hud">
+        <span id="hud-left">A · Generated gradient</span>
+        <span id="hud-center">Screen · 65%</span>
+        <span id="hud-right">B · Generated signal</span>
+      </div>
+      <div id="unsupported" class="unsupported hidden">
+        <div class="empty-mark">18</div>
+        <h2>WebGL unavailable</h2>
+        <p>This example requires WebGL 1 in the Tauri WebView.</p>
+      </div>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

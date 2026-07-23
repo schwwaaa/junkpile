@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>15 · Tauri v1 · Multipass Compositor</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main id="app">
+    <aside id="controls" aria-label="Multipass compositor controls">
+      <header class="panel-header">
+        <div class="eyebrow">Junkpile · Tauri v1 essentials</div>
+        <h1>15 · Multipass Compositor</h1>
+        <p>Source shader → reorderable GPU passes → persistent history → screen</p>
+      </header>
+
+      <section class="control-section">
+        <div class="section-heading"><span>Pipeline</span><span id="pipeline-state" class="status-pill ready">Live</span></div>
+        <div class="button-grid three">
+          <button id="bypass-button" type="button">Bypass</button>
+          <button id="clear-history" type="button">Clear history</button>
+          <button id="reset-pipeline" type="button">Reset</button>
+        </div>
+        <label class="toggle wide-toggle"><input id="freeze-history" type="checkbox"><span>Freeze feedback history</span></label>
+        <div class="select-row">
+          <label for="render-scale">Render scale</label>
+          <select id="render-scale">
+            <option value="0.5">50%</option>
+            <option value="0.75">75%</option>
+            <option value="1" selected>100%</option>
+            <option value="1.25">125%</option>
+          </select>
+        </div>
+        <dl class="source-details">
+          <div><dt>Active</dt><dd id="active-pass-count">0 passes</dd></div>
+          <div><dt>Draws</dt><dd id="draw-call-count">0 / frame</dd></div>
+          <div><dt>History</dt><dd id="history-label">Buffer A</dd></div>
+        </dl>
+      </section>
+
+      <section class="control-section">
+        <div class="section-heading"><span>Source</span></div>
+        <div class="select-row">
+          <label for="source-mode">Generator</label>
+          <select id="source-mode">
+            <option value="0">Fluid field</option>
+            <option value="1">Infinite tunnel</option>
+            <option value="2">Cellular lattice</option>
+            <option value="3">Signal bands</option>
+          </select>
+        </div>
+        <div class="control-row">
+          <label for="source-speed">Speed</label>
+          <input id="source-speed" type="range" min="0" max="3" step="0.01" value="0.65">
+          <output id="source-speed-output">0.65</output>
+        </div>
+        <div class="control-row">
+          <label for="source-scale">Scale</label>
+          <input id="source-scale" type="range" min="0.25" max="5" step="0.01" value="1.35">
+          <output id="source-scale-output">1.35</output>
+        </div>
+        <div class="control-row">
+          <label for="source-detail">Detail</label>
+          <input id="source-detail" type="range" min="1" max="6" step="1" value="5">
+          <output id="source-detail-output">5</output>
+        </div>
+        <div class="control-row">
+          <label for="source-hue">Hue</label>
+          <input id="source-hue" type="range" min="-180" max="180" step="1" value="0">
+          <output id="source-hue-output">0°</output>
+        </div>
+      </section>
+
+      <section class="control-section pass-section">
+        <div class="section-heading"><span>Pass stack</span><span>Top → bottom</span></div>
+        <div id="pass-list" class="pass-list" aria-label="Reorderable shader pass list"></div>
+      </section>
+
+      <section class="control-section inspector-section">
+        <div class="section-heading"><span>Selected pass</span><span id="selected-pass-label">Pass 1</span></div>
+        <div class="select-row">
+          <label for="selected-effect">Effect</label>
+          <select id="selected-effect"></select>
+        </div>
+        <div class="control-row">
+          <label id="amount-label" for="pass-amount">Decay</label>
+          <input id="pass-amount" type="range" min="0" max="1" step="0.001" value="0.84">
+          <output id="pass-amount-output">0.840</output>
+        </div>
+        <div class="control-row">
+          <label id="secondary-label" for="pass-secondary">Drift</label>
+          <input id="pass-secondary" type="range" min="0" max="1" step="0.001" value="0.18">
+          <output id="pass-secondary-output">0.180</output>
+        </div>
+        <div class="control-row">
+          <label for="pass-mix">Mix</label>
+          <input id="pass-mix" type="range" min="0" max="1" step="0.001" value="1">
+          <output id="pass-mix-output">1.000</output>
+        </div>
+      </section>
+
+      <section class="control-section">
+        <div class="section-heading"><span>Presets</span></div>
+        <div class="preset-grid">
+          <button data-preset="echo" type="button">Analog echo</button>
+          <button data-preset="prism" type="button">Prism</button>
+          <button data-preset="scan" type="button">Scanline</button>
+          <button data-preset="melt" type="button">Meltdown</button>
+          <button data-preset="clean" type="button">Clean chain</button>
+        </div>
+      </section>
+
+      <footer class="panel-footer">
+        <span id="fps-label">0 fps</span>
+        <span id="render-size">0 × 0</span>
+        <span>WebGL 1 · FBO ping-pong</span>
+      </footer>
+    </aside>
+
+    <section id="stage" aria-label="Multipass WebGL output">
+      <canvas id="gl-canvas"></canvas>
+      <div class="stage-hud">
+        <span id="hud-source">Fluid field</span>
+        <span id="hud-pipeline">5 active passes</span>
+      </div>
+      <div id="unsupported" class="unsupported hidden">
+        <div class="empty-mark">15</div>
+        <h2>WebGL unavailable</h2>
+        <p>This example requires a WebGL 1 context with framebuffer texture support.</p>
+      </div>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

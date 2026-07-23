@@ -1,0 +1,15 @@
+{
+  "name": "17-tauri-v1-glsl-shader-playground",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Tauri v1 raw WebGL GLSL playground with live editing, compile diagnostics, presets, uniform controls, source saving, and PNG snapshots",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^1.6.3"
+  }
+}

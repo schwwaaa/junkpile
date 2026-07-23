@@ -1,0 +1,15 @@
+{
+  "name": "15-tauri-v1-multipass-compositor",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Tauri v1 raw WebGL multipass compositor with reorderable shader passes, ping-pong framebuffers, and persistent feedback",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^1.6.3"
+  }
+}

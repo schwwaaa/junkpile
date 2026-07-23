@@ -1,0 +1,15 @@
+{
+  "name": "18-tauri-v1-texture-mixer",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Tauri v1 raw WebGL dual image/video texture mixer with blend modes, procedural masks, transforms, and native export",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^1.6.3"
+  }
+}

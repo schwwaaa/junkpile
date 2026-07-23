@@ -1,0 +1,15 @@
+{
+  "name": "12-tauri-v1-video-texture-player",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Tauri v1 local video-file playback through a raw WebGL shader pipeline",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^1.6.3"
+  }
+}

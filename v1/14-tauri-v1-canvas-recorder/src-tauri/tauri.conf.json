@@ -1,0 +1,54 @@
+{
+  "$schema": "https://schema.tauri.app/config/1",
+  "build": {
+    "beforeBuildCommand": "",
+    "beforeDevCommand": "",
+    "devPath": "../src",
+    "distDir": "../src",
+    "withGlobalTauri": true
+  },
+  "package": {
+    "productName": "Junkpile 14 · Canvas Recorder",
+    "version": "0.1.0"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": false,
+      "dialog": {
+        "save": true
+      },
+      "fs": {
+        "writeFile": true
+      }
+    },
+    "windows": [
+      {
+        "label": "main",
+        "title": "14 · Tauri v1 · Canvas Recorder",
+        "url": "index.html",
+        "width": 1360,
+        "height": 860,
+        "minWidth": 980,
+        "minHeight": 650,
+        "resizable": true,
+        "decorations": true,
+        "fullscreen": false
+      }
+    ],
+    "bundle": {
+      "active": true,
+      "identifier": "com.schwwaaa.junkpile.v1.canvas-recorder",
+      "icon": [
+        "icons/icon.icns",
+        "icons/icon.png",
+        "icons/icon.ico"
+      ],
+      "macOS": {
+        "entitlements": "entitlements.plist"
+      }
+    },
+    "security": {
+      "csp": "default-src 'self'; media-src 'self' blob: mediastream:; img-src 'self' blob: data:; script-src 'self'; style-src 'self' 'unsafe-inline'"
+    }
+  }
+}

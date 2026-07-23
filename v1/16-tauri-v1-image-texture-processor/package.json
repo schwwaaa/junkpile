@@ -1,0 +1,15 @@
+{
+  "name": "16-tauri-v1-image-texture-processor",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Tauri v1 raw WebGL still-image texture processor with comparison, grading, stylization, and native PNG/JPEG export",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^1.6.3"
+  }
+}
