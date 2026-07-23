@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Junkpile 25 · Ultra-Resolution Export</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="masthead glass">
+      <div class="identity">
+        <span class="eyebrow">JUNKPILE / NATIVE WGPU / EXAMPLE 25</span>
+        <h1>Ultra-Resolution Export</h1>
+        <p class="lede">Render once for the native preview, then reproduce the same frame as tiled 4K or 8K GPU output with CPU readback and PNG encoding.</p>
+      </div>
+      <div class="mast-actions">
+        <div class="mast-buttons">
+          <button class="button" type="button" data-command="renderer-fullscreen">Renderer fullscreen</button>
+          <button class="button" type="button" data-command="open-folder">Open exports</button>
+          <button class="button quiet" type="button" data-command="reset">Reset all</button>
+        </div>
+        <span class="status-pill" data-status-pill><i></i><span>Initializing GPU</span></span>
+      </div>
+    </header>
+
+    <section class="workspace">
+      <aside class="control-stack">
+        <section class="panel glass">
+          <div class="panel-head">
+            <div><span class="section-index">01</span><h2>Procedural field</h2></div>
+            <label class="switch"><input type="checkbox" data-toggle="paused"><span></span><b>Freeze frame</b></label>
+          </div>
+
+          <div class="preset-grid">
+            <button class="active" type="button" data-preset="nebula">Nebula</button>
+            <button type="button" data-preset="crystal">Crystal</button>
+            <button type="button" data-preset="void">Void</button>
+            <button type="button" data-preset="aurora">Aurora</button>
+            <button type="button" data-preset="ember">Ember</button>
+          </div>
+
+          <div class="control-grid two-col">
+            <label class="control motion"><span><b>Animation speed</b><output data-output="animation_speed"></output></span><input type="range" min="-3" max="3" step="0.01" value="0.55" data-param="animation_speed" data-unit="×"></label>
+            <label class="control"><span><b>Zoom</b><output data-output="zoom"></output></span><input type="range" min="0.25" max="4" step="0.01" value="1.35" data-param="zoom"></label>
+            <label class="control"><span><b>Rotation</b><output data-output="rotation"></output></span><input type="range" min="-180" max="180" step="1" value="12" data-param="rotation" data-unit="°"></label>
+            <label class="control warp"><span><b>Domain warp</b><output data-output="warp"></output></span><input type="range" min="0" max="3" step="0.01" value="0.75" data-param="warp"></label>
+            <label class="control fold"><span><b>Fractal fold</b><output data-output="fold"></output></span><input type="range" min="0.25" max="1.8" step="0.01" value="0.92" data-param="fold"></label>
+            <label class="control density"><span><b>Density</b><output data-output="density"></output></span><input type="range" min="1" max="24" step="0.1" value="8.5" data-param="density"></label>
+            <label class="control detail"><span><b>Iterations</b><output data-output="detail"></output></span><input type="range" min="1" max="16" step="1" value="10" data-param="detail"></label>
+            <label class="control glow"><span><b>Central glow</b><output data-output="glow"></output></span><input type="range" min="0" max="4" step="0.01" value="0.75" data-param="glow"></label>
+          </div>
+        </section>
+
+        <section class="panel glass">
+          <div class="panel-head">
+            <div><span class="section-index">02</span><h2>Color and finishing</h2></div>
+            <span class="microcopy">same shader / every resolution</span>
+          </div>
+          <div class="control-grid two-col compact">
+            <label class="control hue"><span><b>Hue phase</b><output data-output="hue"></output></span><input type="range" min="0" max="1" step="0.001" value="0.08" data-param="hue"></label>
+            <label class="control"><span><b>Saturation</b><output data-output="saturation"></output></span><input type="range" min="0" max="1.5" step="0.01" value="0.92" data-param="saturation"></label>
+            <label class="control exposure"><span><b>Exposure</b><output data-output="exposure"></output></span><input type="range" min="0.05" max="5" step="0.01" value="1.4" data-param="exposure"></label>
+            <label class="control"><span><b>Contrast</b><output data-output="contrast"></output></span><input type="range" min="0.25" max="2.5" step="0.01" value="1.12" data-param="contrast"></label>
+            <label class="control"><span><b>Vignette</b><output data-output="vignette"></output></span><input type="range" min="0" max="1" step="0.01" value="0.65" data-param="vignette"></label>
+            <label class="control"><span><b>Deterministic grain</b><output data-output="grain"></output></span><input type="range" min="0" max="0.08" step="0.001" value="0.012" data-param="grain"></label>
+            <label class="control span-two"><span><b>Background lift</b><output data-output="background"></output></span><input type="range" min="0" max="0.5" step="0.001" value="0.018" data-param="background"></label>
+          </div>
+        </section>
+
+        <section class="panel glass export-panel">
+          <div class="panel-head">
+            <div><span class="section-index">03</span><h2>Offscreen export</h2></div>
+            <span class="microcopy">tiled RGBA8 → PNG</span>
+          </div>
+
+          <div class="resolution-presets">
+            <button type="button" data-resolution="1920x1080">HD</button>
+            <button class="active" type="button" data-resolution="3840x2160">4K</button>
+            <button type="button" data-resolution="5760x3240">6K</button>
+            <button type="button" data-resolution="7680x4320">8K</button>
+            <button type="button" data-resolution="4096x4096">4K square</button>
+          </div>
+
+          <div class="export-grid">
+            <label><span>Width</span><input type="number" min="256" max="8192" step="1" value="3840" data-export="width"></label>
+            <label><span>Height</span><input type="number" min="256" max="8192" step="1" value="2160" data-export="height"></label>
+            <label><span>GPU tile</span><select data-export="tileSize"><option value="512">512 px</option><option value="1024">1024 px</option><option selected value="2048">2048 px</option><option value="4096">4096 px</option></select></label>
+            <label><span>Pixel samples</span><select data-export="samples"><option selected value="1">1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
+          </div>
+
+          <div class="export-summary">
+            <div><span>Tile grid</span><b data-export-summary="tiles">—</b></div>
+            <div><span>Raw RGBA</span><b data-export-summary="bytes">—</b></div>
+            <div><span>Snapshot time</span><b data-info="sceneTime">—</b></div>
+          </div>
+
+          <button class="export-button" type="button" data-command="export">Export PNG</button>
+          <div class="progress-block" data-progress-block>
+            <div><span data-progress-stage>Ready</span><b data-progress-label>0%</b></div>
+            <progress max="1" value="0" data-progress></progress>
+          </div>
+          <p class="export-path" data-export-path>No export written yet.</p>
+        </section>
+      </aside>
+
+      <aside class="telemetry glass">
+        <div class="telemetry-head"><span>GPU telemetry</span><b data-backend>wgpu</b></div>
+        <dl>
+          <div><dt>Preview FPS</dt><dd data-info="fps">—</dd></div>
+          <div><dt>Frame time</dt><dd data-info="frameTimeMs">—</dd></div>
+          <div><dt>Preview size</dt><dd data-info="resolution">—</dd></div>
+          <div><dt>Surface format</dt><dd data-info="surfaceFormat">—</dd></div>
+          <div><dt>Export format</dt><dd data-info="exportFormat">—</dd></div>
+          <div><dt>Texture limit</dt><dd data-info="textureLimit">—</dd></div>
+          <div><dt>Export size</dt><dd data-info="exportResolution">—</dd></div>
+          <div><dt>Tiles</dt><dd data-info="tileProgress">—</dd></div>
+          <div><dt>Last duration</dt><dd data-info="lastExportMs">—</dd></div>
+          <div><dt>PNG size</dt><dd data-info="lastExportBytes">—</dd></div>
+        </dl>
+        <div class="tile-diagram" aria-label="tiled render flow">
+          <span>shader</span><i></i><span>tile</span><i></i><span>readback</span><i></i><span>PNG</span>
+        </div>
+        <div class="adapter">
+          <span>Adapter</span>
+          <strong data-info="adapter">Detecting GPU…</strong>
+          <small data-info="driver"></small>
+        </div>
+        <div class="pipeline-map"><b>global pixels</b><i></i><b>offscreen tile</b><i></i><b>padded buffer</b><i></i><b>dense image</b></div>
+        <p class="directory"><span>Export directory</span><small data-info="exportDirectory">—</small></p>
+        <p class="error" data-error hidden></p>
+      </aside>
+    </section>
+
+    <footer class="footer glass">
+      <span><b>Preview:</b> native swapchain surface</span>
+      <span><b>Export:</b> resolution-independent tiled render</span>
+      <span><b>Readback:</b> 256-byte aligned rows</span>
+    </footer>
+  </main>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101214">
+  <title>Junkpile 23 · Morph Target Lab · Controls</title>
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="masthead glass">
+      <div>
+        <p class="eyebrow">Junkpile · native GPU example 23</p>
+        <h1>Morph Target Lab</h1>
+        <p class="lede">Blend one shared mesh topology into a rounded cube, torus, and harmonic bloom. Vertex positions and normals are mixed in WGSL on every frame.</p>
+      </div>
+      <div class="mast-actions">
+        <div class="mast-buttons">
+          <button class="button quiet" type="button" data-command="renderer-fullscreen">Renderer fullscreen</button>
+          <button class="button quiet" type="button" data-command="reset">Reset</button>
+        </div>
+        <span class="status-pill" data-status-pill><i></i><span>Initializing GPU</span></span>
+      </div>
+    </header>
+
+    <section class="workspace">
+      <aside class="control-stack">
+        <section class="panel glass">
+          <div class="panel-head">
+            <div><span class="section-index">01</span><h2>Morph field</h2></div>
+            <label class="switch"><input type="checkbox" data-toggle="auto_morph" checked><span></span><b>Auto morph</b></label>
+          </div>
+
+          <div class="preset-grid" aria-label="Morph presets">
+            <button type="button" data-preset="cube">Cube</button>
+            <button type="button" data-preset="torus">Torus</button>
+            <button type="button" data-preset="bloom">Bloom</button>
+            <button type="button" data-preset="cycle" class="active">Cycle</button>
+            <button type="button" data-preset="overdrive">Overdrive</button>
+          </div>
+
+          <div class="control-grid morph-controls">
+            <label class="control cube">
+              <span><b>Rounded cube</b><output data-output="cube_weight">0.10</output></span>
+              <input type="range" min="0" max="1" step="0.001" value="0.10" data-param="cube_weight">
+              <span class="effective"><i data-effective-bar="effectiveCubeWeight"></i><small>GPU effective <b data-effective="effectiveCubeWeight">0.10</b></small></span>
+            </label>
+            <label class="control torus">
+              <span><b>Torus</b><output data-output="torus_weight">0.18</output></span>
+              <input type="range" min="0" max="1" step="0.001" value="0.18" data-param="torus_weight">
+              <span class="effective"><i data-effective-bar="effectiveTorusWeight"></i><small>GPU effective <b data-effective="effectiveTorusWeight">0.18</b></small></span>
+            </label>
+            <label class="control bloom">
+              <span><b>Harmonic bloom</b><output data-output="bloom_weight">0.32</output></span>
+              <input type="range" min="0" max="1" step="0.001" value="0.32" data-param="bloom_weight">
+              <span class="effective"><i data-effective-bar="effectiveBloomWeight"></i><small>GPU effective <b data-effective="effectiveBloomWeight">0.32</b></small></span>
+            </label>
+          </div>
+
+          <div class="split-row">
+            <label class="select-control"><span>Blend rule</span><select data-select="blend_mode"><option value="normalized" selected>Normalized</option><option value="additive">Additive</option><option value="sequential">Sequential</option></select></label>
+            <label class="select-control"><span>Inspection view</span><select data-select="view_mode"><option value="lit" selected>Lit material</option><option value="normals">Normals</option><option value="morph_heat">Morph heat</option><option value="grid">UV grid</option></select></label>
+          </div>
+
+          <div class="control-grid compact">
+            <label class="control"><span><b>Auto amount</b><output data-output="auto_amount">0.82</output></span><input type="range" min="0" max="1" step="0.001" value="0.82" data-param="auto_amount"></label>
+            <label class="control"><span><b>Auto speed</b><output data-output="auto_speed">0.42</output></span><input type="range" min="0" max="4" step="0.01" value="0.42" data-param="auto_speed"></label>
+            <label class="control"><span><b>Displacement</b><output data-output="displacement_scale">1.00</output></span><input type="range" min="0" max="1.8" step="0.01" value="1" data-param="displacement_scale"></label>
+          </div>
+        </section>
+
+        <section class="panel glass collapsible">
+          <div class="panel-head">
+            <div><span class="section-index">02</span><h2>Camera</h2></div>
+            <label class="switch"><input type="checkbox" data-toggle="backface_culling" checked><span></span><b>Cull backs</b></label>
+          </div>
+          <div class="control-grid compact two-col">
+            <label class="control"><span><b>Yaw</b><output data-output="camera_yaw">30.0°</output></span><input type="range" min="-180" max="180" step="0.5" value="30" data-param="camera_yaw" data-unit="°"></label>
+            <label class="control"><span><b>Pitch</b><output data-output="camera_pitch">16.0°</output></span><input type="range" min="-88" max="88" step="0.5" value="16" data-param="camera_pitch" data-unit="°"></label>
+            <label class="control"><span><b>Distance</b><output data-output="camera_distance">3.65</output></span><input type="range" min="1.25" max="12" step="0.01" value="3.65" data-param="camera_distance"></label>
+            <label class="control"><span><b>Field of view</b><output data-output="camera_fov">48.0°</output></span><input type="range" min="18" max="110" step="0.5" value="48" data-param="camera_fov" data-unit="°"></label>
+            <label class="control span-two"><span><b>Auto orbit</b><output data-output="auto_orbit">5.0°/s</output></span><input type="range" min="-90" max="90" step="0.5" value="5" data-param="auto_orbit" data-unit="°/s"></label>
+          </div>
+        </section>
+
+        <section class="panel glass collapsible">
+          <div class="panel-head"><div><span class="section-index">03</span><h2>Light & surface</h2></div></div>
+          <div class="control-grid compact two-col">
+            <label class="control"><span><b>Exposure</b><output data-output="exposure">1.28</output></span><input type="range" min="0.1" max="5" step="0.01" value="1.28" data-param="exposure"></label>
+            <label class="control"><span><b>Roughness</b><output data-output="roughness">0.30</output></span><input type="range" min="0.02" max="1" step="0.01" value="0.30" data-param="roughness"></label>
+            <label class="control"><span><b>Light azimuth</b><output data-output="light_azimuth">42.0°</output></span><input type="range" min="-180" max="180" step="0.5" value="42" data-param="light_azimuth" data-unit="°"></label>
+            <label class="control"><span><b>Light elevation</b><output data-output="light_elevation">35.0°</output></span><input type="range" min="-89" max="89" step="0.5" value="35" data-param="light_elevation" data-unit="°"></label>
+            <label class="control"><span><b>Light intensity</b><output data-output="light_intensity">1.35</output></span><input type="range" min="0" max="5" step="0.01" value="1.35" data-param="light_intensity"></label>
+            <label class="control"><span><b>Background</b><output data-output="background">0.025</output></span><input type="range" min="0" max="0.35" step="0.001" value="0.025" data-param="background"></label>
+          </div>
+        </section>
+      </aside>
+
+      <aside class="telemetry glass" aria-label="Renderer telemetry">
+        <div class="telemetry-head"><span>Native renderer</span><b data-backend>—</b></div>
+        <dl>
+          <div><dt>FPS</dt><dd data-info="fps">—</dd></div>
+          <div><dt>Frame</dt><dd data-info="frameTimeMs">—</dd></div>
+          <div><dt>Surface</dt><dd data-info="resolution">—</dd></div>
+          <div><dt>Vertices</dt><dd data-info="vertexCount">—</dd></div>
+          <div><dt>Triangles</dt><dd data-info="triangleCount">—</dd></div>
+          <div><dt>Topology</dt><dd data-info="topology">—</dd></div>
+        </dl>
+        <div class="adapter"><span>Adapter</span><strong data-info="adapter">Waiting for wgpu…</strong><small data-info="driver"></small></div>
+        <div class="pipeline-map">
+          <span>CPU startup</span><i></i><span>4 shapes</span><i></i><span>GPU vertex blend</span><i></i><span>raster</span>
+        </div>
+        <p class="error" data-error hidden></p>
+      </aside>
+    </section>
+
+    <footer class="footer glass">
+      <span><b>Shared topology:</b> base sphere + 3 target position/normal streams</span>
+      <span><b>Hot path:</b> uniforms → WGSL vertex shader → native Metal/Vulkan/DX12 backend</span>
+    </footer>
+  </main>
+</body>
+</html>

@@ -1,0 +1,24 @@
+[package]
+name = "junkpile_24_wgpu_mesh_feedback_deformer"
+version = "0.1.0"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "=2.6.3", features = [] }
+
+[dependencies]
+bytemuck = { version = "1.24", features = ["derive"] }
+glam = "0.30"
+pollster = "0.4"
+serde = { version = "1", features = ["derive"] }
+tauri = { version = "=2.11.5", features = ["unstable"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+wgpu = { version = "=29.0.4", features = ["vulkan-portability"] }
+
+[target.'cfg(not(target_os = "macos"))'.dependencies]
+wgpu = "=29.0.4"
+
+# Keep this example isolated when extracted inside another Cargo repository.
+[workspace]
+resolver = "2"

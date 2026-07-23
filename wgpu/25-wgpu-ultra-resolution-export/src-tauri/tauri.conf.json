@@ -1,0 +1,35 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Junkpile 25 · Ultra-Resolution Export",
+  "version": "0.1.0",
+  "identifier": "com.schwwaaa.junkpile.wgpu-ultra-resolution-export",
+  "build": {
+    "frontendDist": "../src"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "controls",
+        "title": "Junkpile 25 · Ultra-Resolution Export · Controls",
+        "url": "index.html",
+        "width": 960,
+        "height": 1010,
+        "minWidth": 560,
+        "minHeight": 720,
+        "resizable": true,
+        "decorations": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "icon": [
+      "icons/icon.png",
+      "icons/icon.ico"
+    ]
+  }
+}

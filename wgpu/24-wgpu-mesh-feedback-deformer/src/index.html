@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#09100f">
+  <title>Junkpile 24 · Mesh Feedback Deformer · Controls</title>
+  <link rel="stylesheet" href="styles.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="masthead glass">
+      <div>
+        <p class="eyebrow">Junkpile · native GPU example 24</p>
+        <h1>Mesh Feedback Deformer</h1>
+        <p class="lede">A compute shader reads the previous mesh state, writes the next state into a second storage buffer, then renders that new state immediately. Position and velocity persist entirely on the GPU.</p>
+      </div>
+      <div class="mast-actions">
+        <div class="mast-buttons">
+          <button class="button accent" type="button" data-command="impulse">Inject impulse</button>
+          <button class="button quiet" type="button" data-command="renderer-fullscreen">Renderer fullscreen</button>
+          <button class="button quiet" type="button" data-command="reset">Reset all</button>
+        </div>
+        <span class="status-pill" data-status-pill><i></i><span>Initializing GPU</span></span>
+      </div>
+    </header>
+
+    <section class="workspace">
+      <aside class="control-stack">
+        <section class="panel glass">
+          <div class="panel-head">
+            <div><span class="section-index">01</span><h2>Feedback solver</h2></div>
+            <label class="switch"><input type="checkbox" data-toggle="paused"><span></span><b>Pause</b></label>
+          </div>
+
+          <div class="preset-grid">
+            <button type="button" data-preset="breath">Breath</button>
+            <button class="active" type="button" data-preset="liquid">Liquid</button>
+            <button type="button" data-preset="storm">Storm</button>
+            <button type="button" data-preset="taffy">Taffy</button>
+            <button type="button" data-preset="sculpture">Sculpture</button>
+          </div>
+
+          <div class="control-grid two-col">
+            <label class="control feedback"><span><b>Feedback</b><output data-output="feedback"></output></span><input type="range" min="0" max="1.025" step="0.001" value="0.985" data-param="feedback"></label>
+            <label class="control damping"><span><b>Damping</b><output data-output="damping"></output></span><input type="range" min="0.8" max="1" step="0.001" value="0.985" data-param="damping"></label>
+            <label class="control"><span><b>Rest attraction</b><output data-output="spring"></output></span><input type="range" min="0" max="6" step="0.01" value="0.72" data-param="spring"></label>
+            <label class="control"><span><b>Neighbor smoothing</b><output data-output="smoothing"></output></span><input type="range" min="0" max="0.5" step="0.001" value="0.055" data-param="smoothing"></label>
+            <label class="control"><span><b>Simulation speed</b><output data-output="simulation_speed"></output></span><input type="range" min="0" max="3" step="0.01" value="1" data-param="simulation_speed" data-unit="×"></label>
+            <label class="control"><span><b>Maximum displacement</b><output data-output="max_displacement"></output></span><input type="range" min="0.05" max="3" step="0.01" value="1.15" data-param="max_displacement"></label>
+          </div>
+
+          <div class="solver-flags">
+            <label class="switch"><input type="checkbox" data-toggle="auto_impulse"><span></span><b>Auto impulse</b></label>
+            <button class="mini-button" type="button" data-command="reset-simulation">Restore sphere state</button>
+          </div>
+        </section>
+
+        <section class="panel glass">
+          <div class="panel-head">
+            <div><span class="section-index">02</span><h2>Deformation field</h2></div>
+            <span class="microcopy">compute forces</span>
+          </div>
+          <div class="control-grid two-col">
+            <label class="control drive"><span><b>Noise drive</b><output data-output="drive"></output></span><input type="range" min="0" max="3" step="0.01" value="0.72" data-param="drive"></label>
+            <label class="control"><span><b>Noise scale</b><output data-output="noise_scale"></output></span><input type="range" min="0.1" max="10" step="0.01" value="2.4" data-param="noise_scale"></label>
+            <label class="control"><span><b>Noise speed</b><output data-output="noise_speed"></output></span><input type="range" min="0" max="4" step="0.01" value="0.42" data-param="noise_speed"></label>
+            <label class="control twist"><span><b>Twist</b><output data-output="twist"></output></span><input type="range" min="-4" max="4" step="0.01" value="0.32" data-param="twist"></label>
+            <label class="control curl"><span><b>Curl</b><output data-output="curl"></output></span><input type="range" min="-3" max="3" step="0.01" value="0.78" data-param="curl"></label>
+            <label class="control"><span><b>Radial pulse</b><output data-output="pulse"></output></span><input type="range" min="0" max="3" step="0.01" value="0.24" data-param="pulse"></label>
+            <label class="control"><span><b>Vertical force</b><output data-output="gravity"></output></span><input type="range" min="-3" max="3" step="0.01" value="0" data-param="gravity"></label>
+            <label class="control impulse"><span><b>Impulse strength</b><output data-output="impulse_strength"></output></span><input type="range" min="0" max="30" step="0.1" value="8" data-param="impulse_strength"></label>
+            <label class="control"><span><b>Impulse radius</b><output data-output="impulse_radius"></output></span><input type="range" min="0.05" max="2" step="0.01" value="0.58" data-param="impulse_radius"></label>
+            <label class="control"><span><b>Auto interval</b><output data-output="auto_impulse_interval"></output></span><input type="range" min="0.5" max="20" step="0.1" value="4.5" data-param="auto_impulse_interval" data-unit="s"></label>
+          </div>
+        </section>
+
+        <section class="panel glass">
+          <div class="panel-head">
+            <div><span class="section-index">03</span><h2>Camera and shading</h2></div>
+            <label class="switch"><input type="checkbox" checked data-toggle="backface_culling"><span></span><b>Backface cull</b></label>
+          </div>
+          <div class="control-grid two-col compact">
+            <label class="control"><span><b>Yaw</b><output data-output="camera_yaw"></output></span><input type="range" min="-180" max="180" step="1" value="31" data-param="camera_yaw" data-unit="°"></label>
+            <label class="control"><span><b>Pitch</b><output data-output="camera_pitch"></output></span><input type="range" min="-80" max="80" step="1" value="15" data-param="camera_pitch" data-unit="°"></label>
+            <label class="control"><span><b>Distance</b><output data-output="camera_distance"></output></span><input type="range" min="1.25" max="8" step="0.01" value="3.65" data-param="camera_distance"></label>
+            <label class="control"><span><b>Field of view</b><output data-output="camera_fov"></output></span><input type="range" min="18" max="100" step="1" value="48" data-param="camera_fov" data-unit="°"></label>
+            <label class="control"><span><b>Auto orbit</b><output data-output="auto_orbit"></output></span><input type="range" min="-30" max="30" step="0.1" value="4" data-param="auto_orbit" data-unit="°/s"></label>
+            <label class="control"><span><b>Exposure</b><output data-output="exposure"></output></span><input type="range" min="0.1" max="4" step="0.01" value="1.28" data-param="exposure"></label>
+            <label class="control"><span><b>Roughness</b><output data-output="roughness"></output></span><input type="range" min="0.02" max="1" step="0.01" value="0.28" data-param="roughness"></label>
+            <label class="control"><span><b>Light azimuth</b><output data-output="light_azimuth"></output></span><input type="range" min="-180" max="180" step="1" value="42" data-param="light_azimuth" data-unit="°"></label>
+            <label class="control"><span><b>Light elevation</b><output data-output="light_elevation"></output></span><input type="range" min="-80" max="80" step="1" value="36" data-param="light_elevation" data-unit="°"></label>
+            <label class="control"><span><b>Light intensity</b><output data-output="light_intensity"></output></span><input type="range" min="0" max="5" step="0.01" value="1.35" data-param="light_intensity"></label>
+            <label class="control span-two"><span><b>Background</b><output data-output="background"></output></span><input type="range" min="0" max="0.35" step="0.001" value="0.022" data-param="background"></label>
+          </div>
+          <div class="split-row single-select">
+            <label class="select-control"><span>Inspection mode</span><select data-select="view_mode"><option value="lit">Lit surface</option><option value="normals">Normals</option><option value="velocity">Velocity heat</option><option value="displacement">Displacement heat</option><option value="grid">UV grid</option></select></label>
+          </div>
+        </section>
+      </aside>
+
+      <aside class="telemetry glass">
+        <div class="telemetry-head"><span>GPU telemetry</span><b data-backend>wgpu</b></div>
+        <dl>
+          <div><dt>FPS</dt><dd data-info="fps">—</dd></div>
+          <div><dt>Frame time</dt><dd data-info="frameTimeMs">—</dd></div>
+          <div><dt>Resolution</dt><dd data-info="resolution">—</dd></div>
+          <div><dt>Vertices</dt><dd data-info="vertexCount">—</dd></div>
+          <div><dt>Triangles</dt><dd data-info="triangleCount">—</dd></div>
+          <div><dt>Topology</dt><dd data-info="topology">—</dd></div>
+          <div><dt>Dispatch groups</dt><dd data-info="dispatchGroups">—</dd></div>
+          <div><dt>Storage</dt><dd data-info="storageBytes">—</dd></div>
+          <div><dt>Simulation step</dt><dd data-info="simulationStep">—</dd></div>
+          <div><dt>Active state</dt><dd data-info="activeBuffer">—</dd></div>
+          <div><dt>Impulses</dt><dd data-info="impulseCount">—</dd></div>
+        </dl>
+        <div class="buffer-diagram" aria-label="ping pong buffer flow">
+          <span data-buffer="A">A</span><i>compute</i><span data-buffer="B">B</span><i>render</i>
+        </div>
+        <div class="adapter">
+          <span>Adapter</span>
+          <strong data-info="adapter">Detecting GPU…</strong>
+          <small data-info="driver"></small>
+        </div>
+        <div class="pipeline-map"><b>storage A</b><i></i><b>compute</b><i></i><b>storage B</b><i></i><b>vertex shader</b></div>
+        <p class="error" data-error hidden></p>
+      </aside>
+    </section>
+
+    <footer class="footer glass">
+      <span><b>Compute:</b> 128 vertices per workgroup</span>
+      <span><b>State:</b> position + velocity + normal + rest position</span>
+      <span><b>Readback:</b> none</span>
+    </footer>
+  </main>
+</body>
+</html>

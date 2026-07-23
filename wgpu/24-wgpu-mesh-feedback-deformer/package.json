@@ -1,0 +1,17 @@
+{
+  "name": "24-wgpu-mesh-feedback-deformer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Junkpile Example 24: native wgpu ping-pong mesh feedback deformer",
+  "scripts": {
+    "dev": "tauri dev",
+    "dev:metal": "node scripts/run-backend.mjs metal",
+    "dev:vulkan": "node scripts/run-backend.mjs vulkan",
+    "dev:dx12": "node scripts/run-backend.mjs dx12",
+    "build": "tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.11.0"
+  }
+}
