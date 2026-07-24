@@ -1,0 +1,14 @@
+{
+  "name": "24-tauri-v1-keyframe-automation",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Tauri v1 WebGL visual system with keyframe automation, interpolation, presets, JSON import/export, and snapshots",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^1.6.3"
+  }
+}

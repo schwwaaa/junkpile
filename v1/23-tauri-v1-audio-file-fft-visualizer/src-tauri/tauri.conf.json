@@ -1,0 +1,43 @@
+{
+  "$schema": "https://schema.tauri.app/config/1",
+  "build": {
+    "beforeBuildCommand": "",
+    "beforeDevCommand": "",
+    "devPath": "../src",
+    "distDir": "../src",
+    "withGlobalTauri": true
+  },
+  "package": {
+    "productName": "Junkpile 23 · Audio File FFT Visualizer",
+    "version": "0.1.0"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": false,
+      "dialog": { "save": true },
+      "fs": { "writeFile": true }
+    },
+    "windows": [
+      {
+        "label": "main",
+        "title": "23 · Tauri v1 · Audio File FFT Visualizer",
+        "url": "index.html",
+        "width": 1380,
+        "height": 880,
+        "minWidth": 1020,
+        "minHeight": 680,
+        "resizable": true,
+        "decorations": true,
+        "fullscreen": false
+      }
+    ],
+    "bundle": {
+      "active": true,
+      "identifier": "com.schwwaaa.junkpile.v1.audio-file-fft-visualizer",
+      "icon": ["icons/icon.icns", "icons/icon.png", "icons/icon.ico"]
+    },
+    "security": {
+      "csp": "default-src 'self'; media-src 'self' blob: data:; img-src 'self' blob: data:; script-src 'self'; style-src 'self' 'unsafe-inline'"
+    }
+  }
+}

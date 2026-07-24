@@ -1,0 +1,16 @@
+{
+  "name": "24-tauri-v2-keyframe-automation",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tauri v2 WebGL visual system with editable keyframe automation, live recording, presets, JSON project import/export, and native snapshots",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.8.5"
+  },
+  "dependencies": {
+    "@tauri-apps/plugin-dialog": "^2.4.0"
+  }
+}

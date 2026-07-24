@@ -1,0 +1,43 @@
+{
+  "$schema": "https://schema.tauri.app/config/1",
+  "build": {
+    "beforeBuildCommand": "",
+    "beforeDevCommand": "",
+    "devPath": "../src",
+    "distDir": "../src",
+    "withGlobalTauri": true
+  },
+  "package": {
+    "productName": "Junkpile 24 · Keyframe Automation",
+    "version": "0.1.0"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": false,
+      "dialog": { "open": true, "save": true },
+      "fs": { "readFile": true, "writeFile": true }
+    },
+    "windows": [
+      {
+        "label": "main",
+        "title": "24 · Tauri v1 · Keyframe Automation",
+        "url": "index.html",
+        "width": 1480,
+        "height": 930,
+        "minWidth": 1120,
+        "minHeight": 720,
+        "resizable": true,
+        "decorations": true,
+        "fullscreen": false
+      }
+    ],
+    "bundle": {
+      "active": true,
+      "identifier": "com.schwwaaa.junkpile.v1.keyframe-automation",
+      "icon": ["icons/icon.icns", "icons/icon.png", "icons/icon.ico"]
+    },
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' blob: data:; script-src 'self'; style-src 'self' 'unsafe-inline'"
+    }
+  }
+}

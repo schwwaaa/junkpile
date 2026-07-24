@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Core IPC and event access for the Tauri v2 MIDI input example",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

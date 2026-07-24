@@ -1,0 +1,15 @@
+{
+  "name": "14-tauri-v2-canvas-recorder",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Junkpile Tauri v2 essential 14: high-resolution WebGL canvas recording, optional microphone audio, native save, and PNG snapshots",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}

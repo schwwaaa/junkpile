@@ -1,0 +1,77 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Junkpile 25 · Tauri v2 Multi-Display Output Manager",
+  "version": "0.1.0",
+  "identifier": "com.schwwaaa.junkpile.tauri-v2-multi-display-output-manager",
+  "build": {
+    "beforeBuildCommand": "",
+    "beforeDevCommand": "",
+    "frontendDist": "../src"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "controls",
+        "title": "25 · Tauri v2 · Multi-Display Output Manager",
+        "url": "index.html",
+        "width": 660,
+        "height": 940,
+        "minWidth": 520,
+        "minHeight": 720,
+        "resizable": true,
+        "decorations": true
+      },
+      {
+        "label": "output-1",
+        "title": "25 · Output 1",
+        "url": "output.html",
+        "width": 960,
+        "height": 540,
+        "minWidth": 320,
+        "minHeight": 180,
+        "x": 680,
+        "y": 60,
+        "resizable": true,
+        "decorations": true,
+        "visible": true
+      },
+      {
+        "label": "output-2",
+        "title": "25 · Output 2",
+        "url": "output.html",
+        "width": 960,
+        "height": 540,
+        "minWidth": 320,
+        "minHeight": 180,
+        "x": 720,
+        "y": 100,
+        "resizable": true,
+        "decorations": true,
+        "visible": false
+      },
+      {
+        "label": "output-3",
+        "title": "25 · Output 3",
+        "url": "output.html",
+        "width": 960,
+        "height": 540,
+        "minWidth": 320,
+        "minHeight": 180,
+        "x": 760,
+        "y": 140,
+        "resizable": true,
+        "decorations": true,
+        "visible": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; connect-src ipc: http://ipc.localhost"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": ["icons/icon.icns", "icons/icon.png", "icons/icon.ico"]
+  }
+}

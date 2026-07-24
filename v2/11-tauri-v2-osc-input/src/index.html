@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>11 · Tauri v2 OSC Input</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <aside class="control-panel">
+      <header class="hero">
+        <div class="eyebrow">JUNKPILE · TAURI V2 ESSENTIAL 11</div>
+        <h1>OSC Input</h1>
+        <p>Rust receives OSC over UDP, decodes messages and bundles, then emits structured events into the WebView.</p>
+      </header>
+
+      <section class="panel-section">
+        <div class="section-heading">
+          <h2>UDP listener</h2>
+          <span id="listener-pill" class="status-pill idle">stopped</span>
+        </div>
+        <div class="listener-grid">
+          <label>
+            <span>Bind address</span>
+            <select id="bind-address">
+              <option value="0.0.0.0">0.0.0.0 · LAN + local</option>
+              <option value="127.0.0.1">127.0.0.1 · local only</option>
+            </select>
+          </label>
+          <label>
+            <span>UDP port</span>
+            <input id="port-input" type="number" min="1" max="65535" step="1" value="9000">
+          </label>
+        </div>
+        <div class="button-grid two">
+          <button id="start-btn" class="primary" type="button">Start / restart</button>
+          <button id="stop-btn" type="button">Stop</button>
+          <button id="test-btn" type="button">Send test burst</button>
+          <button id="refresh-endpoints-btn" type="button">Refresh endpoints</button>
+        </div>
+        <div id="endpoint-list" class="endpoint-list">127.0.0.1:9000</div>
+        <p class="helper">Use the local endpoint for software on this computer. Use the LAN endpoint for TouchOSC or another device.</p>
+      </section>
+
+      <section class="panel-section">
+        <div class="section-heading">
+          <h2>OSC learn</h2>
+          <span id="learn-pill" class="status-pill idle">off</span>
+        </div>
+        <div class="learn-row">
+          <select id="learn-param" aria-label="Parameter to learn">
+            <option value="hue">Hue</option>
+            <option value="zoom">Zoom</option>
+            <option value="speed">Speed</option>
+            <option value="brightness">Brightness</option>
+            <option value="distortion">Distortion</option>
+            <option value="complexity">Complexity</option>
+          </select>
+          <button id="learn-btn" type="button">Arm learn</button>
+        </div>
+        <p class="helper">Arm learn, then send one OSC message. The incoming address is assigned to the selected parameter.</p>
+      </section>
+
+      <section class="panel-section parameter-section">
+        <div class="section-heading">
+          <h2>Address mapping</h2>
+          <button id="reset-mapping-btn" class="text-button" type="button">Reset routes</button>
+        </div>
+        <div id="parameter-list"></div>
+      </section>
+    </aside>
+
+    <section class="stage-column">
+      <div class="stage-toolbar">
+        <div>
+          <strong>Raw WebGL output</strong>
+          <span id="fps-readout">0 fps</span>
+        </div>
+        <div class="message-summary">
+          <span id="last-address">waiting</span>
+          <span id="last-message">No OSC messages received</span>
+        </div>
+      </div>
+
+      <div id="canvas-wrap">
+        <canvas id="gl-canvas"></canvas>
+        <div id="osc-overlay">
+          <div class="overlay-icon">OSC</div>
+          <div>Start the UDP listener or use the test burst.</div>
+        </div>
+      </div>
+
+      <section class="monitor-panel">
+        <div class="monitor-header">
+          <div>
+            <div class="eyebrow">UDP EVENT STREAM</div>
+            <h2>Mini OSC terminal</h2>
+          </div>
+          <button id="clear-log-btn" type="button">Clear</button>
+        </div>
+        <div class="monitor-grid">
+          <div class="activity-card">
+            <div class="meter-label"><span>Numeric value</span><output id="numeric-value">—</output></div>
+            <div class="meter"><span id="numeric-meter"></span></div>
+          </div>
+          <div class="activity-card">
+            <div class="meter-label"><span>Messages / second</span><output id="rate-value">0</output></div>
+            <div class="meter"><span id="rate-meter"></span></div>
+          </div>
+          <div class="activity-card">
+            <div class="meter-label"><span>Sender</span><output id="sender-value">—</output></div>
+            <div class="meter"><span id="activity-meter"></span></div>
+          </div>
+        </div>
+        <div id="osc-log" class="terminal" aria-live="polite"></div>
+      </section>
+    </section>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

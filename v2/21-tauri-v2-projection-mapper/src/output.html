@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>21 · Tauri v2 Projection Output</title>
+  <link rel="stylesheet" href="output.css">
+</head>
+<body>
+  <canvas id="output-canvas"></canvas>
+  <div id="output-hud">
+    <span>PROJECTION OUTPUT</span>
+    <span id="hud-source">Calibration field</span>
+    <span id="hud-size">—</span>
+  </div>
+  <div id="output-error" class="hidden"><strong>Projection output error</strong><span id="output-error-message"></span></div>
+  <canvas id="pattern-canvas" width="1280" height="720" hidden></canvas>
+  <video id="source-video" playsinline muted loop hidden></video>
+  <video id="camera-video" playsinline muted autoplay hidden></video>
+  <script type="module" src="output.js"></script>
+</body>
+</html>

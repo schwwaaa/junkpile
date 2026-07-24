@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>13 · Tauri v2 · Audio-Reactive FFT</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main id="app">
+    <aside id="controls" aria-label="Audio analysis and shader controls">
+      <header class="panel-header">
+        <div class="eyebrow">Junkpile · Tauri v2 essentials</div>
+        <h1>13 · Audio FFT</h1>
+        <p>Microphone → Web Audio FFT → WebGL textures → GLSL · Tauri v2</p>
+      </header>
+
+      <section class="control-section">
+        <div class="section-heading">
+          <span>Input</span>
+          <span id="input-state" class="status-pill idle">Stopped</span>
+        </div>
+        <div class="device-row">
+          <select id="device-select" disabled aria-label="Microphone device">
+            <option value="">Start input to reveal devices</option>
+          </select>
+          <button id="refresh-devices" class="icon-button" type="button" disabled title="Refresh microphone list">↻</button>
+        </div>
+        <button id="input-button" class="primary-button" type="button">Start microphone</button>
+        <p class="microcopy">Analysis remains local. The input is not routed to the speakers.</p>
+        <dl class="source-details">
+          <div><dt>Device</dt><dd id="device-label">—</dd></div>
+          <div><dt>Rate</dt><dd id="sample-rate-label">—</dd></div>
+          <div><dt>Bins</dt><dd id="bin-count-label">—</dd></div>
+        </dl>
+      </section>
+
+      <section class="control-section meters-section">
+        <div class="section-heading"><span>Live analysis</span><span id="peak-label">−∞ dB</span></div>
+        <div class="meter-list">
+          <div class="meter-row"><span>Sub</span><div class="meter-track"><i id="sub-meter"></i></div><output id="sub-value">0.00</output></div>
+          <div class="meter-row"><span>Bass</span><div class="meter-track"><i id="bass-meter"></i></div><output id="bass-value">0.00</output></div>
+          <div class="meter-row"><span>Mid</span><div class="meter-track"><i id="mid-meter"></i></div><output id="mid-value">0.00</output></div>
+          <div class="meter-row"><span>High</span><div class="meter-track"><i id="high-meter"></i></div><output id="high-value">0.00</output></div>
+          <div class="meter-row"><span>Air</span><div class="meter-track"><i id="air-meter"></i></div><output id="air-value">0.00</output></div>
+          <div class="meter-row rms"><span>RMS</span><div class="meter-track"><i id="rms-meter"></i></div><output id="rms-value">0.00</output></div>
+        </div>
+        <div class="beat-strip">
+          <div id="beat-light" class="beat-light"></div>
+          <span>Adaptive beat pulse</span>
+          <output id="beat-value">0.00</output>
+        </div>
+        <canvas id="spectrum-monitor" width="600" height="160" aria-label="FFT spectrum monitor"></canvas>
+        <canvas id="waveform-monitor" width="600" height="86" aria-label="Waveform monitor"></canvas>
+      </section>
+
+      <section class="control-section">
+        <div class="section-heading"><span>FFT</span></div>
+        <div class="select-row">
+          <label for="fft-size">FFT size</label>
+          <select id="fft-size">
+            <option value="512">512</option>
+            <option value="1024">1024</option>
+            <option value="2048" selected>2048</option>
+            <option value="4096">4096</option>
+            <option value="8192">8192</option>
+          </select>
+        </div>
+        <div class="control-row">
+          <label for="smoothing">Analyser smooth</label>
+          <input id="smoothing" type="range" min="0" max="0.95" step="0.01" value="0.72">
+          <output id="smoothing-output">0.72</output>
+        </div>
+        <div class="control-row">
+          <label for="input-gain">Input gain</label>
+          <input id="input-gain" type="range" min="0" max="4" step="0.01" value="1">
+          <output id="input-gain-output">1.00×</output>
+        </div>
+        <div class="control-row">
+          <label for="sensitivity">Sensitivity</label>
+          <input id="sensitivity" type="range" min="0.25" max="4" step="0.01" value="1.35">
+          <output id="sensitivity-output">1.35×</output>
+        </div>
+        <div class="control-row">
+          <label for="attack">Band attack</label>
+          <input id="attack" type="range" min="0.02" max="1" step="0.01" value="0.62">
+          <output id="attack-output">0.62</output>
+        </div>
+        <div class="control-row">
+          <label for="release">Band release</label>
+          <input id="release" type="range" min="0.005" max="0.25" step="0.005" value="0.055">
+          <output id="release-output">0.055</output>
+        </div>
+      </section>
+
+      <section class="control-section">
+        <div class="section-heading"><span>Beat detector</span></div>
+        <div class="control-row">
+          <label for="beat-threshold">Threshold</label>
+          <input id="beat-threshold" type="range" min="1.05" max="2.2" step="0.01" value="1.32">
+          <output id="beat-threshold-output">1.32×</output>
+        </div>
+        <div class="control-row">
+          <label for="beat-cooldown">Cooldown</label>
+          <input id="beat-cooldown" type="range" min="80" max="600" step="10" value="180">
+          <output id="beat-cooldown-output">180 ms</output>
+        </div>
+        <div class="toggle-grid">
+          <label class="toggle"><input id="beat-enabled" type="checkbox" checked><span>Detect beats</span></label>
+          <button id="manual-beat" type="button">Trigger pulse</button>
+        </div>
+      </section>
+
+      <section class="control-section">
+        <div class="section-heading"><span>Visual</span></div>
+        <div class="select-row">
+          <label for="visual-mode">Mode</label>
+          <select id="visual-mode">
+            <option value="0">Spectrum rings</option>
+            <option value="1">Waveform tunnel</option>
+            <option value="2">Frequency terrain</option>
+            <option value="3">Aurora field</option>
+            <option value="4">Beat grid</option>
+          </select>
+        </div>
+        <div class="control-row">
+          <label for="intensity">Intensity</label>
+          <input id="intensity" type="range" min="0" max="3" step="0.01" value="1.15">
+          <output id="intensity-output">1.15</output>
+        </div>
+        <div class="control-row">
+          <label for="motion-speed">Motion speed</label>
+          <input id="motion-speed" type="range" min="0" max="3" step="0.01" value="0.55">
+          <output id="motion-speed-output">0.55</output>
+        </div>
+        <div class="control-row">
+          <label for="frequency-scale">Frequency scale</label>
+          <input id="frequency-scale" type="range" min="0.25" max="4" step="0.01" value="1">
+          <output id="frequency-scale-output">1.00</output>
+        </div>
+        <div class="control-row">
+          <label for="feedback">Feedback</label>
+          <input id="feedback" type="range" min="0" max="0.98" step="0.01" value="0.76">
+          <output id="feedback-output">0.76</output>
+        </div>
+        <div class="control-row">
+          <label for="feedback-zoom">Feedback zoom</label>
+          <input id="feedback-zoom" type="range" min="0.97" max="1.03" step="0.0005" value="1.003">
+          <output id="feedback-zoom-output">1.003</output>
+        </div>
+      </section>
+
+      <section class="control-section">
+        <div class="section-heading"><span>Color</span></div>
+        <div class="control-row">
+          <label for="hue">Hue</label>
+          <input id="hue" type="range" min="-180" max="180" step="1" value="0">
+          <output id="hue-output">0°</output>
+        </div>
+        <div class="control-row">
+          <label for="saturation">Saturation</label>
+          <input id="saturation" type="range" min="0" max="2" step="0.01" value="1.15">
+          <output id="saturation-output">1.15</output>
+        </div>
+        <div class="control-row">
+          <label for="brightness">Brightness</label>
+          <input id="brightness" type="range" min="0" max="2" step="0.01" value="1">
+          <output id="brightness-output">1.00</output>
+        </div>
+        <div class="control-row">
+          <label for="contrast">Contrast</label>
+          <input id="contrast" type="range" min="0" max="3" step="0.01" value="1.08">
+          <output id="contrast-output">1.08</output>
+        </div>
+      </section>
+
+      <section class="control-section output-section">
+        <div class="section-heading"><span>Output</span><span id="save-status">Ready</span></div>
+        <div class="action-grid">
+          <button id="clear-feedback" type="button">Clear trails</button>
+          <button id="snapshot-button" type="button">Save PNG</button>
+          <button id="fullscreen-button" type="button">Fullscreen</button>
+        </div>
+        <p class="microcopy">PNG saving uses the native Tauri v2 dialog. Fullscreen affects the complete visual workspace.</p>
+      </section>
+
+      <footer class="panel-footer">
+        <span id="fps-label">0 fps</span>
+        <span id="render-size">0 × 0</span>
+        <span>Tauri v2 · Web Audio · WebGL 1</span>
+      </footer>
+    </aside>
+
+    <section id="stage" aria-label="Audio-reactive WebGL output">
+      <canvas id="gl-canvas"></canvas>
+      <div id="empty-state">
+        <div class="empty-mark">13</div>
+        <h2>Start microphone analysis</h2>
+        <p>The complete FFT spectrum and waveform are uploaded to the GPU every frame.</p>
+      </div>
+      <div class="stage-hud">
+        <span id="hud-device">No input</span>
+        <span id="hud-mode">Spectrum rings</span>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "13-tauri-v2-audio-reactive-fft",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Junkpile Tauri v2 essential 13: microphone FFT analysis, WebGL spectrum/waveform textures, beat detection, and native export",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}

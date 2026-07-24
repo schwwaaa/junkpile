@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>25 · Multi-Display Output Manager</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">JUNKPILE · TAURI V2 ESSENTIAL 25</p>
+        <h1>Multi-Display Output Manager</h1>
+        <p class="lede">Route synchronized GPU visuals to three independently managed native output windows.</p>
+      </div>
+      <div class="hero-badge"><span id="online-count">0 / 3</span><small>outputs online</small></div>
+    </header>
+
+    <section class="panel global-panel">
+      <div class="section-head">
+        <div><p class="section-kicker">SYSTEM</p><h2>Global control</h2></div>
+        <button id="refresh-monitors" class="ghost">Refresh displays</button>
+      </div>
+      <div class="button-grid four">
+        <button id="show-all">Show all</button>
+        <button id="hide-all" class="ghost">Hide all</button>
+        <button id="fullscreen-all">Fullscreen all</button>
+        <button id="window-all" class="ghost">Window all</button>
+      </div>
+      <div class="button-grid three">
+        <button id="sync-all" class="accent">Sync all outputs</button>
+        <button id="blackout-all" class="danger">Blackout all</button>
+        <button id="restore-all" class="ghost">Restore all</button>
+      </div>
+      <div class="global-grid">
+        <label>Master speed <output id="master-speed-output">1.00×</output><input id="master-speed" type="range" min="0" max="3" step="0.01" value="1" /></label>
+        <label>Master brightness <output id="master-brightness-output">1.00</output><input id="master-brightness" type="range" min="0" max="2" step="0.01" value="1" /></label>
+        <label>Global phase <output id="global-phase-output">0.00</output><input id="global-phase" type="range" min="-6.283" max="6.283" step="0.01" value="0" /></label>
+      </div>
+      <div class="monitor-strip" id="monitor-strip">No display information yet.</div>
+    </section>
+
+    <section class="panel source-panel">
+      <div class="section-head"><div><p class="section-kicker">SOURCE BANK</p><h2>Procedural channels</h2></div><span class="status-note">A–D share one clock</span></div>
+      <div class="source-grid">
+        <article><strong>A</strong><span>Domain field</span></article>
+        <article><strong>B</strong><span>Orbital grid</span></article>
+        <article><strong>C</strong><span>Signal ribbons</span></article>
+        <article><strong>D</strong><span>Calibration pulse</span></article>
+      </div>
+      <div class="color-grid">
+        <label>Color A<input id="color-a" type="color" value="#78e8ff" /></label>
+        <label>Color B<input id="color-b" type="color" value="#ff6fb5" /></label>
+        <label>Accent<input id="color-c" type="color" value="#79ff9f" /></label>
+      </div>
+    </section>
+
+    <section class="panel outputs-panel">
+      <div class="section-head"><div><p class="section-kicker">ROUTING</p><h2>Output windows</h2></div><span class="status-note">Independent settings</span></div>
+      <div id="output-cards" class="output-cards"></div>
+    </section>
+
+    <section class="panel layout-panel">
+      <div class="section-head"><div><p class="section-kicker">LAYOUTS</p><h2>Save the complete display state</h2></div></div>
+      <div class="layout-row">
+        <input id="layout-name" type="text" value="Three screen layout" aria-label="Layout name" />
+        <button id="save-layout">Save locally</button>
+      </div>
+      <div class="layout-row">
+        <select id="layout-select" aria-label="Saved layouts"></select>
+        <button id="load-layout">Load</button>
+        <button id="delete-layout" class="ghost">Delete</button>
+      </div>
+      <div class="button-grid two">
+        <button id="export-layout" class="ghost">Export JSON</button>
+        <label class="file-button">Import JSON<input id="import-layout" type="file" accept="application/json,.json" /></label>
+      </div>
+    </section>
+
+    <footer>
+      <span id="system-status">Initializing output manager…</span>
+      <span>Example 25 · final v2 essential</span>
+    </footer>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

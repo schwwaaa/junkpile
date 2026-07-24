@@ -1,0 +1,14 @@
+{
+  "name": "23-tauri-v1-audio-file-fft-visualizer",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Tauri v1 local audio player with Web Audio FFT textures, beat analysis, WebGL visuals, recording, and export",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^1.6.3"
+  }
+}

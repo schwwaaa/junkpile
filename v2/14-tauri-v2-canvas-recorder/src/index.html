@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>14 · Tauri v2 · Canvas Recorder</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main id="app">
+    <aside id="controls" aria-label="Canvas recorder controls">
+      <header class="panel-header">
+        <div class="eyebrow">Junkpile · Tauri v2 essentials</div>
+        <h1>14 · Canvas Recorder</h1>
+        <p>WebGL canvas → captureStream → MediaRecorder → Tauri v2 native file</p>
+      </header>
+
+      <section class="control-section recorder-section">
+        <div class="section-heading">
+          <span>Recorder</span>
+          <span id="record-state" class="status-pill idle">Ready</span>
+        </div>
+        <div class="transport-grid">
+          <button id="record-button" class="record-button" type="button"><i></i><span>Record</span></button>
+          <button id="pause-button" type="button" disabled>Pause</button>
+          <button id="stop-button" type="button" disabled>Stop</button>
+        </div>
+        <div class="record-clock">
+          <strong id="record-time">00:00.000</strong>
+          <span id="record-size">0 B</span>
+        </div>
+        <div id="countdown-overlay" class="countdown-inline hidden">3</div>
+      </section>
+
+      <section class="control-section">
+        <div class="section-heading"><span>Output</span></div>
+        <div class="select-row">
+          <label for="resolution">Resolution</label>
+          <select id="resolution">
+            <option value="1280x720">1280 × 720</option>
+            <option value="1920x1080" selected>1920 × 1080</option>
+            <option value="2560x1440">2560 × 1440</option>
+            <option value="3840x2160">3840 × 2160</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+        <div id="custom-size-row" class="dimension-row hidden">
+          <label>Custom</label>
+          <input id="custom-width" type="number" min="320" max="4096" step="2" value="1920" aria-label="Custom width">
+          <span>×</span>
+          <input id="custom-height" type="number" min="240" max="4096" step="2" value="1080" aria-label="Custom height">
+          <button id="apply-size" type="button">Apply</button>
+        </div>
+        <div class="select-row">
+          <label for="frame-rate">Frame rate</label>
+          <select id="frame-rate">
+            <option value="24">24 fps</option>
+            <option value="30">30 fps</option>
+            <option value="60" selected>60 fps</option>
+          </select>
+        </div>
+        <div class="select-row">
+          <label for="video-bitrate">Video bitrate</label>
+          <select id="video-bitrate">
+            <option value="6000000">6 Mbps</option>
+            <option value="12000000">12 Mbps</option>
+            <option value="24000000" selected>24 Mbps</option>
+            <option value="40000000">40 Mbps</option>
+            <option value="60000000">60 Mbps</option>
+          </select>
+        </div>
+        <div class="select-row">
+          <label for="record-duration">Auto stop</label>
+          <select id="record-duration">
+            <option value="0" selected>Manual</option>
+            <option value="10">10 seconds</option>
+            <option value="30">30 seconds</option>
+            <option value="60">60 seconds</option>
+            <option value="180">3 minutes</option>
+          </select>
+        </div>
+        <div class="select-row">
+          <label for="countdown">Countdown</label>
+          <select id="countdown">
+            <option value="0">None</option>
+            <option value="3" selected>3 seconds</option>
+            <option value="5">5 seconds</option>
+          </select>
+        </div>
+        <dl class="source-details">
+          <div><dt>Codec</dt><dd id="codec-label">Detecting…</dd></div>
+          <div><dt>Canvas</dt><dd id="canvas-size-label">1920 × 1080</dd></div>
+          <div><dt>Estimate</dt><dd id="estimate-label">≈ 180 MB/min</dd></div>
+        </dl>
+      </section>
+
+      <section class="control-section">
+        <div class="section-heading"><span>Audio</span><span id="mic-state">Off</span></div>
+        <label class="toggle wide-toggle"><input id="include-mic" type="checkbox"><span>Include microphone audio</span></label>
+        <div class="device-row">
+          <select id="device-select" disabled aria-label="Microphone device">
+            <option value="">Default microphone</option>
+          </select>
+          <button id="refresh-devices" class="icon-button" type="button" title="Refresh microphone list">↻</button>
+        </div>
+        <div class="select-row compact-top">
+          <label for="audio-bitrate">Audio bitrate</label>
+          <select id="audio-bitrate" disabled>
+            <option value="96000">96 kbps</option>
+            <option value="128000">128 kbps</option>
+            <option value="192000" selected>192 kbps</option>
+            <option value="256000">256 kbps</option>
+          </select>
+        </div>
+        <p class="microcopy">The microphone is added directly to the recording stream and is not monitored through the speakers.</p>
+      </section>
+
+      <section class="control-section">
+        <div class="section-heading"><span>Visual</span></div>
+        <div class="select-row">
+          <label for="visual-mode">Mode</label>
+          <select id="visual-mode">
+            <option value="0">Liquid field</option>
+            <option value="1">Infinite tunnel</option>
+            <option value="2">Cellular lattice</option>
+            <option value="3">Signal bands</option>
+          </select>
+        </div>
+        <div class="control-row">
+          <label for="speed">Speed</label>
+          <input id="speed" type="range" min="0" max="3" step="0.01" value="0.72">
+          <output id="speed-output">0.72</output>
+        </div>
+        <div class="control-row">
+          <label for="scale">Scale</label>
+          <input id="scale" type="range" min="0.25" max="5" step="0.01" value="1.4">
+          <output id="scale-output">1.40</output>
+        </div>
+        <div class="control-row">
+          <label for="detail">Detail</label>
+          <input id="detail" type="range" min="1" max="6" step="1" value="5">
+          <output id="detail-output">5</output>
+        </div>
+        <div class="control-row">
+          <label for="warp">Warp</label>
+          <input id="warp" type="range" min="0" max="2" step="0.01" value="0.78">
+          <output id="warp-output">0.78</output>
+        </div>
+        <div class="control-row">
+          <label for="pulse">Pulse</label>
+          <input id="pulse" type="range" min="0" max="2" step="0.01" value="0.45">
+          <output id="pulse-output">0.45</output>
+        </div>
+      </section>
+
+      <section class="control-section">
+        <div class="section-heading"><span>Color</span></div>
+        <div class="control-row">
+          <label for="hue">Hue</label>
+          <input id="hue" type="range" min="-180" max="180" step="1" value="0">
+          <output id="hue-output">0°</output>
+        </div>
+        <div class="control-row">
+          <label for="saturation">Saturation</label>
+          <input id="saturation" type="range" min="0" max="2" step="0.01" value="1.18">
+          <output id="saturation-output">1.18</output>
+        </div>
+        <div class="control-row">
+          <label for="brightness">Brightness</label>
+          <input id="brightness" type="range" min="0" max="2" step="0.01" value="1.05">
+          <output id="brightness-output">1.05</output>
+        </div>
+        <div class="control-row">
+          <label for="contrast">Contrast</label>
+          <input id="contrast" type="range" min="0" max="3" step="0.01" value="1.12">
+          <output id="contrast-output">1.12</output>
+        </div>
+      </section>
+
+      <section class="control-section export-section">
+        <div class="section-heading"><span>Export</span><span id="last-format">No capture</span></div>
+        <dl class="source-details export-details">
+          <div><dt>Duration</dt><dd id="last-duration">—</dd></div>
+          <div><dt>Size</dt><dd id="last-size">—</dd></div>
+          <div><dt>File</dt><dd id="last-file">—</dd></div>
+        </dl>
+        <div class="export-grid">
+          <button id="save-button" class="primary-button" type="button" disabled>Save recording</button>
+          <button id="discard-button" type="button" disabled>Discard</button>
+          <button id="snapshot-button" type="button">Save PNG</button>
+        </div>
+        <button id="fullscreen-button" class="wide-action" type="button">Fullscreen preview</button>
+        <label class="toggle wide-toggle"><input id="auto-save" type="checkbox"><span>Prompt to save when recording stops</span></label>
+      </section>
+
+      <footer class="panel-footer">
+        <span id="fps-label">0 fps</span>
+        <span id="render-size">0 × 0</span>
+        <span>Tauri v2 · WebGL 1 · MediaRecorder</span>
+      </footer>
+    </aside>
+
+    <section id="stage" aria-label="WebGL recording preview">
+      <canvas id="gl-canvas"></canvas>
+      <div id="recording-border"></div>
+      <div id="stage-countdown" class="stage-countdown hidden">3</div>
+      <div class="stage-hud">
+        <span id="hud-mode">Liquid field</span>
+        <span id="hud-recording">Preview</span>
+      </div>
+      <div id="unsupported" class="unsupported hidden">
+        <div class="empty-mark">14</div>
+        <h2>Canvas recording unavailable</h2>
+        <p>This WebView does not expose canvas.captureStream or MediaRecorder.</p>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

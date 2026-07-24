@@ -1,0 +1,15 @@
+{
+  "name": "17-tauri-v2-glsl-shader-playground",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Junkpile Tauri v2 essential 17: live WebGL 1 GLSL editing, diagnostics terminal, native shader open/save, presets, uniforms, and PNG snapshots",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "20-tauri-v2-live-video-switcher",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tauri v2 raw WebGL four-source live video switcher with preview/program buses, GPU transitions, overlays, recording, and native media loading",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.8.5"
+  },
+  "dependencies": {
+    "@tauri-apps/plugin-dialog": "^2.4.0"
+  }
+}

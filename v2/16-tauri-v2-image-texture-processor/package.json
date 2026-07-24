@@ -1,0 +1,15 @@
+{
+  "name": "16-tauri-v2-image-texture-processor",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Junkpile Tauri v2 essential 16: local image textures, WebGL processing, comparison, high-resolution PNG/JPEG export, and native file dialogs",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}

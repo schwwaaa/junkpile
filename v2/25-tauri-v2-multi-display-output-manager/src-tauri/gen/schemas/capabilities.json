@@ -1,0 +1,1 @@
+{"default":{"identifier":"default","description":"Core events and native save dialogs for the Tauri v2 multi-display output manager","local":true,"windows":["controls","output-1","output-2","output-3"],"permissions":["core:default","dialog:allow-save"]}}

@@ -1,0 +1,18 @@
+[package]
+name = "junkpile_23_tauri_v1_audio_file_fft_visualizer"
+version = "0.1.0"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "1", features = [] }
+
+[dependencies]
+tauri = { version = "1", features = ["wry", "dialog-save", "fs-write-file"] }
+
+[features]
+default = []
+custom-protocol = ["tauri/custom-protocol"]
+
+# Keep this standalone example isolated from any Cargo workspace above it.
+[workspace]
+resolver = "2"

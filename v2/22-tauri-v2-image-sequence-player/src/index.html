@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>22 · Image Sequence Player</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div><span class="eyebrow">JUNKPILE · TAURI V2 ESSENTIAL 22</span><h1>Image Sequence Player</h1></div>
+    <div class="connection"><span id="output-dot" class="dot"></span><span id="output-status">Waiting for output…</span></div>
+  </header>
+
+  <main>
+    <section class="hero card">
+      <div>
+        <span class="section-tag">SOURCE</span>
+        <h2>Numbered frames, precise transport</h2>
+        <p>Load a folder or selected stills. The output window sorts, decodes, caches, blends, and presents the sequence.</p>
+      </div>
+      <div class="button-grid three">
+        <button id="load-folder" class="primary">Choose folder</button>
+        <button id="load-files">Choose files</button>
+        <button id="load-demo">Generated demo</button>
+      </div>
+      <label class="check"><input id="recursive-scan" type="checkbox" /> Scan subfolders</label>
+      <div id="drop-zone" class="drop-zone">Drop ordered image frames here · each still becomes one frame</div>
+      <div class="stats four">
+        <div><span>Sequence</span><strong id="sequence-name">Generated demo</strong></div>
+        <div><span>Frames</span><strong id="frame-count">180</strong></div>
+        <div><span>Source</span><strong id="source-size">1280 × 720</strong></div>
+        <div><span>Cache</span><strong id="cache-status">procedural</strong></div>
+      </div>
+      <div class="filename-row"><span id="first-file">demo_0001.png</span><span>→</span><span id="last-file">demo_0180.png</span></div>
+    </section>
+
+    <section class="card">
+      <div class="section-heading"><div><span class="section-tag">TRANSPORT</span><h2>Playback</h2></div><span id="timecode" class="readout">00:00:00:00</span></div>
+      <div class="transport">
+        <button id="jump-start" title="Jump to in point">|◀</button>
+        <button id="step-back" title="Previous frame">◀</button>
+        <button id="play-pause" class="primary">Play</button>
+        <button id="step-forward" title="Next frame">▶</button>
+        <button id="jump-end" title="Jump to out point">▶|</button>
+        <button id="reverse">Reverse</button>
+      </div>
+      <input id="timeline" class="timeline" type="range" min="0" max="179" value="0" step="0.001" />
+      <div class="timeline-meta"><span id="current-frame">Frame 1 / 180</span><span id="play-direction">Forward</span></div>
+      <div class="grid two">
+        <label>Sequence FPS<input id="sequence-fps" type="range" min="1" max="60" value="24" step="1" /><output id="sequence-fps-output">24</output></label>
+        <label>Playback rate<input id="playback-rate" type="range" min="0.1" max="4" value="1" step="0.05" /><output id="playback-rate-output">1.00×</output></label>
+        <label>Loop mode<select id="loop-mode"><option value="loop">Loop</option><option value="pingpong">Ping-pong</option><option value="once">Play once</option></select></label>
+        <label>Frame handling<select id="frame-handling"><option value="hold" selected>Hold every frame</option><option value="drop">Drop late frames</option></select></label>
+        <label>In frame<input id="in-frame" type="number" min="1" max="180" value="1" /></label>
+        <label>Out frame<input id="out-frame" type="number" min="1" max="180" value="180" /></label>
+      </div>
+      <div class="inline-options">
+        <label class="check"><input id="interpolate" type="checkbox" checked /> Blend adjacent frames</label>
+        <label class="check"><input id="start-paused" type="checkbox" /> Pause after loading</label>
+      </div>
+      <div class="stats three compact">
+        <div><span>Output</span><strong id="output-fps">0.0 fps</strong></div>
+        <div><span>Dropped</span><strong id="dropped-frames">0</strong></div>
+        <div><span>Decode</span><strong id="decode-status">ready</strong></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-heading"><div><span class="section-tag">CACHE</span><h2>Decode strategy</h2></div><span id="cache-detail" class="readout">0 ready</span></div>
+      <div class="grid two">
+        <label>Strategy<select id="cache-strategy"><option value="window">Window around playhead</option><option value="all">Preload all frames</option></select></label>
+        <label>Window radius<input id="cache-radius" type="range" min="2" max="60" value="12" step="1" /><output id="cache-radius-output">±12</output></label>
+      </div>
+      <div class="button-grid three"><button id="preload-now">Preload now</button><button id="clear-cache">Clear cache</button><button id="retry-errors">Retry failed</button></div>
+      <div class="meter"><span id="cache-meter-fill"></span></div>
+    </section>
+
+    <section class="card">
+      <div class="section-heading"><div><span class="section-tag">IMAGE</span><h2>Framing and grade</h2></div><button id="reset-image">Reset</button></div>
+      <div class="grid two">
+        <label>Fit<select id="fit-mode"><option value="contain">Contain</option><option value="cover">Cover</option><option value="stretch">Stretch</option></select></label>
+        <label>Background<input id="background-color" type="color" value="#05070a" /></label>
+        <label>Zoom<input id="zoom" type="range" min="0.2" max="4" value="1" step="0.01" /><output id="zoom-output">1.00×</output></label>
+        <label>Rotation<input id="rotation" type="range" min="-180" max="180" value="0" step="0.1" /><output id="rotation-output">0.0°</output></label>
+        <label>Pan X<input id="pan-x" type="range" min="-1" max="1" value="0" step="0.001" /><output id="pan-x-output">0.000</output></label>
+        <label>Pan Y<input id="pan-y" type="range" min="-1" max="1" value="0" step="0.001" /><output id="pan-y-output">0.000</output></label>
+        <label>Brightness<input id="brightness" type="range" min="0" max="2" value="1" step="0.01" /><output id="brightness-output">1.00</output></label>
+        <label>Contrast<input id="contrast" type="range" min="0" max="2" value="1" step="0.01" /><output id="contrast-output">1.00</output></label>
+        <label>Saturation<input id="saturation" type="range" min="0" max="2" value="1" step="0.01" /><output id="saturation-output">1.00</output></label>
+        <label>Gamma<input id="gamma" type="range" min="0.2" max="3" value="1" step="0.01" /><output id="gamma-output">1.00</output></label>
+      </div>
+      <div class="inline-options"><label class="check"><input id="mirror-x" type="checkbox" /> Mirror X</label><label class="check"><input id="mirror-y" type="checkbox" /> Mirror Y</label><label class="check"><input id="show-grid" type="checkbox" /> Output grid</label></div>
+    </section>
+
+    <section class="card">
+      <div class="section-heading"><div><span class="section-tag">OUTPUT</span><h2>Display and capture</h2></div><span id="output-size" class="readout">—</span></div>
+      <label>Display<select id="display-select"><option value="0">Current display</option></select></label>
+      <div class="button-grid two"><button id="refresh-displays">Refresh displays</button><button id="move-display">Move to display</button><button id="fullscreen-output" class="primary">Fullscreen output</button><button id="snapshot-output">Save PNG</button><button id="show-output">Show output</button><button id="hide-output">Hide output</button></div>
+    </section>
+  </main>
+
+  <footer><span>22 · IMAGE SEQUENCE PLAYER</span><span id="footer-status">Ready</span></footer>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

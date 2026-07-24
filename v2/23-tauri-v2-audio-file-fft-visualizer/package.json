@@ -1,0 +1,15 @@
+{
+  "name": "23-tauri-v2-audio-file-fft-visualizer",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.8.5"
+  },
+  "dependencies": {
+    "@tauri-apps/plugin-dialog": "^2.4.0"
+  }
+}

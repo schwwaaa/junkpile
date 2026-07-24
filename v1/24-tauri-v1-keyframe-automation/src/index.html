@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>24 · Keyframe Automation</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">JUNKPILE · TAURI V1 ESSENTIALS</p>
+        <h1>24 · Keyframe Automation</h1>
+        <p class="subtitle">Animate shader parameters on an editable timeline, record live changes, and save complete visual performances.</p>
+      </div>
+      <div class="top-actions">
+        <button id="snapshotBtn">Save PNG</button>
+        <button id="fullscreenBtn">Fullscreen</button>
+      </div>
+    </header>
+
+    <section class="workspace">
+      <section class="preview-panel panel">
+        <div class="panel-head">
+          <div>
+            <span class="label">LIVE OUTPUT</span>
+            <strong id="statusText">Ready</strong>
+          </div>
+          <div class="telemetry">
+            <span><b id="fpsReadout">0</b> fps</span>
+            <span><b id="keyframeCount">0</b> keys</span>
+            <span><b id="trackCount">0</b> tracks</span>
+          </div>
+        </div>
+        <div class="canvas-wrap">
+          <canvas id="glCanvas"></canvas>
+          <div class="canvas-badge" id="canvasBadge">MANUAL</div>
+        </div>
+        <div class="transport">
+          <button id="jumpStartBtn" title="Jump to start">|◀</button>
+          <button id="stepBackBtn" title="Step backward">◀</button>
+          <button id="playBtn" class="primary">Play</button>
+          <button id="stepForwardBtn" title="Step forward">▶</button>
+          <button id="jumpEndBtn" title="Jump to end">▶|</button>
+          <label class="time-display"><input id="currentTimeInput" type="number" min="0" step="0.01" value="0" /> / <span id="durationReadout">12.00</span>s</label>
+          <label>Duration <input id="durationInput" type="number" min="1" max="300" step="0.5" value="12" /></label>
+          <label>Rate <input id="rateInput" type="range" min="-2" max="2" step="0.05" value="1" /><output id="rateValue">1.00×</output></label>
+          <label class="check"><input id="loopToggle" type="checkbox" checked /> Loop</label>
+          <label class="check"><input id="pingPongToggle" type="checkbox" /> Ping-pong</label>
+          <button id="recordAutomationBtn" class="record">Arm automation</button>
+        </div>
+      </section>
+
+      <aside class="controls-panel panel">
+        <div class="tabs">
+          <button class="tab active" data-tab="parameters">Parameters</button>
+          <button class="tab" data-tab="presets">Presets</button>
+          <button class="tab" data-tab="project">Project</button>
+        </div>
+
+        <div class="tab-page active" id="tab-parameters">
+          <div class="section-head">
+            <div>
+              <span class="label">VISUAL ENGINE</span>
+              <strong>Live parameters</strong>
+            </div>
+            <select id="visualMode">
+              <option value="0">Domain warp</option>
+              <option value="1">Orbital field</option>
+              <option value="2">Cellular bloom</option>
+              <option value="3">Prism tunnel</option>
+            </select>
+          </div>
+          <div id="parameterControls" class="parameter-list"></div>
+          <div class="button-row">
+            <button id="addAllKeyframesBtn">Key all values</button>
+            <button id="clearAtTimeBtn">Clear keys at time</button>
+            <button id="resetParametersBtn">Reset values</button>
+          </div>
+        </div>
+
+        <div class="tab-page" id="tab-presets">
+          <div class="section-head">
+            <div><span class="label">STATE LIBRARY</span><strong>Presets</strong></div>
+          </div>
+          <div class="preset-grid" id="factoryPresets"></div>
+          <hr />
+          <label>Preset name <input id="presetNameInput" type="text" value="My preset" /></label>
+          <div class="button-row">
+            <button id="savePresetBtn">Save local preset</button>
+            <button id="deletePresetBtn">Delete selected</button>
+          </div>
+          <select id="localPresetSelect"><option value="">Local presets…</option></select>
+          <p class="help">A preset stores visual values only. A project stores values, duration, tracks, interpolation, and playback settings.</p>
+        </div>
+
+        <div class="tab-page" id="tab-project">
+          <div class="section-head">
+            <div><span class="label">AUTOMATION FILE</span><strong>Project</strong></div>
+          </div>
+          <label>Project title <input id="projectTitleInput" type="text" value="Untitled automation" /></label>
+          <div class="button-stack">
+            <button id="newProjectBtn">New project</button>
+            <button id="exportProjectBtn">Export project JSON</button>
+            <button id="importProjectBtn">Import project JSON</button>
+          </div>
+          <div class="project-summary">
+            <div><span>Duration</span><b id="summaryDuration">12.00s</b></div>
+            <div><span>Tracks</span><b id="summaryTracks">0</b></div>
+            <div><span>Keyframes</span><b id="summaryKeys">0</b></div>
+            <div><span>Mode</span><b id="summaryMode">Loop</b></div>
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="timeline-panel panel">
+      <div class="timeline-toolbar">
+        <div>
+          <span class="label">AUTOMATION TIMELINE</span>
+          <strong id="timelineTitle">Untitled automation</strong>
+        </div>
+        <div class="timeline-actions">
+          <label>Snap <select id="snapSelect"><option value="0">Off</option><option value="0.033333">1 frame / 30</option><option value="0.016667">1 frame / 60</option><option value="0.1" selected>0.1 sec</option><option value="0.25">0.25 sec</option><option value="0.5">0.5 sec</option><option value="1">1 sec</option></select></label>
+          <label>Interpolation <select id="defaultInterpolation"><option value="linear">Linear</option><option value="ease" selected>Ease</option><option value="step">Step</option></select></label>
+          <button id="clearAllBtn" class="danger">Clear all keys</button>
+        </div>
+      </div>
+      <div class="timeline-scroll">
+        <div class="time-ruler" id="timeRuler"></div>
+        <div class="tracks" id="tracks"></div>
+        <div class="playhead" id="playhead"></div>
+      </div>
+      <div class="key-editor" id="keyEditor">
+        <span class="muted">Select a keyframe to edit it.</span>
+      </div>
+    </section>
+  </main>
+  <input id="projectFileInput" type="file" accept="application/json,.json" hidden />
+  <script src="app.js"></script>
+</body>
+</html>

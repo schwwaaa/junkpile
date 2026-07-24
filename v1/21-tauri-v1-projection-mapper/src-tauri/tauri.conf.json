@@ -1,0 +1,61 @@
+{
+  "$schema": "https://schema.tauri.app/config/1",
+  "build": {
+    "beforeBuildCommand": "",
+    "beforeDevCommand": "",
+    "devPath": "../src",
+    "distDir": "../src",
+    "withGlobalTauri": true
+  },
+  "package": {
+    "productName": "Junkpile 21 · Projection Mapper",
+    "version": "0.1.0"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": false,
+      "dialog": { "save": true },
+      "fs": { "writeFile": true },
+      "window": {
+        "all": true
+      }
+    },
+    "windows": [
+      {
+        "label": "controls",
+        "title": "21 · Tauri v1 · Projection Mapper Controls",
+        "url": "index.html",
+        "width": 520,
+        "height": 940,
+        "minWidth": 450,
+        "minHeight": 720,
+        "resizable": true,
+        "decorations": true,
+        "fullscreen": false
+      },
+      {
+        "label": "output",
+        "title": "21 · Projection Output",
+        "url": "output.html",
+        "width": 1280,
+        "height": 720,
+        "minWidth": 480,
+        "minHeight": 270,
+        "resizable": true,
+        "decorations": true,
+        "fullscreen": false,
+        "x": 540,
+        "y": 80
+      }
+    ],
+    "bundle": {
+      "active": true,
+      "identifier": "com.schwwaaa.junkpile.v1.projection-mapper",
+      "icon": ["icons/icon.icns", "icons/icon.png", "icons/icon.ico"],
+      "macOS": { "entitlements": "entitlements.plist" }
+    },
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' blob: data:; media-src 'self' blob: data: mediastream:; script-src 'self'; style-src 'self' 'unsafe-inline'"
+    }
+  }
+}

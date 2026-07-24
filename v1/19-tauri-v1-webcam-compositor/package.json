@@ -1,0 +1,15 @@
+{
+  "name": "19-tauri-v1-webcam-compositor",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Tauri v1 raw WebGL webcam compositor with chroma/luma keying, media backgrounds, overlays, recording, and native export",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^1.6.3"
+  }
+}

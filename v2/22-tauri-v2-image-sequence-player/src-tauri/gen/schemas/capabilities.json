@@ -1,0 +1,1 @@
+{"default":{"identifier":"default","description":"Core events and native open/save dialogs for the Tauri v2 image-sequence player","local":true,"windows":["controls","output"],"permissions":["core:default","dialog:allow-open","dialog:allow-save"]}}

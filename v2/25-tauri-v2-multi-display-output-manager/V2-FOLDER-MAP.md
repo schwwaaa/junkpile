@@ -1,0 +1,30 @@
+# Junkpile Tauri v2 Essentials — Folder Map 00–25
+
+| # | Exact folder name | Focus |
+|---:|---|---|
+| 00 | `p5-tauri-v2-single-template` | p5.js single window |
+| 01 | `p5-tauri-v2-ws-template` | p5.js two-window WebSocket |
+| 02 | `webgl-tauri-v2-single-template` | Raw WebGL single window |
+| 03 | `webgl-tauri-v2-ws-template` | Raw WebGL two-window WebSocket |
+| 04 | `glsl-tauri-v2-single-template` | External GLSL single window |
+| 05 | `glsl-tauri-v2-ws-template` | External GLSL two-window |
+| 06 | `webcam-tauri-v2-single-template` | Webcam texture single window |
+| 07 | `webcam-tauri-v2-ws-template` | Webcam texture two-window |
+| 08 | `feedback-tauri-v2-single-template` | Feedback single window |
+| 09 | `feedback-tauri-v2-ws-template` | Feedback two-window |
+| 10 | `10-tauri-v2-midi-input` | Rust MIDI bridge, MIDI learn, WebGL control |
+| 11 | `11-tauri-v2-osc-input` | Rust OSC/UDP bridge, OSC learn, address routing |
+| 12 | `12-tauri-v2-video-texture-player` | Native/browser video loading, WebGL processing, feedback |
+| 13 | `13-tauri-v2-audio-reactive-fft` | Microphone FFT/waveform textures, beat analysis, WebGL visuals |
+| 14 | `14-tauri-v2-canvas-recorder` | High-resolution canvas recording, optional microphone audio, native export |
+| 15 | `15-tauri-v2-multipass-compositor` | Reorderable WebGL pass stack, ping-pong buffers, persistent feedback, native PNG export |
+| 16 | `16-tauri-v2-image-texture-processor` | Native/browser image loading, WebGL processing, comparison, high-resolution PNG/JPEG export |
+| 17 | `17-tauri-v2-glsl-shader-playground` | Live GLSL editing, compiler terminal, native shader open/save, presets, PNG export |
+| 18 | `18-tauri-v2-texture-mixer` | Two image/video layers, blend modes, masks, transforms, native drop, high-resolution export |
+| 19 | `19-tauri-v2-webcam-compositor` | Live webcam keying, backgrounds, overlays, recording, native media and export |
+| 20 | `20-tauri-v2-live-video-switcher` | Four-source Preview/Program switcher, GPU transitions, overlays, recording, native media loading |
+| 21 | `21-tauri-v2-projection-mapper` | Two-window mesh warping, edge feathering, calibration, monitor placement, fullscreen output, presets |
+| 22 | `22-tauri-v2-image-sequence-player` | Two-window native folder/file sequence playback, decode-aware caching, monitor output, PNG snapshots |
+| 23 | `23-tauri-v2-audio-file-fft-visualizer` | Local audio transport, FFT/waveform textures, beat analysis, GLSL visuals, audio-inclusive recording |
+| 24 | `24-tauri-v2-keyframe-automation` | Editable parameter tracks, interpolation, live automation recording, presets, native JSON import/export |
+| 25 | `25-tauri-v2-multi-display-output-manager` | Three synchronized native output windows, monitor routing, layouts, blackout, and snapshots |

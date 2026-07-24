@@ -1,0 +1,16 @@
+{
+  "name": "25-tauri-v2-multi-display-output-manager",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tauri v2 multi-display manager with three synchronized WebGL output windows, monitor placement, layouts, blackout, and snapshots",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.8.5"
+  },
+  "dependencies": {
+    "@tauri-apps/plugin-dialog": "^2.4.0"
+  }
+}

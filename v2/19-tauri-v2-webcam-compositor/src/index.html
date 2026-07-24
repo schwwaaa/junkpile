@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>19 · Tauri v2 · Webcam Compositor</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main id="app">
+    <aside id="controls" aria-label="Webcam compositor controls">
+      <header class="panel-header">
+        <div class="eyebrow">Junkpile · Tauri v2 essentials</div>
+        <h1>19 · Webcam Compositor</h1>
+        <p>Camera → key matte → background → overlay → record/export</p>
+      </header>
+
+      <section class="control-section">
+        <div class="section-heading"><span>Camera</span><span id="camera-state" class="status-pill warm-pill">Stopped</span></div>
+        <div class="device-row">
+          <select id="camera-select" aria-label="Camera input"><option value="">Default camera</option></select>
+          <button id="refresh-cameras" class="icon-button" type="button" title="Refresh camera list">↻</button>
+        </div>
+        <div class="button-grid two">
+          <button id="start-camera" class="primary-button" type="button">Start camera</button>
+          <button id="stop-camera" type="button" disabled>Stop</button>
+        </div>
+        <div class="select-row"><label for="camera-resolution">Capture</label><select id="camera-resolution"><option value="640x480">640 × 480</option><option value="1280x720" selected>1280 × 720</option><option value="1920x1080">1920 × 1080</option><option value="ideal">Highest available</option></select></div>
+        <label class="toggle wide-toggle"><input id="camera-mirror" type="checkbox" checked><span>Mirror camera horizontally</span></label>
+        <dl class="source-details"><div><dt>Input</dt><dd id="camera-size">—</dd></div><div><dt>Frames</dt><dd id="camera-frames">0</dd></div></dl>
+      </section>
+
+      <section class="control-section" data-drop-target="background">
+        <div class="section-heading"><span>Background</span><span id="background-name">Procedural</span></div>
+        <div class="button-grid two media-open-grid">
+          <button id="native-open-background" class="primary-button" type="button">Native open</button>
+          <label class="file-button" for="background-file">Browser picker</label>
+        </div>
+        <input id="background-file" type="file" accept="image/*,video/*" hidden>
+        <div class="button-grid two"><button id="clear-background" type="button">Use procedural</button><button id="background-play" type="button" disabled>Pause video</button></div>
+        <div class="select-row"><label for="background-style">Procedural</label><select id="background-style"><option value="0">Gradient field</option><option value="1">Soft plasma</option><option value="2">Grid horizon</option><option value="3">Color wash</option></select></div>
+        <div class="color-row"><label for="background-color-a">Color A</label><input id="background-color-a" type="color" value="#123650"><label for="background-color-b">Color B</label><input id="background-color-b" type="color" value="#f26f46"></div>
+        <div class="select-row"><label for="background-fit">Media fit</label><select id="background-fit"><option value="0">Cover</option><option value="1">Contain</option><option value="2">Stretch</option></select></div>
+        <div class="control-row"><label for="background-zoom">Zoom</label><input id="background-zoom" type="range" min="0.25" max="4" step="0.01" value="1"><output id="background-zoom-output">1.00</output></div>
+        <div class="control-row"><label for="background-pan-x">Pan X</label><input id="background-pan-x" type="range" min="-1" max="1" step="0.01" value="0"><output id="background-pan-x-output">0.00</output></div>
+        <div class="control-row"><label for="background-pan-y">Pan Y</label><input id="background-pan-y" type="range" min="-1" max="1" step="0.01" value="0"><output id="background-pan-y-output">0.00</output></div>
+        <div class="control-row"><label for="background-blur">Blur</label><input id="background-blur" type="range" min="0" max="8" step="0.1" value="0"><output id="background-blur-output">0.0</output></div>
+        <div class="control-row"><label for="background-speed">Motion</label><input id="background-speed" type="range" min="0" max="3" step="0.01" value="0.55"><output id="background-speed-output">0.55</output></div>
+      </section>
+
+      <section class="control-section key-section">
+        <div class="section-heading"><span>Key matte</span><span id="matte-readout">Chroma</span></div>
+        <div class="select-row"><label for="key-mode">Mode</label><select id="key-mode"><option value="0">None</option><option value="1" selected>Chroma key</option><option value="2">Luminance key</option></select></div>
+        <div class="color-row single"><label for="key-color">Key color</label><input id="key-color" type="color" value="#00ff3b"><button id="sample-key" type="button">Sample center</button></div>
+        <div class="control-row"><label for="key-threshold">Threshold</label><input id="key-threshold" type="range" min="0" max="1" step="0.001" value="0.32"><output id="key-threshold-output">0.320</output></div>
+        <div class="control-row"><label for="key-softness">Softness</label><input id="key-softness" type="range" min="0.001" max="0.5" step="0.001" value="0.14"><output id="key-softness-output">0.140</output></div>
+        <div class="control-row"><label for="spill">Spill removal</label><input id="spill" type="range" min="0" max="1" step="0.01" value="0.58"><output id="spill-output">0.58</output></div>
+        <div class="control-row"><label for="matte-expand">Matte expand</label><input id="matte-expand" type="range" min="-0.2" max="0.2" step="0.001" value="0"><output id="matte-expand-output">0.000</output></div>
+        <div class="control-row"><label for="luma-level">Luma level</label><input id="luma-level" type="range" min="0" max="1" step="0.001" value="0.5"><output id="luma-level-output">0.500</output></div>
+        <label class="toggle wide-toggle"><input id="invert-matte" type="checkbox"><span>Invert matte</span></label>
+        <div class="preset-grid"><button data-key-preset="green" type="button">Green screen</button><button data-key-preset="blue" type="button">Blue screen</button><button data-key-preset="dark" type="button">Remove dark</button><button data-key-preset="light" type="button">Remove light</button></div>
+      </section>
+
+      <section class="control-section">
+        <div class="section-heading"><span>Foreground</span></div>
+        <div class="select-row"><label for="foreground-fit">Fit</label><select id="foreground-fit"><option value="0">Cover</option><option value="1">Contain</option><option value="2">Stretch</option></select></div>
+        <div class="control-row"><label for="foreground-zoom">Zoom</label><input id="foreground-zoom" type="range" min="0.25" max="4" step="0.01" value="1"><output id="foreground-zoom-output">1.00</output></div>
+        <div class="control-row"><label for="foreground-pan-x">Pan X</label><input id="foreground-pan-x" type="range" min="-1" max="1" step="0.01" value="0"><output id="foreground-pan-x-output">0.00</output></div>
+        <div class="control-row"><label for="foreground-pan-y">Pan Y</label><input id="foreground-pan-y" type="range" min="-1" max="1" step="0.01" value="0"><output id="foreground-pan-y-output">0.00</output></div>
+        <div class="control-row"><label for="foreground-rotation">Rotation</label><input id="foreground-rotation" type="range" min="-180" max="180" step="1" value="0"><output id="foreground-rotation-output">0°</output></div>
+        <div class="control-row"><label for="foreground-saturation">Saturation</label><input id="foreground-saturation" type="range" min="0" max="2" step="0.01" value="1"><output id="foreground-saturation-output">1.00</output></div>
+        <div class="control-row"><label for="foreground-exposure">Exposure</label><input id="foreground-exposure" type="range" min="0" max="2" step="0.01" value="1"><output id="foreground-exposure-output">1.00</output></div>
+        <div class="control-row"><label for="foreground-contrast">Contrast</label><input id="foreground-contrast" type="range" min="0" max="2.5" step="0.01" value="1"><output id="foreground-contrast-output">1.00</output></div>
+      </section>
+
+      <section class="control-section" data-drop-target="overlay">
+        <div class="section-heading"><span>Overlay</span><span id="overlay-name">Generated frame</span></div>
+        <div class="button-grid two media-open-grid">
+          <button id="native-open-overlay" class="warm-native-button" type="button">Native open</button>
+          <label class="file-button warm-button" for="overlay-file">Browser picker</label>
+        </div>
+        <input id="overlay-file" type="file" accept="image/*" hidden>
+        <button id="clear-overlay" class="full-button" type="button">Use generated frame</button>
+        <div class="select-row"><label for="overlay-blend">Blend</label><select id="overlay-blend"><option value="0">Normal</option><option value="1">Add</option><option value="2">Screen</option><option value="3">Multiply</option></select></div>
+        <div class="control-row"><label for="overlay-opacity">Opacity</label><input id="overlay-opacity" type="range" min="0" max="1" step="0.01" value="0.72"><output id="overlay-opacity-output">0.72</output></div>
+        <div class="control-row"><label for="overlay-scale">Scale</label><input id="overlay-scale" type="range" min="0.25" max="3" step="0.01" value="1"><output id="overlay-scale-output">1.00</output></div>
+        <div class="control-row"><label for="overlay-pan-x">Pan X</label><input id="overlay-pan-x" type="range" min="-1" max="1" step="0.01" value="0"><output id="overlay-pan-x-output">0.00</output></div>
+        <div class="control-row"><label for="overlay-pan-y">Pan Y</label><input id="overlay-pan-y" type="range" min="-1" max="1" step="0.01" value="0"><output id="overlay-pan-y-output">0.00</output></div>
+      </section>
+
+      <section class="control-section">
+        <div class="section-heading"><span>Output</span><span id="record-state">Ready</span></div>
+        <div class="select-row"><label for="view-mode">Inspect</label><select id="view-mode"><option value="0">Composite</option><option value="1">Matte</option><option value="2">Foreground</option><option value="3">Background</option></select></div>
+        <div class="select-row"><label for="record-fps">Record fps</label><select id="record-fps"><option value="30">30 fps</option><option value="60" selected>60 fps</option></select></div>
+        <div class="button-grid three"><button id="record-button" class="record-button" type="button">Record</button><button id="pause-button" type="button" disabled>Pause</button><button id="stop-recording" type="button" disabled>Stop</button></div>
+        <div class="record-clock"><strong id="record-time">00:00.000</strong><span id="record-size">0 B</span></div>
+        <div class="button-grid two"><button id="save-recording" class="primary-button" type="button" disabled>Save recording</button><button id="save-snapshot" type="button">Save PNG</button></div>
+        <button id="fullscreen-preview" class="full-button" type="button">Fullscreen preview</button>
+        <dl class="source-details"><div><dt>Codec</dt><dd id="codec-label">Detecting…</dd></div><div><dt>Last file</dt><dd id="last-file">—</dd></div></dl>
+      </section>
+
+      <footer class="panel-footer"><span id="fps-label">0 fps</span><span id="render-size">0 × 0</span><span>WebGL 1 · Tauri v2 · MediaRecorder</span></footer>
+    </aside>
+
+    <section id="stage" aria-label="Live webcam compositor preview">
+      <canvas id="gl-canvas"></canvas>
+      <video id="camera-video" playsinline muted hidden></video>
+      <video id="background-video" playsinline muted loop hidden></video>
+      <div id="recording-border"></div>
+      <div id="drop-overlay" class="drop-overlay hidden"><strong>Drop media</strong><span>Background by default · drop over Overlay controls for an overlay image</span></div>
+      <div class="stage-hud"><span id="hud-camera">Camera stopped</span><span id="hud-view">Composite</span><span id="hud-key">Chroma key</span></div>
+      <div id="empty-state" class="empty-state"><div class="empty-mark">19</div><h2>Start a camera</h2><p>Approve camera access, then tune the matte or load a background.</p><button id="empty-start" class="primary-button" type="button">Start camera</button></div>
+      <div id="unsupported" class="unsupported hidden"><div class="empty-mark">19</div><h2>Camera compositing unavailable</h2><p>This WebView does not expose WebGL or mediaDevices.getUserMedia.</p></div>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

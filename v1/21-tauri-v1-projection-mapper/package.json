@@ -1,0 +1,15 @@
+{
+  "name": "21-tauri-v1-projection-mapper",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Tauri v1 two-window WebGL projection mapper with editable subdivision mesh, calibration, feathering, display placement, presets, and snapshots",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^1.6.3"
+  }
+}

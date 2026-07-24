@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>23 · Tauri v2 · Audio File FFT Visualizer</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main id="app">
+    <aside id="controls" aria-label="Audio file and visualization controls">
+      <header class="panel-header">
+        <div class="eyebrow">Junkpile · Tauri v2 essentials</div>
+        <h1>23 · Audio File FFT</h1>
+        <p>Local audio → Web Audio analysis → FFT textures → GLSL → record/export</p>
+      </header>
+
+      <section class="control-section source-section">
+        <div class="section-heading"><span>Audio source</span><span id="source-state" class="status-pill idle">No file</span></div>
+        <div class="button-grid three">
+          <button id="native-open" class="primary-button" type="button">Native open</button>
+          <button id="choose-audio" type="button">Browser open</button>
+          <button id="clear-audio" type="button" disabled>Clear</button>
+        </div>
+        <input id="audio-input" type="file" accept="audio/*,.mp3,.wav,.aif,.aiff,.m4a,.aac,.flac,.ogg,.opus" hidden>
+        <div id="drop-zone" class="drop-zone" tabindex="0">
+          <strong>Drop an audio file</strong>
+          <span>MP3 · WAV · AIFF · M4A · AAC · FLAC · OGG · OPUS where supported</span>
+        </div>
+        <dl class="source-details">
+          <div><dt>File</dt><dd id="file-label">—</dd></div>
+          <div><dt>Duration</dt><dd id="duration-label">—</dd></div>
+          <div><dt>Format</dt><dd id="format-label">—</dd></div>
+          <div><dt>Rate</dt><dd id="sample-rate-label">—</dd></div>
+        </dl>
+      </section>
+
+      <section class="control-section transport-section">
+        <div class="section-heading"><span>Transport</span><span id="transport-time">00:00.000 / 00:00.000</span></div>
+        <input id="seek" class="seek" type="range" min="0" max="1" step="0.001" value="0" disabled aria-label="Audio timeline">
+        <div class="transport-buttons">
+          <button id="back-ten" type="button" disabled>−10s</button>
+          <button id="play-pause" class="primary-button" type="button" disabled>Play</button>
+          <button id="stop" type="button" disabled>Stop</button>
+          <button id="forward-ten" type="button" disabled>+10s</button>
+        </div>
+        <div class="control-row">
+          <label for="playback-rate">Playback rate</label>
+          <input id="playback-rate" type="range" min="0.25" max="2" step="0.01" value="1">
+          <output id="playback-rate-output">1.00×</output>
+        </div>
+        <div class="control-row">
+          <label for="volume">Volume</label>
+          <input id="volume" type="range" min="0" max="1.5" step="0.01" value="0.9">
+          <output id="volume-output">90%</output>
+        </div>
+        <div class="toggle-grid">
+          <label class="toggle"><input id="loop" type="checkbox" checked><span>Loop file</span></label>
+          <label class="toggle"><input id="mute" type="checkbox"><span>Mute output</span></label>
+        </div>
+        <div class="loop-region">
+          <span>Loop region</span>
+          <button id="set-in" type="button" disabled>Set in</button>
+          <button id="set-out" type="button" disabled>Set out</button>
+          <button id="clear-region" type="button" disabled>Full file</button>
+          <output id="region-label">Full duration</output>
+        </div>
+      </section>
+
+      <section class="control-section meters-section">
+        <div class="section-heading"><span>Live analysis</span><span id="peak-label">−∞ dB</span></div>
+        <div class="meter-list">
+          <div class="meter-row"><span>Sub</span><div class="meter-track"><i id="sub-meter"></i></div><output id="sub-value">0.00</output></div>
+          <div class="meter-row"><span>Bass</span><div class="meter-track"><i id="bass-meter"></i></div><output id="bass-value">0.00</output></div>
+          <div class="meter-row"><span>Mid</span><div class="meter-track"><i id="mid-meter"></i></div><output id="mid-value">0.00</output></div>
+          <div class="meter-row"><span>High</span><div class="meter-track"><i id="high-meter"></i></div><output id="high-value">0.00</output></div>
+          <div class="meter-row"><span>Air</span><div class="meter-track"><i id="air-meter"></i></div><output id="air-value">0.00</output></div>
+          <div class="meter-row rms"><span>RMS</span><div class="meter-track"><i id="rms-meter"></i></div><output id="rms-value">0.00</output></div>
+        </div>
+        <div class="beat-strip"><div id="beat-light" class="beat-light"></div><span>Adaptive beat pulse</span><output id="beat-value">0.00</output></div>
+        <canvas id="spectrum-monitor" width="640" height="150" aria-label="FFT spectrum monitor"></canvas>
+        <canvas id="waveform-monitor" width="640" height="82" aria-label="Waveform monitor"></canvas>
+      </section>
+
+      <section class="control-section">
+        <div class="section-heading"><span>Analysis</span></div>
+        <div class="select-row"><label for="fft-size">FFT size</label><select id="fft-size"><option>512</option><option>1024</option><option selected>2048</option><option>4096</option><option>8192</option><option>16384</option></select></div>
+        <div class="control-row"><label for="smoothing">Analyser smooth</label><input id="smoothing" type="range" min="0" max="0.95" step="0.01" value="0.7"><output id="smoothing-output">0.70</output></div>
+        <div class="control-row"><label for="sensitivity">Sensitivity</label><input id="sensitivity" type="range" min="0.25" max="4" step="0.01" value="1.3"><output id="sensitivity-output">1.30×</output></div>
+        <div class="control-row"><label for="attack">Band attack</label><input id="attack" type="range" min="0.02" max="1" step="0.01" value="0.64"><output id="attack-output">0.64</output></div>
+        <div class="control-row"><label for="release">Band release</label><input id="release" type="range" min="0.005" max="0.25" step="0.005" value="0.055"><output id="release-output">0.055</output></div>
+        <div class="control-row"><label for="beat-threshold">Beat threshold</label><input id="beat-threshold" type="range" min="1.05" max="2.2" step="0.01" value="1.28"><output id="beat-threshold-output">1.28×</output></div>
+        <div class="control-row"><label for="beat-cooldown">Beat cooldown</label><input id="beat-cooldown" type="range" min="80" max="600" step="10" value="170"><output id="beat-cooldown-output">170 ms</output></div>
+        <div class="toggle-grid"><label class="toggle"><input id="beat-enabled" type="checkbox" checked><span>Detect beats</span></label><button id="manual-beat" type="button">Trigger pulse</button></div>
+      </section>
+
+      <section class="control-section">
+        <div class="section-heading"><span>Visual</span></div>
+        <div class="select-row"><label for="visual-mode">Mode</label><select id="visual-mode"><option value="0">Spectrum rings</option><option value="1">Waveform tunnel</option><option value="2">Frequency terrain</option><option value="3">Aurora field</option><option value="4">Beat grid</option><option value="5">Spectral ribbons</option></select></div>
+        <div class="control-row"><label for="intensity">Intensity</label><input id="intensity" type="range" min="0" max="3" step="0.01" value="1.15"><output id="intensity-output">1.15</output></div>
+        <div class="control-row"><label for="motion-speed">Motion speed</label><input id="motion-speed" type="range" min="0" max="3" step="0.01" value="0.6"><output id="motion-speed-output">0.60</output></div>
+        <div class="control-row"><label for="frequency-scale">Frequency scale</label><input id="frequency-scale" type="range" min="0.25" max="4" step="0.01" value="1"><output id="frequency-scale-output">1.00</output></div>
+        <div class="control-row"><label for="feedback">Feedback</label><input id="feedback" type="range" min="0" max="0.98" step="0.01" value="0.78"><output id="feedback-output">0.78</output></div>
+        <div class="control-row"><label for="feedback-zoom">Feedback zoom</label><input id="feedback-zoom" type="range" min="0.97" max="1.03" step="0.0005" value="1.003"><output id="feedback-zoom-output">1.003</output></div>
+        <div class="control-row"><label for="hue">Hue</label><input id="hue" type="range" min="-180" max="180" step="1" value="0"><output id="hue-output">0°</output></div>
+        <div class="control-row"><label for="saturation">Saturation</label><input id="saturation" type="range" min="0" max="2" step="0.01" value="1.15"><output id="saturation-output">1.15</output></div>
+        <div class="control-row"><label for="brightness">Brightness</label><input id="brightness" type="range" min="0" max="2" step="0.01" value="1"><output id="brightness-output">1.00</output></div>
+        <div class="control-row"><label for="contrast">Contrast</label><input id="contrast" type="range" min="0" max="3" step="0.01" value="1.08"><output id="contrast-output">1.08</output></div>
+      </section>
+
+      <section class="control-section export-section">
+        <div class="section-heading"><span>Capture</span><span id="record-state" class="status-pill idle">Ready</span></div>
+        <div class="select-row"><label for="record-fps">Frame rate</label><select id="record-fps"><option value="30">30 fps</option><option value="60" selected>60 fps</option></select></div>
+        <div class="select-row"><label for="video-bitrate">Video bitrate</label><select id="video-bitrate"><option value="12000000">12 Mbps</option><option value="24000000" selected>24 Mbps</option><option value="40000000">40 Mbps</option></select></div>
+        <div class="button-grid three"><button id="record" class="record-button" type="button">Record</button><button id="pause-record" type="button" disabled>Pause</button><button id="stop-record" type="button" disabled>Stop</button></div>
+        <div class="button-grid three"><button id="save-recording" type="button" disabled>Save recording</button><button id="snapshot" type="button">Save PNG</button><button id="fullscreen-preview" type="button">Fullscreen</button></div>
+        <dl class="source-details"><div><dt>Codec</dt><dd id="codec-label">Detecting…</dd></div><div><dt>Recorded</dt><dd id="record-duration">00:00.0</dd></div><div><dt>Size</dt><dd id="record-size">0 B</dd></div><div><dt>Last save</dt><dd id="last-save">—</dd></div></dl>
+      </section>
+
+      <footer class="panel-footer"><span id="fps-label">0 fps</span><span id="render-size">0 × 0</span><span>Web Audio · WebGL 1</span></footer>
+    </aside>
+
+    <section id="stage" aria-label="Audio file reactive WebGL output">
+      <canvas id="gl-canvas"></canvas>
+      <div id="empty-state">
+        <div class="empty-mark">23</div>
+        <h2>Load an audio file</h2>
+        <p>The spectrum and waveform are uploaded to the GPU every frame.</p>
+      </div>
+      <div class="stage-hud"><span id="hud-file">No audio loaded</span><span id="hud-mode">Spectrum rings</span></div>
+    </section>
+  </main>
+  <audio id="audio-element" preload="metadata"></audio>
+  <script src="app.js"></script>
+</body>
+</html>

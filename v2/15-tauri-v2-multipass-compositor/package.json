@@ -1,0 +1,15 @@
+{
+  "name": "15-tauri-v2-multipass-compositor",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Junkpile Tauri v2 essential 15: reorderable WebGL shader passes, ping-pong buffers, persistent feedback, native PNG export, and fullscreen",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}

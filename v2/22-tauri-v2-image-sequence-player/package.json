@@ -1,0 +1,9 @@
+{
+  "name": "22-tauri-v2-image-sequence-player",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tauri v2 two-window image-sequence player with native folder scanning, decode-aware caching, transport, display output, and snapshots",
+  "scripts": { "dev": "tauri dev", "build": "tauri build" },
+  "devDependencies": { "@tauri-apps/cli": "^2.8.5" },
+  "dependencies": { "@tauri-apps/plugin-dialog": "^2.4.0" }
+}

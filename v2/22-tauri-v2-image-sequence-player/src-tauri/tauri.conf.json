@@ -1,0 +1,46 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Junkpile 22 · Tauri v2 Image Sequence Player",
+  "version": "0.1.0",
+  "identifier": "com.schwwaaa.junkpile.tauri-v2-image-sequence-player",
+  "build": { "beforeBuildCommand": "", "beforeDevCommand": "", "frontendDist": "../src" },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "controls",
+        "title": "22 · Tauri v2 Image Sequence Player Controls",
+        "url": "index.html",
+        "width": 540,
+        "height": 940,
+        "minWidth": 440,
+        "minHeight": 680,
+        "resizable": true,
+        "decorations": true,
+        "dragDropEnabled": true
+      },
+      {
+        "label": "output",
+        "title": "22 · Tauri v2 Image Sequence Output",
+        "url": "output.html",
+        "width": 1280,
+        "height": 720,
+        "minWidth": 480,
+        "minHeight": 270,
+        "resizable": true,
+        "decorations": true,
+        "x": 560,
+        "y": 80,
+        "dragDropEnabled": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; connect-src ipc: http://ipc.localhost"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": ["icons/icon.icns", "icons/icon.png", "icons/icon.ico"]
+  }
+}

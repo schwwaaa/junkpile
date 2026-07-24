@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>12 · Tauri v2 · Video Texture Player</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main id="app">
+    <aside id="controls" aria-label="Video and shader controls">
+      <header class="panel-header">
+        <div class="eyebrow">Junkpile · Tauri v2 essentials</div>
+        <h1>12 · Video Texture</h1>
+        <p>Local video → asset protocol / Blob URL → WebGL texture → GLSL → feedback</p>
+      </header>
+
+      <section class="control-section file-section">
+        <div class="section-heading">
+          <span>Source</span>
+          <span id="source-state" class="status-pill idle">No file</span>
+        </div>
+        <input id="file-input" type="file" accept="video/*" hidden>
+        <div class="button-grid two">
+          <button id="native-open-button" class="primary-button" type="button">Native open</button>
+          <button id="browser-open-button" type="button">Browser picker</button>
+        </div>
+        <div id="drop-zone" class="drop-zone" tabindex="0">
+          <strong>Drop a local video here</strong>
+          <span>MP4, MOV, M4V, WebM, MKV, AVI, OGV, or another WebView-supported format</span>
+        </div>
+        <dl class="source-details">
+          <div><dt>File</dt><dd id="file-name">—</dd></div>
+          <div><dt>Source</dt><dd id="source-size">—</dd></div>
+          <div><dt>Duration</dt><dd id="duration-label">—</dd></div>
+          <div><dt>Decoder</dt><dd id="decoder-label">Waiting</dd></div>
+        </dl>
+      </section>
+
+      <section class="control-section">
+        <div class="section-heading"><span>Transport</span></div>
+        <div class="button-grid three">
+          <button id="restart-button" type="button" disabled>Restart</button>
+          <button id="play-button" class="accent-button" type="button" disabled>Play</button>
+          <button id="step-button" type="button" disabled>+1 frame</button>
+        </div>
+
+        <div class="timeline-block">
+          <input id="timeline" type="range" min="0" max="1" step="0.0001" value="0" disabled aria-label="Video timeline">
+          <div class="timeline-labels">
+            <span id="current-time">00:00.000</span>
+            <span id="remaining-time">−00:00.000</span>
+          </div>
+        </div>
+
+        <div class="control-row">
+          <label for="rate">Playback speed</label>
+          <input id="rate" type="range" min="0.25" max="3" step="0.05" value="1">
+          <output id="rate-output">1.00×</output>
+        </div>
+        <div class="control-row">
+          <label for="volume">Volume</label>
+          <input id="volume" type="range" min="0" max="1" step="0.01" value="0">
+          <output id="volume-output">0%</output>
+        </div>
+        <div class="toggle-grid">
+          <label class="toggle"><input id="loop" type="checkbox" checked><span>Loop</span></label>
+          <label class="toggle"><input id="muted" type="checkbox" checked><span>Muted</span></label>
+        </div>
+      </section>
+
+      <section class="control-section">
+        <div class="section-heading"><span>Framing</span></div>
+        <div class="select-row">
+          <label for="fit-mode">Fit mode</label>
+          <select id="fit-mode">
+            <option value="0">Contain</option>
+            <option value="1" selected>Cover</option>
+            <option value="2">Stretch</option>
+          </select>
+        </div>
+        <div class="control-row">
+          <label for="zoom">Zoom</label>
+          <input id="zoom" type="range" min="0.25" max="4" step="0.01" value="1">
+          <output id="zoom-output">1.00</output>
+        </div>
+        <div class="control-row">
+          <label for="rotation">Rotation</label>
+          <input id="rotation" type="range" min="-180" max="180" step="1" value="0">
+          <output id="rotation-output">0°</output>
+        </div>
+        <div class="toggle-grid">
+          <label class="toggle"><input id="mirror-x" type="checkbox"><span>Mirror X</span></label>
+          <label class="toggle"><input id="mirror-y" type="checkbox"><span>Mirror Y</span></label>
+        </div>
+      </section>
+
+      <section class="control-section">
+        <div class="section-heading"><span>Shader</span></div>
+        <div class="select-row">
+          <label for="effect">Effect</label>
+          <select id="effect">
+            <option value="0">Passthrough</option>
+            <option value="1">Wave warp</option>
+            <option value="2">Radial warp</option>
+            <option value="3">Kaleidoscope</option>
+            <option value="4">Edge field</option>
+            <option value="5">Scanline glitch</option>
+            <option value="6">Pixel blocks</option>
+            <option value="7">RGB split</option>
+          </select>
+        </div>
+        <div class="control-row">
+          <label for="amount">Effect amount</label>
+          <input id="amount" type="range" min="0" max="1" step="0.01" value="0.35">
+          <output id="amount-output">0.35</output>
+        </div>
+        <div class="control-row">
+          <label for="speed">Motion speed</label>
+          <input id="speed" type="range" min="0" max="3" step="0.01" value="0.55">
+          <output id="speed-output">0.55</output>
+        </div>
+        <div class="control-row">
+          <label for="feedback">Feedback</label>
+          <input id="feedback" type="range" min="0" max="0.98" step="0.01" value="0">
+          <output id="feedback-output">0.00</output>
+        </div>
+        <div class="control-row">
+          <label for="feedback-zoom">Feedback zoom</label>
+          <input id="feedback-zoom" type="range" min="0.97" max="1.03" step="0.0005" value="1.002">
+          <output id="feedback-zoom-output">1.002</output>
+        </div>
+        <button id="clear-feedback-button" type="button">Clear feedback history</button>
+      </section>
+
+      <section class="control-section">
+        <div class="section-heading"><span>Color</span></div>
+        <div class="control-row">
+          <label for="hue">Hue</label>
+          <input id="hue" type="range" min="-180" max="180" step="1" value="0">
+          <output id="hue-output">0°</output>
+        </div>
+        <div class="control-row">
+          <label for="saturation">Saturation</label>
+          <input id="saturation" type="range" min="0" max="2" step="0.01" value="1">
+          <output id="saturation-output">1.00</output>
+        </div>
+        <div class="control-row">
+          <label for="brightness">Brightness</label>
+          <input id="brightness" type="range" min="0" max="2" step="0.01" value="1">
+          <output id="brightness-output">1.00</output>
+        </div>
+        <div class="control-row">
+          <label for="contrast">Contrast</label>
+          <input id="contrast" type="range" min="0" max="3" step="0.01" value="1">
+          <output id="contrast-output">1.00</output>
+        </div>
+      </section>
+
+      <section class="control-section output-section">
+        <div class="section-heading"><span>Output</span></div>
+        <div class="button-grid two">
+          <button id="snapshot-button" type="button">Save PNG frame</button>
+          <button id="fullscreen-button" type="button">Fullscreen</button>
+        </div>
+        <div id="save-status" class="save-status">Native commands ready</div>
+      </section>
+
+      <footer class="panel-footer">
+        <span id="fps-label">0 fps</span>
+        <span id="render-size">0 × 0</span>
+        <span id="frame-label">0 frames</span>
+      </footer>
+    </aside>
+
+    <section id="stage" aria-label="WebGL video output">
+      <canvas id="gl-canvas"></canvas>
+      <div id="empty-state">
+        <div class="empty-mark">12</div>
+        <h2>Load a local video</h2>
+        <p>Native paths use the Tauri v2 asset protocol. Browser drops use local Blob URLs. Both stay on this computer.</p>
+      </div>
+      <div id="drop-overlay">Drop video to load</div>
+      <div class="stage-hud">
+        <span id="hud-state">NO SOURCE</span>
+        <span id="hud-source-fps">source — fps</span>
+      </div>
+    </section>
+  </main>
+
+  <video id="video-source" playsinline preload="auto"></video>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

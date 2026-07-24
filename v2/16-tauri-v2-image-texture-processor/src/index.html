@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>16 · Tauri v2 · Image Texture Processor</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main id="app">
+    <aside id="controls" aria-label="Image processor controls">
+      <header class="panel-header">
+        <div class="eyebrow">Junkpile · Tauri v2 essentials</div>
+        <h1>16 · Image Texture Processor</h1>
+        <p>Native/browser image → WebGL texture → shader processing → native export</p>
+      </header>
+
+      <section class="control-section source-section">
+        <div class="section-heading"><span>Source image</span><span id="source-state" class="status-pill">Demo loaded</span></div>
+        <div class="source-button-grid">
+          <button id="native-open" class="file-button primary-button" type="button">Native open</button>
+          <label class="file-button" for="image-input">Browser file</label>
+        </div>
+        <input id="image-input" type="file" accept="image/*" hidden>
+        <div id="drop-zone" class="drop-zone" tabindex="0">
+          <strong>Drop an image here</strong>
+          <span>PNG · JPEG · WebP · GIF first frame · other WebView-supported formats</span>
+        </div>
+        <dl class="source-details">
+          <div><dt>Name</dt><dd id="source-name">Generated demo</dd></div>
+          <div><dt>Dimensions</dt><dd id="source-size">1024 × 1024</dd></div>
+          <div><dt>Aspect</dt><dd id="source-aspect">1.000</dd></div>
+        </dl>
+      </section>
+
+      <section class="control-section">
+        <div class="section-heading"><span>Framing</span></div>
+        <div class="select-row">
+          <label for="fit-mode">Fit mode</label>
+          <select id="fit-mode">
+            <option value="0">Contain</option>
+            <option value="1" selected>Cover</option>
+            <option value="2">Stretch</option>
+          </select>
+        </div>
+        <div class="control-row">
+          <label for="zoom">Zoom</label>
+          <input id="zoom" type="range" min="0.1" max="5" step="0.01" value="1">
+          <output id="zoom-output">1.00</output>
+        </div>
+        <div class="control-row">
+          <label for="pan-x">Pan X</label>
+          <input id="pan-x" type="range" min="-1" max="1" step="0.001" value="0">
+          <output id="pan-x-output">0.000</output>
+        </div>
+        <div class="control-row">
+          <label for="pan-y">Pan Y</label>
+          <input id="pan-y" type="range" min="-1" max="1" step="0.001" value="0">
+          <output id="pan-y-output">0.000</output>
+        </div>
+        <div class="control-row">
+          <label for="rotation">Rotation</label>
+          <input id="rotation" type="range" min="-180" max="180" step="1" value="0">
+          <output id="rotation-output">0°</output>
+        </div>
+        <div class="toggle-grid">
+          <label class="toggle"><input id="mirror-x" type="checkbox"><span>Mirror X</span></label>
+          <label class="toggle"><input id="mirror-y" type="checkbox"><span>Mirror Y</span></label>
+        </div>
+        <button id="reset-framing" type="button">Reset framing</button>
+      </section>
+
+      <section class="control-section">
+        <div class="section-heading"><span>Effect</span><span id="effect-label">Clean</span></div>
+        <div class="select-row">
+          <label for="effect-mode">Mode</label>
+          <select id="effect-mode">
+            <option value="0">Clean</option>
+            <option value="1">Duotone</option>
+            <option value="2">Posterize</option>
+            <option value="3">Edge ink</option>
+            <option value="4">Chromatic split</option>
+            <option value="5">Halftone</option>
+            <option value="6">Prismatic warp</option>
+            <option value="7">Solarize</option>
+          </select>
+        </div>
+        <div class="control-row">
+          <label for="effect-amount">Amount</label>
+          <input id="effect-amount" type="range" min="0" max="1" step="0.001" value="0.8">
+          <output id="effect-amount-output">0.800</output>
+        </div>
+        <div class="control-row">
+          <label for="effect-scale">Scale</label>
+          <input id="effect-scale" type="range" min="1" max="160" step="1" value="36">
+          <output id="effect-scale-output">36</output>
+        </div>
+        <div class="control-row">
+          <label for="effect-angle">Angle</label>
+          <input id="effect-angle" type="range" min="-180" max="180" step="1" value="0">
+          <output id="effect-angle-output">0°</output>
+        </div>
+        <div class="preset-grid">
+          <button type="button" data-preset="editorial">Editorial</button>
+          <button type="button" data-preset="print">Print</button>
+          <button type="button" data-preset="signal">Signal</button>
+          <button type="button" data-preset="soft">Soft grade</button>
+        </div>
+      </section>
+
+      <section class="control-section">
+        <div class="section-heading"><span>Color grade</span></div>
+        <div class="control-row">
+          <label for="hue">Hue</label>
+          <input id="hue" type="range" min="-180" max="180" step="1" value="0">
+          <output id="hue-output">0°</output>
+        </div>
+        <div class="control-row">
+          <label for="saturation">Saturation</label>
+          <input id="saturation" type="range" min="0" max="2" step="0.001" value="1">
+          <output id="saturation-output">1.000</output>
+        </div>
+        <div class="control-row">
+          <label for="brightness">Brightness</label>
+          <input id="brightness" type="range" min="0" max="2" step="0.001" value="1">
+          <output id="brightness-output">1.000</output>
+        </div>
+        <div class="control-row">
+          <label for="contrast">Contrast</label>
+          <input id="contrast" type="range" min="0" max="3" step="0.001" value="1">
+          <output id="contrast-output">1.000</output>
+        </div>
+        <div class="control-row">
+          <label for="gamma">Gamma</label>
+          <input id="gamma" type="range" min="0.2" max="3" step="0.001" value="1">
+          <output id="gamma-output">1.000</output>
+        </div>
+        <button id="reset-grade" type="button">Reset grade</button>
+      </section>
+
+      <section class="control-section compare-section">
+        <div class="section-heading"><span>Comparison</span></div>
+        <label class="toggle wide-toggle"><input id="compare-enabled" type="checkbox" checked><span>Show original / processed split</span></label>
+        <div class="control-row">
+          <label for="compare-position">Split</label>
+          <input id="compare-position" type="range" min="0" max="1" step="0.001" value="0.5">
+          <output id="compare-position-output">50%</output>
+        </div>
+        <div class="select-row">
+          <label for="compare-axis">Direction</label>
+          <select id="compare-axis">
+            <option value="0">Vertical</option>
+            <option value="1">Horizontal</option>
+          </select>
+        </div>
+      </section>
+
+      <section class="control-section export-section">
+        <div class="section-heading"><span>Export</span><span id="export-state">Ready</span></div>
+        <div class="select-row">
+          <label for="export-size">Dimensions</label>
+          <select id="export-size">
+            <option value="source" selected>Source resolution</option>
+            <option value="1920x1080">1920 × 1080</option>
+            <option value="3840x2160">3840 × 2160</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+        <div id="custom-export-row" class="dimension-row hidden">
+          <input id="export-width" type="number" min="64" max="8192" step="1" value="1920" aria-label="Export width">
+          <span>×</span>
+          <input id="export-height" type="number" min="64" max="8192" step="1" value="1080" aria-label="Export height">
+        </div>
+        <div class="select-row">
+          <label for="export-format">Format</label>
+          <select id="export-format">
+            <option value="png" selected>PNG</option>
+            <option value="jpeg">JPEG</option>
+          </select>
+        </div>
+        <div class="control-row" id="jpeg-quality-row">
+          <label for="jpeg-quality">JPEG quality</label>
+          <input id="jpeg-quality" type="range" min="0.1" max="1" step="0.01" value="0.92">
+          <output id="jpeg-quality-output">92%</output>
+        </div>
+        <div class="export-grid">
+          <button id="save-image" class="primary-button" type="button">Save processed image</button>
+          <button id="save-original" type="button">Save original</button>
+        </div>
+        <button id="fullscreen-preview" class="wide-button" type="button">Fullscreen preview</button>
+        <p class="microcopy">Comparison guides are never included in exports.</p>
+      </section>
+
+      <footer class="panel-footer">
+        <span id="fps-label">0 fps</span>
+        <span id="render-size">0 × 0</span>
+        <span>WebGL 1 · Tauri v2 image texture</span>
+      </footer>
+    </aside>
+
+    <section id="stage" aria-label="Image processing preview">
+      <canvas id="gl-canvas"></canvas>
+      <div id="drop-overlay" class="drop-overlay hidden">Drop image to replace source</div>
+      <div class="stage-hud">
+        <span id="hud-effect">Clean</span>
+        <span id="hud-file">Generated demo</span>
+      </div>
+      <div id="unsupported" class="unsupported hidden">
+        <div class="empty-mark">16</div>
+        <h2>WebGL unavailable</h2>
+        <p>This example requires WebGL 1 in the Tauri WebView.</p>
+      </div>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
