@@ -1,1 +1,8 @@
-{ "name": "feedback-tauri-v1-ws-template", "private": true, "version": "0.1.0", "type": "module", "scripts": { "dev": "tauri dev", "build": "tauri build", "tauri": "tauri" }, "devDependencies": { "@tauri-apps/cli": "^1.6.3" } }
+{
+  "name": "feedback-tauri-v1-ws-template",
+  "private": true,
+  "version": "0.2.0",
+  "description": "Junkpile Tauri v1 Essential 09: modernized two-window webcam feedback over an embedded WebSocket relay",
+  "scripts": {"dev":"tauri dev","build":"tauri build","tauri":"tauri"},
+  "devDependencies": {"@tauri-apps/cli":"^1.6.3"}
+}

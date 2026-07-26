@@ -1,123 +1,46 @@
-// =============================================================================
-// sketch.js — params object · GLSL shaders · p5 setup/draw · UI wiring
-// =============================================================================
-//
-// HOW THIS DIFFERS FROM THE TWO-WINDOW TEMPLATE
-// ──────────────────────────────────────────────
-// Two-window:    slider → WebSocket → Rust relay → WebSocket → params → draw()
-// Single-window: slider → params → draw()
-//
-// Because the controls panel and the p5 canvas share the same JavaScript
-// context (the same HTML page), a slider's input handler can write directly
-// into the `params` object. The draw() loop reads it on the next frame.
-// No network, no relay, no async messaging required.
-//
-// STRUCTURE OF THIS FILE
-// ──────────────────────
-//   1. params{}        — live parameter state, read by draw() every frame
-//   2. PARAMS / TOGGLES — lists of input ids for auto-wiring
-//   3. VERT_SHADER     — GLSL vertex shader (boilerplate, rarely changed)
-//   4. FRAG_SHADER     — GLSL fragment shader (this is where your art lives)
-//   5. p5 sketch       — setup() and draw()
-//   6. wireControls()  — connects DOM inputs to params
-//
-// HOW TO ADD A NEW PARAMETER — COMPLETE CHECKLIST
-// ─────────────────────────────────────────────────
-//   [ ] 1. Add <input type="range" id="myParam"> in index.html
-//   [ ] 2. Add 'myParam' to the PARAMS array below
-//   [ ] 3. Add myParam: <default> to the params object below
-//   [ ] 4. Add `uniform float u_myParam;` in FRAG_SHADER
-//   [ ] 5. Add shd.setUniform('u_myParam', params.myParam) in draw()
-//   [ ] 6. Use u_myParam in your GLSL code
-//
-// =============================================================================
+"use strict";
 
-'use strict';
+// Example 00 intentionally uses one shared JavaScript object. The UI writes to
+// params; p5 reads params on the next frame and uploads them as GLSL uniforms.
 
-// ---------------------------------------------------------------------------
-// 1. Shared parameter state
-// ---------------------------------------------------------------------------
+const DEFAULT_PARAMS = Object.freeze({
+  hue: 180,
+  saturation: 0.8,
+  brightness: 1,
+  zoom: 1.5,
+  speed: 0.5,
+  distortion: 0.3,
+  complexity: 4,
+  symmetry: 3,
+  glow: 0.4,
+  invert: 0,
+  pulse: 1,
+  rotate: 0,
+});
 
-/**
- * `params` is the single source of truth for all visual parameters.
- *
- * The controls panel writes into this object on every slider move.
- * The draw() loop reads from it on every frame.
- * No synchronisation is needed because everything runs on the same JS thread.
- *
- * Default values here are what's shown before the user touches any slider.
- * They should match the `value` attributes on the HTML inputs.
- */
-const params = {
-    // Color
-    hue:        180.0,  // Hue rotation in degrees (0–360)
-    saturation: 0.8,    // Colour saturation (0 = grey, 1 = vivid)
-    brightness: 1.0,    // Overall brightness multiplier
+const params = { ...DEFAULT_PARAMS };
+const SLIDER_IDS = ["hue", "saturation", "brightness", "zoom", "speed", "distortion", "complexity", "symmetry", "glow"];
+const TOGGLE_IDS = ["invert", "pulse", "rotate"];
 
-    // Shape
-    zoom:       1.5,    // Coordinate zoom (larger = zoomed out)
-    speed:      0.5,    // Animation speed multiplier
-    distortion: 0.3,    // UV warp amount
-
-    // Pattern
-    complexity: 4.0,    // fBm octave count (1–8)
-    symmetry:   3.0,    // Rotational mirror folds (1–8)
-    glow:       0.4,    // Radial glow intensity
-
-    // Toggles stored as 0.0/1.0 for direct GLSL uniform use
-    invert:     0.0,    // 1.0 = invert colour palette
-    pulse:      1.0,    // 1.0 = enable brightness pulsation
-    rotate:     0.0,    // 1.0 = enable slow global rotation
+const PRESETS = {
+  default: { ...DEFAULT_PARAMS },
+  soft: { ...DEFAULT_PARAMS, hue: 202, saturation: 0.48, brightness: 0.9, speed: 0.2, distortion: 0.12, complexity: 3, symmetry: 2, glow: 0.68, rotate: 1 },
+  prism: { ...DEFAULT_PARAMS, hue: 312, saturation: 1, brightness: 1.35, zoom: 2.1, speed: 0.9, distortion: 0.7, complexity: 6, symmetry: 7, glow: 0.75, pulse: 1, rotate: 1 },
+  mono: { ...DEFAULT_PARAMS, hue: 0, saturation: 0, brightness: 1.25, zoom: 1.1, speed: 0.35, distortion: 0.38, complexity: 5, symmetry: 4, glow: 0.5, pulse: 1 },
 };
 
-// ---------------------------------------------------------------------------
-// 2. Input id lists (used by wireControls)
-// ---------------------------------------------------------------------------
+const VALUE_FORMATTERS = {
+  hue: value => `${Math.round(value)}°`,
+  speed: value => `${value.toFixed(2)}×`,
+  complexity: value => String(Math.round(value)),
+  symmetry: value => String(Math.round(value)),
+};
 
-/**
- * PARAMS: ids of all <input type="range"> sliders.
- * Values are read as parseFloat and written directly to params[id].
- *
- * To add a slider: add the id here AND add the default to params{} above.
- */
-const PARAMS = [
-    'hue',
-    'saturation',
-    'brightness',
-    'zoom',
-    'speed',
-    'distortion',
-    'complexity',
-    'symmetry',
-    'glow',
-];
+let shaderProgram;
+let elapsedSeconds = 0;
+let animationPaused = false;
+let telemetryLastMs = 0;
 
-/**
- * TOGGLES: ids of all <input type="checkbox"> controls.
- * Values are written as 1.0 (checked) or 0.0 (unchecked) for GLSL compatibility.
- */
-const TOGGLES = [
-    'invert',
-    'pulse',
-    'rotate',
-];
-
-// ---------------------------------------------------------------------------
-// 3. GLSL vertex shader
-// ---------------------------------------------------------------------------
-
-/**
- * Standard full-screen quad vertex shader.
- * Passes UV coordinates to the fragment shader.
- * You will almost never need to modify this.
- *
- * p5.js WEBGL provides:
- *   aPosition  — vertex position (3D)
- *   aTexCoord  — UV coordinate for this vertex (0.0–1.0)
- *
- * We output:
- *   vTexCoord  — interpolated UV per pixel (received in frag shader)
- */
 const VERT_SHADER = `
     precision highp float;
 
@@ -165,7 +88,7 @@ const FRAG_SHADER = `
     // ── Uniforms ──────────────────────────────────────────────────────────
     // All declared as float — GLSL ES 1.0 has no int/bool uniform types.
 
-    uniform float u_time;        // seconds (millis()/1000 * speed, from draw())
+    uniform float u_time;        // accumulated animation seconds, from draw()
     uniform vec2  u_resolution;  // canvas size in pixels
 
     uniform float u_hue;         // hue shift 0.0–360.0
@@ -290,141 +213,161 @@ const FRAG_SHADER = `
 `;
 
 // ---------------------------------------------------------------------------
-// 5. p5.js sketch
+// p5 renderer
 // ---------------------------------------------------------------------------
 
-let shd; // compiled shader (set in setup, used in draw)
-
-/**
- * setup() — runs once at startup.
- *
- * KEY DIFFERENCE from the two-window template:
- *   canvas.parent('canvas-container') tells p5 to append the <canvas> element
- *   to #canvas-container (the right column div) instead of document.body.
- *   This is what keeps the canvas inside the layout column.
- */
 function setup() {
-    // Get the container's current pixel size for the initial canvas dimensions
-    const container = document.getElementById('canvas-container');
-    const w = container.clientWidth;
-    const h = container.clientHeight;
+  const container = document.getElementById("canvas-container");
+  const canvas = createCanvas(Math.max(1, container.clientWidth), Math.max(1, container.clientHeight), WEBGL);
+  canvas.parent("canvas-container");
+  pixelDensity(1);
+  noStroke();
 
-    // Create the canvas and attach it to the right-column container
-    const cnv = createCanvas(w, h, WEBGL);
-    cnv.parent('canvas-container');
-
-    pixelDensity(1); // 1 = consistent performance; use devicePixelRatio for HiDPI
-
-    shd = createShader(VERT_SHADER, FRAG_SHADER);
-    noStroke();
-
-    console.log('[sketch] p5 started — canvas:', w, '×', h);
+  shaderProgram = createShader(VERT_SHADER, FRAG_SHADER);
+  updateStatus("Rendering");
+  updateCanvasSize();
 }
 
-/**
- * draw() — called every frame (~60fps).
- * Reads params, passes them to the shader as uniforms, renders.
- *
- * This is the only place that reads `params`. No other synchronisation needed.
- */
 function draw() {
-    shader(shd);
+  const safeDelta = Math.min(deltaTime / 1000, 0.1);
+  if (!animationPaused) elapsedSeconds += safeDelta * params.speed;
 
-    // Time — millis() / 1000 gives seconds; speed scales the animation rate
-    shd.setUniform('u_time',       (millis() / 1000.0) * params.speed);
-    shd.setUniform('u_resolution', [width, height]);
+  shader(shaderProgram);
+  shaderProgram.setUniform("u_time", elapsedSeconds);
+  shaderProgram.setUniform("u_resolution", [width, height]);
+  shaderProgram.setUniform("u_hue", params.hue);
+  shaderProgram.setUniform("u_saturation", params.saturation);
+  shaderProgram.setUniform("u_brightness", params.brightness);
+  shaderProgram.setUniform("u_zoom", params.zoom);
+  shaderProgram.setUniform("u_distortion", params.distortion);
+  shaderProgram.setUniform("u_rotate", params.rotate);
+  shaderProgram.setUniform("u_complexity", params.complexity);
+  shaderProgram.setUniform("u_symmetry", params.symmetry);
+  shaderProgram.setUniform("u_glow", params.glow);
+  shaderProgram.setUniform("u_invert", params.invert);
+  shaderProgram.setUniform("u_pulse", params.pulse);
+  rect(-width / 2, -height / 2, width, height);
 
-    // Color
-    shd.setUniform('u_hue',        params.hue);
-    shd.setUniform('u_saturation', params.saturation);
-    shd.setUniform('u_brightness', params.brightness);
-
-    // Shape
-    shd.setUniform('u_zoom',       params.zoom);
-    shd.setUniform('u_distortion', params.distortion);
-    shd.setUniform('u_rotate',     params.rotate);
-
-    // Pattern
-    shd.setUniform('u_complexity', params.complexity);
-    shd.setUniform('u_symmetry',   params.symmetry);
-    shd.setUniform('u_glow',       params.glow);
-
-    // Toggles
-    shd.setUniform('u_invert',     params.invert);
-    shd.setUniform('u_pulse',      params.pulse);
-
-    // Full-screen quad — the fragment shader covers every pixel
-    rect(-width / 2, -height / 2, width, height);
+  const now = millis();
+  if (now - telemetryLastMs > 250) {
+    telemetryLastMs = now;
+    document.getElementById("fpsReadout").textContent = Math.round(frameRate()).toString();
+  }
 }
 
-/**
- * windowResized() — p5 calls this automatically when the OS window resizes.
- * Resizes the canvas to match the new container size.
- */
 function windowResized() {
-    const container = document.getElementById('canvas-container');
-    resizeCanvas(container.clientWidth, container.clientHeight);
+  const container = document.getElementById("canvas-container");
+  resizeCanvas(Math.max(1, container.clientWidth), Math.max(1, container.clientHeight));
+  updateCanvasSize();
 }
 
 // ---------------------------------------------------------------------------
-// 6. UI wiring — connect DOM inputs directly to params
+// UI
 // ---------------------------------------------------------------------------
 
-/**
- * wireControls() wires all sliders and checkboxes to write their values
- * into `params` on every change.
- *
- * This is the key architectural simplification vs. the two-window template:
- * instead of sending a WebSocket message, the handler just does:
- *   params[id] = parseFloat(input.value);
- * The next draw() call (≤16ms away) picks it up automatically.
- */
+function formatValue(id, value) {
+  return VALUE_FORMATTERS[id]?.(value) ?? value.toFixed(2);
+}
+
+function syncControlsFromParams() {
+  for (const id of SLIDER_IDS) {
+    const input = document.getElementById(id);
+    const output = document.getElementById(`${id}-val`);
+    input.value = String(params[id]);
+    output.textContent = formatValue(id, params[id]);
+  }
+
+  for (const id of TOGGLE_IDS) {
+    document.getElementById(id).checked = params[id] > 0.5;
+  }
+}
+
+function applyState(nextState, { resetClock = false } = {}) {
+  Object.assign(params, nextState);
+  if (resetClock) elapsedSeconds = 0;
+  syncControlsFromParams();
+}
+
+function resetExample() {
+  applyState(DEFAULT_PARAMS, { resetClock: true });
+  updateStatus(animationPaused ? "Paused · reset" : "Rendering · reset");
+}
+
+function setPaused(paused) {
+  animationPaused = paused;
+  const button = document.getElementById("pauseBtn");
+  const badge = document.getElementById("canvasBadge");
+  button.textContent = paused ? "Resume" : "Pause";
+  badge.textContent = paused ? "PAUSED" : "RUNNING";
+  badge.classList.toggle("paused", paused);
+  updateStatus(paused ? "Animation paused" : "Rendering");
+}
+
+async function toggleFullscreen() {
+  try {
+    const isFullscreen = await window.__TAURI__.tauri.invoke("toggle_fullscreen");
+    document.getElementById("fullscreenBtn").textContent = isFullscreen ? "Windowed" : "Fullscreen";
+  } catch (error) {
+    console.error("[junkpile] fullscreen command failed", error);
+    updateStatus(`Fullscreen error: ${String(error)}`);
+  }
+}
+
+function updateStatus(text) {
+  const element = document.getElementById("statusText");
+  if (element) element.textContent = text;
+}
+
+function updateCanvasSize() {
+  const element = document.getElementById("sizeReadout");
+  if (element && typeof width === "number") element.textContent = `${width} × ${height}`;
+}
+
 function wireControls() {
-    // ── Sliders ──────────────────────────────────────────────────────────
-    PARAMS.forEach(id => {
-        const input = document.getElementById(id);
-        const valEl = document.getElementById(`${id}-val`);
-
-        if (!input) {
-            console.warn(`[sketch] no element found for param id: "${id}"`);
-            return;
-        }
-
-        input.addEventListener('input', () => {
-            const val = parseFloat(input.value);
-
-            // Write directly into shared params — draw() reads it next frame
-            params[id] = val;
-
-            // Update the value display span
-            if (valEl) {
-                valEl.textContent = Number.isInteger(val)
-                    ? val.toString()
-                    : val.toFixed(2);
-            }
-        });
+  for (const id of SLIDER_IDS) {
+    const input = document.getElementById(id);
+    const output = document.getElementById(`${id}-val`);
+    input.addEventListener("input", () => {
+      params[id] = Number.parseFloat(input.value);
+      output.textContent = formatValue(id, params[id]);
     });
+  }
 
-    // ── Checkboxes ───────────────────────────────────────────────────────
-    TOGGLES.forEach(id => {
-        const input = document.getElementById(id);
-        if (!input) {
-            console.warn(`[sketch] no element found for toggle id: "${id}"`);
-            return;
-        }
-
-        input.addEventListener('change', () => {
-            // Store as 1.0/0.0 so it can be used directly in GLSL uniforms
-            params[id] = input.checked ? 1.0 : 0.0;
-        });
+  for (const id of TOGGLE_IDS) {
+    document.getElementById(id).addEventListener("change", event => {
+      params[id] = event.currentTarget.checked ? 1 : 0;
     });
+  }
+
+  document.querySelectorAll("[data-preset]").forEach(button => {
+    button.addEventListener("click", () => applyState(PRESETS[button.dataset.preset], { resetClock: true }));
+  });
+
+  document.getElementById("resetBtn").addEventListener("click", resetExample);
+  document.getElementById("pauseBtn").addEventListener("click", () => setPaused(!animationPaused));
+  document.getElementById("fullscreenBtn").addEventListener("click", toggleFullscreen);
+
+  window.addEventListener("keydown", event => {
+    const tag = document.activeElement?.tagName;
+    if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
+
+    if (event.code === "Space") {
+      event.preventDefault();
+      setPaused(!animationPaused);
+    } else if (event.key.toLowerCase() === "r") {
+      resetExample();
+    } else if (event.key.toLowerCase() === "f") {
+      toggleFullscreen();
+    }
+  });
+
+  syncControlsFromParams();
 }
 
-// ---------------------------------------------------------------------------
-// Startup
-// ---------------------------------------------------------------------------
-
-// Wire controls as soon as the DOM is ready.
-// p5's setup() runs separately — both can happen in either order safely,
-// because setup() only reads params at draw time, not at setup time.
-document.addEventListener('DOMContentLoaded', wireControls);
+document.addEventListener("DOMContentLoaded", () => {
+  if (typeof window.p5 === "undefined") {
+    updateStatus("p5.js missing · run npm install, then npm run dev");
+    return;
+  }
+  wireControls();
+});

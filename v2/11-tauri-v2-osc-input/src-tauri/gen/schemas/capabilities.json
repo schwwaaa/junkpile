@@ -1,1 +1,0 @@
-{"default":{"identifier":"default","description":"Core IPC and event access for the Tauri v2 OSC input example","local":true,"windows":["main"],"permissions":["core:default"]}}

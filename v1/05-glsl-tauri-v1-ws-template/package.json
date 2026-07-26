@@ -1,9 +1,15 @@
 {
   "name": "glsl-tauri-v1-ws-template",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
-  "description": "Two-window Tauri v1 + raw WebGL + external .frag + WebSocket shader hot-swap",
-  "scripts": { "dev": "tauri dev", "build": "tauri build", "tauri": "tauri" },
-  "devDependencies": { "@tauri-apps/cli": "^1.6.3" }
+  "description": "Junkpile V1 Example 05: two-window external GLSL hot-swap over an embedded Rust WebSocket relay",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^1.6.3"
+  }
 }

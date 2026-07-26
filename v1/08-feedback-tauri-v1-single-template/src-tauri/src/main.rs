@@ -1,17 +1,17 @@
-// =============================================================================
-// src-tauri/src/main.rs  (Tauri v1)
-// =============================================================================
-//
-// Minimal single-window entry point.
-// Tauri reads tauri.conf.json, creates the window defined there, and serves
-// files from devPath/distDir (../src) via the built-in custom-protocol server.
-// All application logic lives in src/index.html and src/sketch.js.
-// =============================================================================
-
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
+#[tauri::command]
+fn toggle_fullscreen(window: tauri::Window) -> Result<bool, String> {
+    let next = !window.is_fullscreen().map_err(|error| error.to_string())?;
+    window
+        .set_fullscreen(next)
+        .map_err(|error| error.to_string())?;
+    Ok(next)
+}
 
 fn main() {
     tauri::Builder::default()
+        .invoke_handler(tauri::generate_handler![toggle_fullscreen])
         .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .expect("error while running Junkpile Example 08");
 }

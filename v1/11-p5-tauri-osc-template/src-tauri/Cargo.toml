@@ -1,22 +1,20 @@
 [package]
-name = "p5-tauri-osc-template"
-version = "0.1.0"
+name = "junkpile_11_tauri_v1_osc_input"
+version = "0.2.0"
 edition = "2021"
 
 [build-dependencies]
 tauri-build = { version = "1", features = [] }
 
 [dependencies]
-tauri      = { version = "1", features = ["wry"] }
-# rosc: pure-Rust OSC decoder/encoder, no external deps
-rosc       = "0.10"
-# Tokio for the async UDP listener
-tokio      = { version = "1", features = ["full"] }
-# JSON for Tauri events
-serde      = { version = "1", features = ["derive"] }
-serde_json = "1"
-once_cell  = "1"
+tauri = { version = "1", features = ["wry"] }
+rosc = "0.10"
+serde = { version = "1", features = ["derive"] }
 
 [features]
 default = []
 custom-protocol = ["tauri/custom-protocol"]
+
+# Keep this standalone example isolated from Cargo workspaces above it.
+[workspace]
+resolver = "2"

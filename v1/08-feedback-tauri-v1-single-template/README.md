@@ -1,124 +1,147 @@
-# Ping-Pong Webcam Feedback · Tauri v1 · Single Window
+# 08 · Tauri v1 Feedback Single Window
 
-> **Baseline:** ping-pong feedback baseline  
-> **Tauri:** 1.x  
-> **Window topology:** single window  
-> **Input:** Webcam + DOM controls  
-> **Renderer:** raw WebGL 1 with webcam input and two alternating framebuffer textures
+A focused foundation for persistent GPU feedback inside one Tauri v1 WebView. A webcam or generated source is injected into a pair of alternating WebGL framebuffer textures, allowing each frame to read and transform the previous one.
 
-## Purpose
+This folder intentionally retains its original repository name:
 
-An advanced baseline for stateful visual processing. Each frame reads the previous framebuffer and the current webcam texture, writes a new simulation state into the alternate framebuffer, then displays the result through a separate tone-mapping pass.
-
-This example is intentionally a baseline: it exposes the complete path from input to pixels without introducing an application-specific product architecture. Start here, confirm the baseline works, then replace the visual or input mapping with your own idea.
-
-## What you should learn
-
-- Build a ping-pong framebuffer loop without reading and writing the same texture.
-- Separate simulation and display shaders.
-- Inject live camera luminance or edges into persistent GPU state.
-- Implement multiple feedback behaviors without changing the host render loop.
-
-## Architecture
-
-```mermaid
-flowchart LR
-  Camera[OS camera] --> Permission[WebView getUserMedia permission]
-  Permission --> Video[Hidden HTML video]
-  Video --> Texture[WebGL webcam texture]
-  Controls[DOM controls] --> Params[params object]
-  Texture --> Render[Ping-pong simulation + display pass]
-  Params --> Render
-  Render --> Canvas[Canvas in one Tauri V1 window]
+```text
+feedback-tauri-v1-single-template
 ```
 
-### Runtime data flow
+The visible example number is **08** so it aligns with the complete Junkpile Tauri v1 Essentials sequence.
 
-1. The HTML creates the controls and canvas layout in one WebView document.
-2. Input handlers write directly into the shared `params` object.
-3. The simulation pass samples both the webcam and the previous framebuffer.
-4. The display pass tone-maps the new state, then the framebuffer references are swapped for the next frame.
+## What this example teaches
 
-## Prerequisites
+- Creating a full-screen raw WebGL quad
+- Allocating two persistent framebuffer textures
+- Alternating their read/write roles every frame
+- Uploading webcam or Canvas 2D frames with `gl.texImage2D()`
+- Separating simulation and display shaders
+- Using source luminance and edges to drive temporal systems
+- Implementing trails, advection, reaction-diffusion, heat diffusion, symmetry, and glitch memory
+- Injecting state directly with pointer input
+- Reallocating feedback buffers safely when the window or quality setting changes
+- Diagnosing shader compilation, program linking, framebuffer completeness, and WebGL context loss
+- Packaging camera permissions for macOS
 
-1. Install the operating-system dependencies required by Tauri.
-2. Install a current Rust toolchain with `rustup`.
-3. Install Node.js and npm.
-4. Install project dependencies from this directory.
+## Signal flow
+
+```text
+Webcam or generated source
+            ↓
+       source texture
+            ↓
+previous history texture ──┐
+                           ├── simulation shader ──→ next history texture
+                           │                              ↓
+                           └──────────────────────── display shader
+                                                          ↓
+                                                     WebGL canvas
+```
+
+The two history textures exchange roles after each simulation pass:
+
+```text
+Frame N:   history A → simulation → history B → display
+Frame N+1: history B → simulation → history A → display
+```
+
+Camera frames and feedback textures remain entirely inside the WebView. Rust only launches the application and toggles native fullscreen.
+
+## Run
 
 ```bash
 npm install
 npm run dev
 ```
 
-Build an installable application with:
+The generated calibration source starts immediately. Press **Start camera** to replace it with a live input.
+
+## Production build
 
 ```bash
 npm run build
 ```
 
-> The first camera start triggers an operating-system/WebView permission request. Packaged apps may also require platform permission metadata; the included macOS entitlement file is the starting point.
-
-## Controls and inputs
-
-Camera selection and start/stop, six simulation modes, `decay`, `camMix`, `speed`, `scale`, `intensity`, `hue`, `palette`, `brush`, and clear.
-
-The HTML control defaults and the JavaScript `params` defaults are intended to match. When adding a parameter, update both so a fresh launch and the first user interaction produce the same state.
-
-## File map
-
-| File | Responsibility |
-|---|---|
-| `package.json` | Node scripts and the project-local Tauri CLI version. |
-| `src/index.html` | Single-window controls, canvas layout, and script loading. |
-| `src/sketch.js` | Visual state, shaders, rendering loop, and UI/input integration. |
-| `src-tauri/Cargo.toml` | Rust package metadata and native dependencies. |
-| `src-tauri/build.rs` | Project metadata or source file. |
-| `src-tauri/entitlements.plist` | Project metadata or source file. |
-| `src-tauri/src/main.rs` | Tauri entry point. |
-| `src-tauri/tauri.conf.json` | Tauri 1 window, frontend, security, and bundle configuration. |
-
-Generated schemas, icon assets, and lock files are omitted from this table because they do not define the example's runtime architecture.
-
-## Tauri 1.x notes
-
-This project uses Tauri 1: `tauri = "1"`, the v1 configuration schema, `build.devPath`/`build.distDir`, and the v1 `tauri` configuration object. The visual pipeline still runs inside the WebView; Tauri 2 does not make this example a native wgpu renderer.
-
-Read [`../../docs/V1_V2_ARCHITECTURE.md`](../../docs/V1_V2_ARCHITECTURE.md) for the repository-wide comparison.
-
-## Extending the example
-
-1. Add a new simulation function in the `SIM` shader and route it from the mode selector.
-2. Preserve the framebuffer swap order: read previous, write next, display next, swap references.
-3. Treat framebuffer size changes as state resets unless a resampling strategy is added.
-
-Before adding a unique behavior, preserve a runnable baseline commit or branch. This makes it possible to distinguish framework/integration failures from failures introduced by the new visual idea.
-
-## Troubleshooting
-
-| Symptom | Check |
-|---|---|
-| App does not start | Confirm the OS-specific Tauri prerequisites, run `npm install`, then run `npm run dev` from this project directory. |
-| Blank or frozen canvas | Open the WebView developer tools, check shader compiler output, and confirm WebGL is available. |
-| No camera devices appear | Grant camera permission to the development app, refresh the device list, and verify another application is not exclusively using the camera. |
-| Camera starts but image is black | Check the selected device, video readiness state, and WebGL texture upload errors. |
-
-## Screenshot placeholder
-
-Add a screenshot after the example has been run on a target platform:
+On macOS, generated bundles are placed under:
 
 ```text
-docs/images/feedback-tauri-v1-single-template.png
+src-tauri/target/release/bundle/
 ```
 
-Then replace this section with:
+Public distribution generally requires Apple signing and notarization. The project includes camera usage text and the camera sandbox entitlement.
 
-```markdown
-![Ping-Pong Webcam Feedback · Tauri v1 · Single Window running](../../docs/images/feedback-tauri-v1-single-template.png)
+## Modes
+
+| Mode | Feedback behavior |
+|---|---|
+| Echo Trail | Decays the previous frame and reinjects the source |
+| Fluid Smear | Advects history through a curl field stirred by source edges |
+| Reaction-Diffusion | Uses source luminance to inject Gray-Scott activator |
+| Thermal | Treats source brightness as heat that diffuses outward |
+| Mirror Echo | Folds source and history into six-way symmetry |
+| Glitch Memory | Displaces and color-separates accumulated frames |
+
+## Main controls
+
+| Section | Control | Purpose |
+|---|---|---|
+| Source | Device | Selects a camera input |
+| Source | Request | Requests 480p, 720p, 1080p, or highest available |
+| Source | Framing | Chooses contain, cover, or stretch mapping |
+| Source | Mirror | Reverses the source horizontally |
+| Feedback | Decay | Controls how long previous frames persist |
+| Feedback | Source mix | Controls how strongly new source frames enter the state |
+| Feedback | Simulation speed | Advances time-based and iterative behavior |
+| Feedback | Flow scale | Changes the spatial frequency used by flow modes |
+| Feedback | Intensity | Scales source injection and visual energy |
+| Display | Hue drift / palette | Colors the accumulated state |
+| Display | History resolution | Allocates the two feedback textures at 25–100% of canvas resolution |
+| Brush | Radius | Controls pointer-based state injection |
+
+Keyboard shortcuts:
+
+| Key | Action |
+|---|---|
+| Space | Pause or resume simulation updates |
+| X | Clear feedback history |
+| R | Restore defaults and reset simulation time |
+| F | Toggle native-window fullscreen |
+
+## Project structure
+
+```text
+feedback-tauri-v1-single-template/
+├── README.md
+├── MODERNIZATION-NOTES.md
+├── package.json
+├── src/
+│   ├── index.html
+│   ├── sketch.js
+│   └── styles.css
+└── src-tauri/
+    ├── Cargo.toml
+    ├── Info.plist
+    ├── entitlements.plist
+    ├── tauri.conf.json
+    └── src/main.rs
 ```
 
-## Related examples
+## Why two shader programs?
 
-- Browse the complete comparison in [`../../docs/EXAMPLE_MATRIX.md`](../../docs/EXAMPLE_MATRIX.md).
-- Use the paired Tauri 2 version to compare framework-generation changes.
-- Use the paired two-window version to compare direct state with transport-based state.
+The **simulation shader** reads the source and previous history, then writes the next state. The **display shader** interprets and tone-maps that state for the screen.
+
+Keeping these separate prevents display-only color work from altering the simulation data and makes reaction-diffusion modes possible without contaminating the chemical channels.
+
+## Generated source
+
+Before camera permission, an animated Canvas 2D calibration pattern is uploaded through the same texture path as a webcam frame. This allows every mode, preset, buffer setting, and pointer interaction to be tested without external hardware.
+
+## Known limitations
+
+- Camera resolutions are requests; WebKit and the operating system choose the actual format.
+- Higher history resolution increases GPU fill cost substantially.
+- Feedback textures use RGBA8 for broad WebGL 1 compatibility rather than floating-point render targets.
+- Reaction-diffusion behavior changes with history resolution and frame rate.
+- Pausing freezes the simulation but leaves the camera open.
+- Windows and Linux camera behavior should be tested independently.

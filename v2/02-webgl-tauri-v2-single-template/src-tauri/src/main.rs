@@ -1,16 +1,27 @@
-// =============================================================================
-// src-tauri/src/main.rs  (Tauri v2)
-// =============================================================================
-//
-// Minimal entry point. Tauri reads tauri.conf.json, creates the window,
-// and serves src/ files via its built-in asset server (tauri://localhost).
-// No external server required. All app logic lives in src/.
-// =============================================================================
-
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
+use tauri::Manager;
+
+#[tauri::command]
+fn toggle_fullscreen(app: tauri::AppHandle) -> Result<bool, String> {
+    let window = app
+        .get_webview_window("main")
+        .ok_or_else(|| "The main WebView window is unavailable.".to_string())?;
+
+    let next_state = !window
+        .is_fullscreen()
+        .map_err(|error| format!("Could not read fullscreen state: {error}"))?;
+
+    window
+        .set_fullscreen(next_state)
+        .map_err(|error| format!("Could not change fullscreen state: {error}"))?;
+
+    Ok(next_state)
+}
 
 fn main() {
     tauri::Builder::default()
+        .invoke_handler(tauri::generate_handler![toggle_fullscreen])
         .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .expect("error while running Tauri application");
 }

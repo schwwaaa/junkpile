@@ -1,187 +1,158 @@
 <!doctype html>
-<!--
-  webcam controls window — Tauri v1
-  controls.js sends effect parameters and camera requests to the canvas window through the Rust WebSocket relay.
-  See the adjacent README.md for setup, architecture, extension points, and troubleshooting.
--->
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Controls</title>
-  <style>
-    :root { color-scheme: dark; }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body {
-      width: 100%; height: 100vh; overflow: hidden;
-      background: #0a0a0c; color: #e0e0e8;
-      font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px;
-    }
-    .panel {
-      height: 100vh; overflow-y: auto;
-      display: flex; flex-direction: column; padding: 12px; gap: 6px;
-    }
-    .panel::-webkit-scrollbar { width: 3px; }
-    .panel::-webkit-scrollbar-thumb { background: #2a2a36; border-radius: 2px; }
-
-    .header {
-      display: flex; align-items: center; justify-content: space-between;
-      padding-bottom: 8px; border-bottom: 1px solid #1e1e26; margin-bottom: 2px;
-    }
-    .title { font-size: 13px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #7c9fff; }
-    #ws-status { font-size: 9px; color: rgba(255,255,255,0.25); letter-spacing: 0.05em; text-transform: uppercase; }
-    #ws-status.connected { color: #7fff9f; }
-    #ws-status.error     { color: #ff8080; }
-
-    .section-label {
-      font-size: 9px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: #7c9fff;
-      padding: 8px 0 3px; border-top: 1px solid #1e1e26; margin-top: 4px;
-    }
-    .param-row {
-      display: flex; align-items: center; gap: 7px; padding: 5px 7px;
-      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 6px;
-      transition: border-color 0.15s;
-    }
-    .param-row:hover { border-color: rgba(124,159,255,0.3); }
-    .param-row label {
-      flex: 0 0 82px; font-size: 10px; color: rgba(255,255,255,0.4);
-      letter-spacing: 0.05em; text-transform: uppercase; user-select: none;
-    }
-    input[type=range] {
-      -webkit-appearance: none; flex: 1; height: 2px;
-      background: rgba(255,255,255,0.15); border-radius: 1px; outline: none; cursor: pointer;
-    }
-    input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none; width: 10px; height: 10px; border-radius: 50%; background: #7c9fff;
-    }
-    input[type=range]:hover::-webkit-slider-thumb { background: #aac5ff; transform: scale(1.25); }
-    .param-value { flex: 0 0 38px; text-align: right; font-size: 10px; color: #7c9fff; font-variant-numeric: tabular-nums; }
-
-    .toggle-row {
-      display: flex; align-items: center; gap: 7px; padding: 5px 7px;
-      background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 6px;
-    }
-    .toggle-row label {
-      flex: 1; font-size: 10px; color: rgba(255,255,255,0.4);
-      letter-spacing: 0.05em; text-transform: uppercase; user-select: none; cursor: pointer;
-    }
-    input[type=checkbox] { accent-color: #7c9fff; width: 13px; height: 13px; cursor: pointer; }
-
-    /* Camera row */
-    #cam-select {
-      width: 100%; padding: 5px 7px;
-      background: #111115; border: 1px solid #2a2a36; border-radius: 6px;
-      color: #e0e0e8; font-family: inherit; font-size: 10px; cursor: pointer;
-    }
-    #cam-select:disabled { color: rgba(255,255,255,0.25); cursor: not-allowed; }
-
-    .cam-btn-row { display: flex; gap: 5px; }
-    .cam-btn {
-      flex: 1; padding: 6px 8px;
-      background: rgba(124,159,255,0.1); border: 1px solid rgba(124,159,255,0.3); border-radius: 6px;
-      color: #7c9fff; font-family: inherit; font-size: 10px;
-      letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; transition: background 0.15s;
-    }
-    .cam-btn:hover { background: rgba(124,159,255,0.22); }
-    .cam-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-    #cam-refresh { flex: 0 0 28px; font-size: 13px; letter-spacing: 0; }
-
-    #cam-status { font-size: 9px; color: rgba(255,255,255,0.25); text-align: center; padding: 2px 0; }
-    #cam-status.ok  { color: #7fff9f; }
-    #cam-status.err { color: #ff8080; }
-
-    .footer {
-      margin-top: auto; padding-top: 10px; font-size: 9px;
-      color: rgba(255,255,255,0.18); text-align: center; border-top: 1px solid #1e1e26;
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>07 · Webcam WebSocket Controls</title>
+  <link rel="stylesheet" href="controls.css" />
 </head>
 <body>
-<div class="panel">
+  <main class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">JUNKPILE · TAURI V1 ESSENTIALS</p>
+        <h1>07 · Webcam WebSocket</h1>
+        <p class="subtitle">A controls WebView manages camera capture and GLSL processing inside a separate raw WebGL output window through the embedded Rust WebSocket relay.</p>
+      </div>
+      <div class="top-actions">
+        <button id="syncBtn" type="button">Sync</button>
+        <button id="clearBtn" type="button">Clear trails</button>
+        <button id="pauseBtn" type="button" class="primary">Pause render</button>
+        <button id="resetBtn" type="button">Reset</button>
+      </div>
+    </header>
 
-  <div class="header">
-    <span class="title">Webcam · ws</span>
-    <span id="ws-status">WS: connecting…</span>
-  </div>
+    <section class="status-grid" aria-label="Connection and renderer status">
+      <article class="status-card">
+        <span class="label">RELAY</span>
+        <strong id="relayStatus" class="status-value pending">Connecting…</strong>
+        <small>ws://127.0.0.1:2727</small>
+      </article>
+      <article class="status-card">
+        <span class="label">OUTPUT CLIENT</span>
+        <strong id="canvasStatus" class="status-value pending">Waiting…</strong>
+        <small id="presenceReadout">0 controls · 0 outputs</small>
+      </article>
+      <article class="status-card compact">
+        <span class="label">CAMERA / RENDER</span>
+        <strong><b id="cameraStateReadout">No camera</b></strong>
+        <small><span id="fpsReadout">0</span> render fps · <span id="cameraFpsReadout">0</span> camera fps</small>
+      </article>
+    </section>
 
-  <!-- ── Camera ─────────────────────────────────────────────────────────── -->
-  <div class="section-label">Camera</div>
-  <select id="cam-select" disabled><option value="">Start camera first…</option></select>
-  <div class="cam-btn-row">
-    <button id="cam-btn" class="cam-btn">▶ Start</button>
-    <button id="cam-refresh" class="cam-btn" disabled title="Refresh camera list">↺</button>
-  </div>
-  <div id="cam-status">not started</div>
+    <section class="window-actions panel-strip">
+      <button id="showOutputBtn" type="button">Show output</button>
+      <button id="focusOutputBtn" type="button">Focus output</button>
+      <button id="fullscreenOutputBtn" type="button">Output fullscreen</button>
+    </section>
 
-  <!-- ── Effect ─────────────────────────────────────────────────────────── -->
-  <div class="section-label">Effect</div>
-  <div class="param-row">
-    <label for="effect">Mode</label>
-    <input id="effect" type="range" min="0" max="5" step="1" value="0">
-    <span class="param-value" id="effect-val">Pass</span>
-  </div>
-  <div class="param-row">
-    <label for="distortion">Distort</label>
-    <input id="distortion" type="range" min="0" max="1" step="0.01" value="0.0">
-    <span class="param-value" id="distortion-val">0.00</span>
-  </div>
-  <div class="param-row">
-    <label for="feedback">Feedback</label>
-    <input id="feedback" type="range" min="0" max="0.98" step="0.01" value="0.0">
-    <span class="param-value" id="feedback-val">0.00</span>
-  </div>
-  <div class="param-row">
-    <label for="zoom">Zoom</label>
-    <input id="zoom" type="range" min="0.5" max="3.0" step="0.05" value="1.0">
-    <span class="param-value" id="zoom-val">1.00</span>
-  </div>
-  <div class="param-row">
-    <label for="speed">Warp Spd</label>
-    <input id="speed" type="range" min="0" max="2" step="0.01" value="0.3">
-    <span class="param-value" id="speed-val">0.30</span>
-  </div>
+    <section class="signal-strip" aria-label="Signal flow">
+      <span>Controls</span><i>→</i><span>Rust relay</span><i>→</i><span>Output WebView</span><i>→</i><span>getUserMedia</span><i>→</i><span>WebGL</span><i>→</i><span>GLSL + feedback</span>
+    </section>
 
-  <!-- ── Color ──────────────────────────────────────────────────────────── -->
-  <div class="section-label">Color</div>
-  <div class="param-row">
-    <label for="hue">Hue Shift</label>
-    <input id="hue" type="range" min="0" max="360" step="1" value="0">
-    <span class="param-value" id="hue-val">0</span>
-  </div>
-  <div class="param-row">
-    <label for="saturation">Saturation</label>
-    <input id="saturation" type="range" min="0" max="2" step="0.01" value="1.0">
-    <span class="param-value" id="saturation-val">1.00</span>
-  </div>
-  <div class="param-row">
-    <label for="brightness">Brightness</label>
-    <input id="brightness" type="range" min="0" max="2" step="0.01" value="1.0">
-    <span class="param-value" id="brightness-val">1.00</span>
-  </div>
-  <div class="param-row">
-    <label for="contrast">Contrast</label>
-    <input id="contrast" type="range" min="0" max="3" step="0.01" value="1.0">
-    <span class="param-value" id="contrast-val">1.00</span>
-  </div>
+    <section class="controls-panel panel">
+      <div class="controls-scroll">
+        <section class="control-section intro-card">
+          <span class="label">ARCHITECTURE</span>
+          <h2>Camera and GPU live together</h2>
+          <p>The output window owns both the <code>MediaStream</code> and WebGL context. The controls window sends commands and receives devices, camera state, shader status, and render telemetry.</p>
+        </section>
 
-  <!-- ── Toggles ────────────────────────────────────────────────────────── -->
-  <div class="section-label">Toggles</div>
-  <div class="toggle-row">
-    <label for="mirror">Mirror X</label>
-    <input id="mirror" type="checkbox">
-  </div>
-  <div class="toggle-row">
-    <label for="invert">Invert</label>
-    <input id="invert" type="checkbox">
-  </div>
-  <div class="toggle-row">
-    <label for="greyscale">Greyscale</label>
-    <input id="greyscale" type="checkbox">
-  </div>
+        <section class="control-section camera-card">
+          <div class="section-head compact">
+            <div><span class="label">CAMERA INPUT</span><strong id="cameraStatus" class="status-value pending">Not started</strong></div>
+            <span class="status-dot warning" id="cameraDot" aria-hidden="true"></span>
+          </div>
+          <div class="select-line">
+            <select id="cam-select" aria-label="Camera device"><option value="">Default camera</option></select>
+            <button id="cam-refresh" type="button">Refresh</button>
+          </div>
+          <div class="select-line two">
+            <label>Request
+              <select id="capturePreset">
+                <option value="480">640 × 480</option>
+                <option value="720" selected>1280 × 720</option>
+                <option value="1080">1920 × 1080</option>
+                <option value="highest">Highest available</option>
+              </select>
+            </label>
+            <label>Framing
+              <select id="fitMode">
+                <option value="0">Contain</option>
+                <option value="1" selected>Cover</option>
+                <option value="2">Stretch</option>
+              </select>
+            </label>
+          </div>
+          <button id="cam-btn" class="wide primary" type="button">Start camera</button>
+          <p id="cameraMessage" class="microcopy">Refresh works before permission. Camera labels may remain generic until permission is approved.</p>
+        </section>
 
-  <div class="footer">webcam · ws · controls</div>
-</div>
+        <section class="control-section diagnostics-card">
+          <div class="section-head compact">
+            <div><span class="label">OUTPUT DIAGNOSTICS</span><strong id="shaderStatus" class="status-value pending">Waiting for output</strong></div>
+            <span class="status-dot warning" id="shaderDot" aria-hidden="true"></span>
+          </div>
+          <pre id="diagnostics" aria-live="polite">The output window will report its shader and GPU state here.</pre>
+          <div class="mini-grid">
+            <span><b id="sizeReadout">0 × 0</b> canvas</span>
+            <span><b id="inputReadout">0 × 0</b> input</span>
+            <span id="rendererReadout">GPU pending</span>
+          </div>
+        </section>
 
-<script src="controls.js"></script>
+        <section class="control-section">
+          <div class="section-head"><div><span class="label">QUICK STATES</span><strong>Camera-processing presets</strong></div></div>
+          <div class="preset-grid">
+            <button type="button" data-preset="clean">Clean</button>
+            <button type="button" data-preset="echo">Echo</button>
+            <button type="button" data-preset="prism">Prism</button>
+            <button type="button" data-preset="edge">Edge</button>
+          </div>
+        </section>
+
+        <section class="control-section">
+          <div class="section-head"><div><span class="label">EFFECT</span><strong>Texture processing</strong></div></div>
+          <label class="select-row" for="effect"><span>Mode</span>
+            <select id="effect">
+              <option value="0">Passthrough</option>
+              <option value="1">Wave distort</option>
+              <option value="2">Radial warp</option>
+              <option value="3">Kaleidoscope</option>
+              <option value="4">Edge detect</option>
+              <option value="5">Glitch bands</option>
+            </select>
+          </label>
+          <label class="parameter-row" for="distortion"><span>Distortion</span><output id="distortion-val">0.00</output><input id="distortion" type="range" min="0" max="1" step="0.01" value="0" /></label>
+          <label class="parameter-row" for="feedback"><span>Feedback</span><output id="feedback-val">0.00</output><input id="feedback" type="range" min="0" max="0.98" step="0.01" value="0" /></label>
+          <label class="parameter-row" for="zoom"><span>Zoom</span><output id="zoom-val">1.00</output><input id="zoom" type="range" min="0.5" max="3" step="0.05" value="1" /></label>
+          <label class="parameter-row" for="speed"><span>Warp speed</span><output id="speed-val">0.30×</output><input id="speed" type="range" min="0" max="2" step="0.01" value="0.3" /></label>
+        </section>
+
+        <section class="control-section">
+          <div class="section-head"><div><span class="label">COLOR</span><strong>Final grade</strong></div></div>
+          <label class="parameter-row" for="hue"><span>Hue shift</span><output id="hue-val">0°</output><input id="hue" type="range" min="-180" max="180" step="1" value="0" /></label>
+          <label class="parameter-row" for="saturation"><span>Saturation</span><output id="saturation-val">1.00</output><input id="saturation" type="range" min="0" max="2" step="0.01" value="1" /></label>
+          <label class="parameter-row" for="brightness"><span>Brightness</span><output id="brightness-val">1.00</output><input id="brightness" type="range" min="0" max="2" step="0.01" value="1" /></label>
+          <label class="parameter-row" for="contrast"><span>Contrast</span><output id="contrast-val">1.00</output><input id="contrast" type="range" min="0" max="3" step="0.01" value="1" /></label>
+        </section>
+
+        <section class="control-section">
+          <div class="section-head"><div><span class="label">SWITCHES</span><strong>Texture flags</strong></div></div>
+          <label class="toggle-row" for="mirror"><span>Mirror camera</span><input id="mirror" type="checkbox" /></label>
+          <label class="toggle-row" for="invert"><span>Invert colors</span><input id="invert" type="checkbox" /></label>
+          <label class="toggle-row" for="greyscale"><span>Greyscale</span><input id="greyscale" type="checkbox" /></label>
+        </section>
+
+        <section class="control-section lesson-card">
+          <span class="label">RECONNECT BEHAVIOR</span>
+          <p>When the output returns, it requests a complete snapshot. Parameters, pause state, requested camera, capture preset, and framing are restored automatically.</p>
+        </section>
+      </div>
+    </section>
+
+    <footer class="footer">SPACE pause · R reset · X clear trails · S sync · F output fullscreen</footer>
+  </main>
+  <script src="controls.js"></script>
 </body>
 </html>

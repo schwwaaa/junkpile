@@ -1511,6 +1511,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "junkpile_06_tauri_v1_webcam_single_window"
+version = "0.2.0"
+dependencies = [
+ "tauri",
+ "tauri-build",
+]
+
+[[package]]
 name = "kuchikiki"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3442,14 +3450,6 @@ dependencies = [
  "hashbrown 0.15.5",
  "indexmap 2.13.0",
  "semver",
-]
-
-[[package]]
-name = "webcam-tauri-v1-single-template"
-version = "0.1.0"
-dependencies = [
- "tauri",
- "tauri-build",
 ]
 
 [[package]]

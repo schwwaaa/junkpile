@@ -1,11 +1,10 @@
 {
   "name": "webgl-tauri-v1-single-template",
   "private": true,
-  "version": "0.1.0",
-  "type": "module",
-  "description": "Single-window Tauri v1 + raw WebGL template (no p5.js)",
+  "version": "0.2.0",
+  "description": "Junkpile Tauri v1 Essential 02: a polished single-window raw WebGL and GLSL foundation",
   "scripts": {
-    "dev":   "tauri dev",
+    "dev": "tauri dev",
     "build": "tauri build",
     "tauri": "tauri"
   },

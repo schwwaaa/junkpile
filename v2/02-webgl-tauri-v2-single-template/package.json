@@ -1,13 +1,12 @@
 {
   "name": "webgl-tauri-v2-single-template",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
-  "description": "Single-window Tauri v2 + raw WebGL template (no p5.js)",
+  "description": "Junkpile Example 02: single-window Tauri v2 application teaching raw WebGL 1 rendering without p5.js.",
   "scripts": {
-    "dev":   "tauri dev",
-    "build": "tauri build",
-    "tauri": "tauri"
+    "dev": "tauri dev",
+    "build": "tauri build"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2"

@@ -1061,14 +1061,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "glsl-tauri-v1-single-template"
-version = "0.1.0"
-dependencies = [
- "tauri",
- "tauri-build",
-]
-
-[[package]]
 name = "gobject-sys"
 version = "0.15.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1516,6 +1508,14 @@ dependencies = [
  "fluent-uri",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "junkpile_04_tauri_v1_external_glsl_single"
+version = "0.2.0"
+dependencies = [
+ "tauri",
+ "tauri-build",
 ]
 
 [[package]]

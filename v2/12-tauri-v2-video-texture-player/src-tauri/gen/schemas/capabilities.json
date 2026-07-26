@@ -1,1 +1,0 @@
-{"default":{"identifier":"default","description":"Core IPC and native open/save dialogs for the Tauri v2 video texture player","local":true,"windows":["main"],"permissions":["core:default","dialog:allow-open","dialog:allow-save"]}}

@@ -1,116 +1,141 @@
-# Raw WebGL Shader · Tauri v1 · Single Window
+# 02 · Tauri v1 Raw WebGL Single Window
 
-> **Baseline:** raw WebGL shader baseline  
-> **Tauri:** 1.x  
-> **Window topology:** single window  
-> **Input:** DOM controls  
-> **Renderer:** raw WebGL 1 with no graphics framework
+A focused foundation for running a GLSL ES 1.00 shader through raw WebGL inside one Tauri v1 WebView.
 
-## Purpose
+This folder intentionally retains its original repository name:
 
-The same parameterized shader idea as the p5 baseline, but implemented directly with the browser WebGL API. It makes context creation, shader compilation, program linking, buffer setup, uniform lookup, drawing, and resize behavior explicit.
-
-This example is intentionally a baseline: it exposes the complete path from input to pixels without introducing an application-specific product architecture. Start here, confirm the baseline works, then replace the visual or input mapping with your own idea.
-
-## What you should learn
-
-- Acquire a WebGL context with `canvas.getContext("webgl")`.
-- Compile and link GLSL stages without a helper framework.
-- Render a full-screen quad with `gl.drawArrays()` and `requestAnimationFrame()`.
-- Manage canvas pixel dimensions and the WebGL viewport during resize.
-
-## Architecture
-
-```mermaid
-flowchart LR
-  Controls[DOM controls] --> Params[Shared params object]
-  Params --> Render[JavaScript render loop]
-  Render --> Shader[raw WebGL 1 with no graphics framework]
-  Shader --> Canvas[Canvas in one Tauri V1 window]
+```text
+webgl-tauri-v1-single-template
 ```
 
-### Runtime data flow
+The visible example number is **02** so it aligns with the complete Junkpile Tauri v1 Essentials sequence.
 
-1. The HTML creates the controls and canvas layout in one WebView document.
-2. Input handlers write directly into the shared `params` object.
-3. The JavaScript compiles the embedded shaders, links a WebGL program, and creates a full-screen quad buffer.
-4. `requestAnimationFrame()` uploads uniforms and calls `gl.drawArrays()` each frame.
+## What this example teaches
 
-## Prerequisites
+- Creating a WebGL 1 context without p5.js or another graphics framework
+- Compiling vertex and fragment shader stages
+- Linking a complete GPU program
+- Uploading full-screen quad geometry into an array buffer
+- Resolving vertex attributes and shader uniforms
+- Driving a render loop with `requestAnimationFrame()`
+- Resizing the real WebGL drawing buffer with its containing panel
+- Recovering from WebGL context loss
+- Calling a small Rust command from JavaScript to control the native window
 
-1. Install the operating-system dependencies required by Tauri.
-2. Install a current Rust toolchain with `rustup`.
-3. Install Node.js and npm.
-4. Install project dependencies from this directory.
+## Signal flow
+
+```text
+HTML range / checkbox
+        ↓
+     params{}
+        ↓
+requestAnimationFrame()
+        ↓
+gl.uniform*()
+        ↓
+gl.drawArrays()
+        ↓
+GLSL fragment shader
+        ↓
+WebGL canvas in the same WebView
+```
+
+There is no WebSocket, inter-window relay, p5.js renderer, or native GPU surface.
+
+## Run
 
 ```bash
 npm install
 npm run dev
 ```
 
-Build an installable application with:
+## Production build
 
 ```bash
 npm run build
 ```
 
-## Controls and inputs
-
-`hue`, `saturation`, `brightness`, `zoom`, `speed`, `distortion`, `complexity`, `symmetry`, `glow`, `invert`, `pulse`, and `rotate`.
-
-The HTML control defaults and the JavaScript `params` defaults are intended to match. When adding a parameter, update both so a fresh launch and the first user interaction produce the same state.
-
-## File map
-
-| File | Responsibility |
-|---|---|
-| `package.json` | Node scripts and the project-local Tauri CLI version. |
-| `src/index.html` | Single-window controls, canvas layout, and script loading. |
-| `src/sketch.js` | Visual state, shaders, rendering loop, and UI/input integration. |
-| `src-tauri/Cargo.toml` | Rust package metadata and native dependencies. |
-| `src-tauri/build.rs` | Project metadata or source file. |
-| `src-tauri/src/main.rs` | Tauri entry point. |
-| `src-tauri/tauri.conf.json` | Tauri 1 window, frontend, security, and bundle configuration. |
-
-Generated schemas, icon assets, and lock files are omitted from this table because they do not define the example's runtime architecture.
-
-## Tauri 1.x notes
-
-This project uses Tauri 1: `tauri = "1"`, the v1 configuration schema, `build.devPath`/`build.distDir`, and the v1 `tauri` configuration object. The visual pipeline still runs inside the WebView; Tauri 2 does not make this example a native wgpu renderer.
-
-Read [`../../docs/V1_V2_ARCHITECTURE.md`](../../docs/V1_V2_ARCHITECTURE.md) for the repository-wide comparison.
-
-## Extending the example
-
-1. Edit the embedded `FRAG_SHADER` string in the rendering JavaScript file.
-2. Add uniforms by updating the shader, parameter state, and `setUniform()` calls.
-3. Use this family when a developer needs WebGL transparency without p5 abstractions.
-
-Before adding a unique behavior, preserve a runnable baseline commit or branch. This makes it possible to distinguish framework/integration failures from failures introduced by the new visual idea.
-
-## Troubleshooting
-
-| Symptom | Check |
-|---|---|
-| App does not start | Confirm the OS-specific Tauri prerequisites, run `npm install`, then run `npm run dev` from this project directory. |
-| Blank or frozen canvas | Open the WebView developer tools, check shader compiler output, and confirm WebGL is available. |
-
-## Screenshot placeholder
-
-Add a screenshot after the example has been run on a target platform:
+On macOS, generated bundles are placed under:
 
 ```text
-docs/images/webgl-tauri-v1-single-template.png
+src-tauri/target/release/bundle/
 ```
 
-Then replace this section with:
+Unsigned builds may trigger Gatekeeper on another Mac. Public distribution generally requires Apple signing and notarization.
 
-```markdown
-![Raw WebGL Shader · Tauri v1 · Single Window running](../../docs/images/webgl-tauri-v1-single-template.png)
+## Controls
+
+| Section | Parameter | Purpose |
+|---|---|---|
+| Color | Hue shift | Rotates the shader palette |
+| Color | Saturation | Moves from monochrome to vivid color |
+| Color | Brightness | Multiplies final output brightness |
+| Motion | Zoom | Scales shader coordinates |
+| Motion | Speed | Advances the accumulated animation clock |
+| Motion | Distortion | Strengthens domain warping |
+| Pattern | Complexity | Changes the fBm octave count |
+| Pattern | Symmetry | Changes rotational folding |
+| Pattern | Glow | Brightens the center of the field |
+| Switches | Invert | Inverts the final color |
+| Switches | Pulse | Enables rhythmic brightness modulation |
+| Switches | Rotate | Rotates the complete coordinate field |
+
+Keyboard shortcuts:
+
+| Key | Action |
+|---|---|
+| Space | Pause or resume animation |
+| R | Restore defaults and reset time |
+| C | Recompile the shader program |
+| F | Toggle native-window fullscreen |
+
+## Project structure
+
+```text
+webgl-tauri-v1-single-template/
+├── README.md
+├── MODERNIZATION-NOTES.md
+├── package.json
+├── src/
+│   ├── index.html
+│   ├── sketch.js
+│   └── styles.css
+└── src-tauri/
+    ├── Cargo.toml
+    ├── tauri.conf.json
+    └── src/main.rs
 ```
 
-## Related examples
+## Raw WebGL bootstrap
 
-- Browse the complete comparison in [`../../docs/EXAMPLE_MATRIX.md`](../../docs/EXAMPLE_MATRIX.md).
-- Use the paired Tauri 2 version to compare framework-generation changes.
-- Use the paired two-window version to compare direct state with transport-based state.
+The complete setup is visible in `src/sketch.js`:
+
+1. `canvas.getContext('webgl')`
+2. `gl.createShader()` and `gl.compileShader()`
+3. `gl.createProgram()` and `gl.linkProgram()`
+4. `gl.createBuffer()` for a four-vertex full-screen quad
+5. `gl.getAttribLocation()` and `gl.vertexAttribPointer()`
+6. `gl.getUniformLocation()` and `gl.uniform*()` every frame
+7. `gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)`
+
+The small diagnostics panel reports shader compilation and link status. The dedicated shader-playground examples later provide source editing and richer error parsing.
+
+## Add a new shader parameter
+
+1. Add a range input and matching `<output>` in `src/index.html`.
+2. Add its default to `DEFAULT_PARAMS` in `src/sketch.js`.
+3. Add its ID to `SLIDER_IDS`.
+4. Declare a matching uniform in `FRAG_SHADER`.
+5. Upload it in `render()` with `uniform1f()` or `uniform2f()`.
+6. Use the uniform in the shader.
+
+## GLSL ES 1.00 note
+
+WebGL 1 requires fixed compile-time loop bounds. The `fbm()` function loops to a fixed maximum of eight iterations and exits early using the float `u_complexity` uniform.
+
+## Known limitations
+
+- This example is deliberately single-window.
+- It uses browser WebGL rather than native wgpu.
+- The drawing buffer uses CSS-pixel dimensions for predictable performance.
+- Uniform locations are resolved by the helper during each frame to keep the educational path obvious; production engines usually cache them.

@@ -1,118 +1,136 @@
 <!doctype html>
-<!--
-  p5.js OSC bridge — Tauri v1
-  Rust receives OSC over UDP and emits decoded messages; sketch.js maps addresses to p5/GLSL parameters while this page provides monitoring and manual controls.
-  See the adjacent README.md for setup, architecture, extension points, and troubleshooting.
--->
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>p5 · OSC</title>
-  <style>
-    :root{color-scheme:dark}
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    html,body{width:100vw;height:100vh;overflow:hidden;background:#0a0a0c;color:#e0e0e8;font-family:'SF Mono','Fira Code','Consolas',monospace;font-size:12px}
-    #app{display:flex;width:100vw;height:100vh}
-    #panel{flex:0 0 260px;height:100vh;overflow-y:auto;background:#0d0d0f;border-right:1px solid #1e1e26;display:flex;flex-direction:column;padding:12px;gap:6px}
-    #panel::-webkit-scrollbar{width:3px}
-    #panel::-webkit-scrollbar-thumb{background:#2a2a36;border-radius:2px}
-    .panel-title{font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#7c9fff;padding-bottom:8px;border-bottom:1px solid #1e1e26;margin-bottom:2px}
-    .section-label{font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#7c9fff;padding:8px 0 3px;border-top:1px solid #1e1e26;margin-top:4px}
-    .info-box{padding:8px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:6px;font-size:10px;color:rgba(255,255,255,.5);line-height:1.7}
-    .info-box strong{color:#7c9fff}
-    #osc-log{flex:0 0 auto;max-height:130px;overflow-y:auto;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.06);border-radius:6px;padding:5px 7px;font-size:9px;color:rgba(255,255,255,.35);line-height:1.6}
-    #osc-log::-webkit-scrollbar{width:2px}
-    #osc-log::-webkit-scrollbar-thumb{background:#2a2a36}
-    .log-line{white-space:nowrap;font-variant-numeric:tabular-nums}
-    .log-hit{color:#7c9fff}
-    .log-unk{color:rgba(255,255,255,.25)}
-    .param-row{display:flex;align-items:center;gap:7px;padding:5px 7px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:6px;transition:border-color .15s}
-    .param-row:hover{border-color:rgba(124,159,255,.3)}
-    .param-row label{flex:0 0 90px;font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.05em;text-transform:uppercase;user-select:none}
-    input[type=range]{-webkit-appearance:none;appearance:none;flex:1;height:2px;background:rgba(255,255,255,.15);border-radius:1px;outline:none;cursor:pointer}
-    input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:10px;height:10px;border-radius:50%;background:#7c9fff}
-    .param-value{flex:0 0 38px;text-align:right;font-size:10px;color:#7c9fff;font-variant-numeric:tabular-nums}
-    .toggle-row{display:flex;align-items:center;gap:7px;padding:5px 7px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:6px}
-    .toggle-row label{flex:1;font-size:10px;color:rgba(255,255,255,.4);letter-spacing:.05em;text-transform:uppercase;user-select:none;cursor:pointer}
-    input[type=checkbox]{accent-color:#7c9fff;width:13px;height:13px;cursor:pointer;flex-shrink:0}
-    .panel-footer{margin-top:auto;padding-top:10px;font-size:9px;color:rgba(255,255,255,.18);text-align:center;border-top:1px solid #1e1e26}
-    #canvas-container{flex:1;position:relative;overflow:hidden;background:#000}
-    #canvas-container canvas{display:block;width:100%!important;height:100%!important}
-  </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>11 · Tauri v1 OSC Input</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-<div id="app">
-  <div id="panel">
-    <div class="panel-title">p5 · osc</div>
+  <main class="app-shell">
+    <aside class="control-panel">
+      <header class="hero">
+        <p class="eyebrow">JUNKPILE · TAURI V1 ESSENTIAL 11</p>
+        <h1>OSC Input</h1>
+        <p>Rust receives OSC over UDP and emits structured messages into a p5.js WebGL instrument.</p>
+      </header>
 
-    <div class="section-label">Connection</div>
-    <div class="info-box">
-      Listening on UDP<br>
-      <strong id="osc-addr">127.0.0.1:9000</strong><br>
-      Send OSC to this address from TouchOSC, Max, PureData, etc.
-    </div>
+      <section class="panel-section">
+        <div class="section-heading">
+          <h2>UDP listener</h2>
+          <span id="listener-pill" class="status-pill idle">stopped</span>
+        </div>
+        <div class="listener-grid">
+          <label>
+            <span class="field-label">Bind mode</span>
+            <select id="bind-address">
+              <option value="127.0.0.1">Local only · 127.0.0.1</option>
+              <option value="0.0.0.0" selected>LAN devices · 0.0.0.0</option>
+            </select>
+          </label>
+          <label>
+            <span class="field-label">UDP port</span>
+            <input id="port-input" type="number" min="1" max="65535" value="9000" inputmode="numeric" />
+          </label>
+        </div>
+        <div class="button-grid two">
+          <button id="start-btn" class="primary" type="button">Start / restart</button>
+          <button id="stop-btn" type="button">Stop</button>
+          <button id="endpoints-btn" type="button">Refresh endpoints</button>
+          <button id="test-btn" type="button">Send test burst</button>
+        </div>
+        <div id="endpoint-list" class="endpoint-list">127.0.0.1:9000</div>
+        <p class="helper">Use LAN mode for TouchOSC or another computer. Allow incoming UDP traffic if the operating system asks.</p>
+      </section>
 
-    <div class="section-label">OSC Monitor</div>
-    <div id="osc-log"><span style="color:rgba(255,255,255,.2)">waiting for messages…</span></div>
+      <section class="panel-section">
+        <div class="section-heading"><h2>Quick states</h2><button id="reset-btn" class="text-button" type="button">Reset all</button></div>
+        <div class="button-grid two">
+          <button type="button" data-preset="default">Default</button>
+          <button type="button" data-preset="soft">Soft field</button>
+          <button type="button" data-preset="prism">Prism</button>
+          <button type="button" data-preset="mono">Mono pulse</button>
+        </div>
+      </section>
 
-    <div class="section-label">Address Map</div>
-    <!-- Mirrors ADDRESS_MAP in sketch.js — update both if you change addresses -->
-    <div class="info-box" style="font-size:9px;line-height:2">
-      <strong>/hue</strong> 0.0–1.0 → hue (0–360)<br>
-      <strong>/zoom</strong> 0.0–1.0 → zoom (0.5–4)<br>
-      <strong>/speed</strong> 0.0–1.0 → speed<br>
-      <strong>/brightness</strong> 0.0–1.0<br>
-      <strong>/distortion</strong> 0.0–1.0<br>
-      <strong>/complexity</strong> 0.0–1.0 → 1–8<br>
-      <strong>/invert</strong> 0 or 1<br>
-      <strong>/pulse</strong> 0 or 1
-    </div>
+      <section class="panel-section">
+        <div class="section-heading">
+          <h2>OSC learn</h2>
+          <span id="learn-pill" class="status-pill idle">off</span>
+        </div>
+        <div class="learn-row">
+          <select id="learn-param" aria-label="Parameter to learn"></select>
+          <button id="learn-btn" type="button">Arm learn</button>
+        </div>
+        <p class="helper">Choose a parameter, arm learn, then send one OSC message. The incoming address becomes that parameter’s route.</p>
+      </section>
 
-    <div class="section-label">Manual Override</div>
-    <div class="param-row">
-      <label for="hue">Hue</label>
-      <input id="hue" type="range" min="0" max="360" step="1" value="180">
-      <span class="param-value" id="hue-val">180</span>
-    </div>
-    <div class="param-row">
-      <label for="zoom">Zoom</label>
-      <input id="zoom" type="range" min="0.5" max="4.0" step="0.05" value="1.5">
-      <span class="param-value" id="zoom-val">1.50</span>
-    </div>
-    <div class="param-row">
-      <label for="speed">Speed</label>
-      <input id="speed" type="range" min="0" max="2" step="0.01" value="0.5">
-      <span class="param-value" id="speed-val">0.50</span>
-    </div>
-    <div class="param-row">
-      <label for="brightness">Brightness</label>
-      <input id="brightness" type="range" min="0" max="2" step="0.01" value="1.0">
-      <span class="param-value" id="brightness-val">1.00</span>
-    </div>
-    <div class="param-row">
-      <label for="distortion">Distortion</label>
-      <input id="distortion" type="range" min="0" max="1" step="0.01" value="0.3">
-      <span class="param-value" id="distortion-val">0.30</span>
-    </div>
+      <section class="panel-section parameter-section">
+        <div class="section-heading">
+          <h2>Routes and parameters</h2>
+          <button id="reset-routes-btn" class="text-button" type="button">Reset routes</button>
+        </div>
+        <div id="parameter-list"></div>
+      </section>
 
-    <div class="section-label">Toggles</div>
-    <div class="toggle-row">
-      <label for="invert">Invert</label>
-      <input id="invert" type="checkbox">
-    </div>
-    <div class="toggle-row">
-      <label for="pulse">Pulse</label>
-      <input id="pulse" type="checkbox" checked>
-    </div>
+      <section class="panel-section compact-actions">
+        <button id="pause-btn" type="button">Pause</button>
+        <button id="fullscreen-btn" type="button">Fullscreen</button>
+      </section>
+    </aside>
 
-    <div class="panel-footer">p5 · tauri · osc template</div>
-  </div>
+    <section class="stage-column">
+      <div class="stage-toolbar">
+        <div>
+          <strong>p5.js WebGL output</strong>
+          <span id="fps-readout">0 fps</span>
+          <span id="size-readout">0 × 0</span>
+        </div>
+        <div class="message-summary">
+          <span id="last-address">waiting</span>
+          <span id="last-message">No OSC packets received</span>
+        </div>
+      </div>
 
-  <div id="canvas-container"></div>
-</div>
+      <div id="canvas-wrap">
+        <div id="canvas-container"></div>
+        <div id="osc-overlay">
+          <div class="overlay-icon">OSC</div>
+          <div>Send a packet or press “Send test burst.”</div>
+        </div>
+        <div id="canvas-badge">RUNNING</div>
+        <div class="canvas-help">SPACE pause · R reset · F fullscreen</div>
+      </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.0/p5.min.js"></script>
-<script src="sketch.js"></script>
+      <section class="monitor-panel">
+        <div class="monitor-header">
+          <div><p class="eyebrow">PACKET STREAM</p><h2>Mini OSC terminal</h2></div>
+          <button id="clear-log-btn" type="button">Clear</button>
+        </div>
+        <div class="monitor-grid four">
+          <div class="activity-card">
+            <div class="meter-label"><span>Numeric value</span><output id="numeric-value">—</output></div>
+            <div class="meter"><span id="numeric-meter"></span></div>
+          </div>
+          <div class="activity-card">
+            <div class="meter-label"><span>Packet rate</span><output id="rate-value">0</output></div>
+            <div class="meter"><span id="rate-meter"></span></div>
+          </div>
+          <div class="activity-card">
+            <div class="meter-label"><span>Activity</span><output id="event-count">0</output></div>
+            <div class="meter"><span id="activity-meter"></span></div>
+          </div>
+          <div class="activity-card">
+            <div class="meter-label"><span>Last sender</span><output id="sender-value">—</output></div>
+            <div class="meter"><span id="sender-meter"></span></div>
+          </div>
+        </div>
+        <div id="osc-log" class="terminal" aria-live="polite"></div>
+      </section>
+    </section>
+  </main>
+
+  <script src="vendor/p5.min.js"></script>
+  <script src="sketch.js"></script>
 </body>
 </html>

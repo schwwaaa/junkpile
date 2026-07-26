@@ -8,24 +8,30 @@
     "withGlobalTauri": true
   },
   "package": {
-    "productName": "p5-osc-template",
-    "version": "0.1.0"
+    "productName": "Junkpile 11 · Tauri v1 OSC Input",
+    "version": "0.2.0"
   },
   "tauri": {
+    "allowlist": {
+      "all": false
+    },
     "windows": [
       {
         "label": "main",
-        "title": "p5 \u00b7 OSC",
+        "title": "11 · Tauri v1 · OSC Input",
         "url": "index.html",
-        "width": 1100,
-        "height": 720,
+        "width": 1240,
+        "height": 840,
+        "minWidth": 900,
+        "minHeight": 620,
         "resizable": true,
-        "decorations": true
+        "decorations": true,
+        "fullscreen": false
       }
     ],
     "bundle": {
       "active": true,
-      "identifier": "com.example.p5-osc-template",
+      "identifier": "com.schwwaaa.junkpile.v1.osc-input",
       "icon": [
         "icons/icon.icns",
         "icons/icon.png",
@@ -33,7 +39,7 @@
       ]
     },
     "security": {
-      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; style-src 'self' 'unsafe-inline'"
+      "csp": "default-src 'self'; img-src 'self' data: blob:; script-src 'self'; style-src 'self' 'unsafe-inline'"
     }
   }
 }

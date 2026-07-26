@@ -1,37 +1,8 @@
-'use strict';
+"use strict";
 
-// =============================================================================
-// canvas.js — WS two-window feedback template
-// =============================================================================
-// WHY WEBCAM LIVES HERE, NOT IN CONTROLS
-// ─────────────────────────────────────────
-//   getUserMedia() returns a MediaStream. That stream must be assigned to a
-//   <video> element in the SAME WebView as the WebGL context that will call
-//   gl.texImage2D(... video ...). You cannot pass a MediaStream across Tauri
-//   windows. So the canvas window owns the camera entirely.
-//
-//   Controls window sends: { type:'cam', action:'start'|'stop'|'enumerate', deviceId? }
-//   Canvas replies with:   { type:'cam-status', state:'ok'|'err'|'stopped', w, h }
-//                          { type:'cam-devices', devices:[{deviceId,label}], activeDeviceId }
-//
-// TEXTURE UNITS
-//   TEXTURE0 — u_prev    (previous FBO frame — the ping-pong source)
-//   TEXTURE1 — u_webcam  (live camera, uploaded every render tick via texImage2D)
-// =============================================================================
-
-// ---------------------------------------------------------------------------
-// Params  (written by WS param messages)
-// ---------------------------------------------------------------------------
-
-const params = {
-    mode: 0, decay: 0.97, camMix: 0.3,
-    speed: 1.0, scale: 1.0, intensity: 1.0,
-    hue: 0.0, palette: 0, brush: 0.03,
-};
-
-// ---------------------------------------------------------------------------
-// Shaders  (identical to single-window sketch.js)
-// ---------------------------------------------------------------------------
+const MODE_NAMES = ["Echo Trail","Fluid Smear","Reaction-Diffusion","Thermal","Mirror Echo","Glitch Memory"];
+const DEFAULT_PARAMS = { mode:0, decay:0.97, camMix:0.30, speed:1, scale:1, intensity:1, hue:0, palette:0, brush:0.03, bufferScale:0.5 };
+const params = { ...DEFAULT_PARAMS };
 
 const VERT = `
     precision highp float;
@@ -215,278 +186,50 @@ const DISPLAY = `
     }
 `;
 
-// ---------------------------------------------------------------------------
-// WebGL
-// ---------------------------------------------------------------------------
 
-const canvas = document.getElementById('glcanvas');
-const gl     = canvas.getContext('webgl');
-if (!gl) { document.body.style.background='#200'; throw new Error('WebGL unavailable'); }
 
-const floatExt    = gl.getExtension('OES_texture_float');
-const floatLinExt = gl.getExtension('OES_texture_float_linear');
-const USE_FLOAT   = !!floatExt;
+const canvas=document.getElementById("glcanvas");
+const stage=document.getElementById("canvasStage");
+const video=document.getElementById("webcam-video");
+const generated=document.getElementById("generated-source");
+const generatedCtx=generated.getContext("2d");
+let gl=null,simProgram=null,displayProgram=null,quadBuffer=null,sourceTexture=null;
+let framebuffers=[null,null],frameTextures=[null,null],ping=0,fbW=1,fbH=1;
+let socket=null,reconnectTimer=0,reconnectDelay=600;
+let cameraStream=null,cameraOn=false,activeDeviceId="",sourceWidth=640,sourceHeight=360,lastVideoTime=-1;
+let paused=false,clearPending=true,shaderReady=false,diagnostics="Not compiled";
+let elapsed=0,lastFrame=performance.now(),fpsFrames=0,fpsWindow=performance.now(),fps=0,sourceFrames=0,sourceWindow=performance.now(),sourceFps=0;
+const pointer={x:.5,y:.5,down:false};
 
-function mkShader(type, src) {
-    const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
-    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
-    return s;
-}
-function mkProg(vs, fs) {
-    const p = gl.createProgram();
-    gl.attachShader(p, mkShader(gl.VERTEX_SHADER, vs));
-    gl.attachShader(p, mkShader(gl.FRAGMENT_SHADER, fs));
-    gl.linkProgram(p);
-    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
-    return p;
-}
-
-const simProg     = mkProg(VERT, SIM);
-const displayProg = mkProg(VERT, DISPLAY);
-
-const qBuf = gl.createBuffer();
-gl.bindBuffer(gl.ARRAY_BUFFER, qBuf);
-gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
-
-function bindQuad(prog) {
-    const l = gl.getAttribLocation(prog, 'a_pos');
-    gl.bindBuffer(gl.ARRAY_BUFFER, qBuf);
-    gl.enableVertexAttribArray(l); gl.vertexAttribPointer(l, 2, gl.FLOAT, false, 0, 0);
-}
+function badge(id,text,kind="pending"){const el=document.getElementById(id);if(!el)return;el.textContent=text;el.classList.remove("ok","pending","error");el.classList.add(kind);}
+function setError(text=""){const el=document.getElementById("errorPanel");el.textContent=text;el.classList.toggle("hidden",!text);}
+function send(message){if(!socket||socket.readyState!==WebSocket.OPEN)return false;socket.send(JSON.stringify(message));return true;}
+function compileShader(type,source,label){const shader=gl.createShader(type);gl.shaderSource(shader,source);gl.compileShader(shader);if(!gl.getShaderParameter(shader,gl.COMPILE_STATUS)){const info=gl.getShaderInfoLog(shader)||`${label} failed`;gl.deleteShader(shader);throw new Error(`${label}\n${info}`);}return shader;}
+function buildProgram(fragment,label){const vs=compileShader(gl.VERTEX_SHADER,VERT,`${label} vertex`);const fs=compileShader(gl.FRAGMENT_SHADER,fragment,`${label} fragment`);const p=gl.createProgram();gl.attachShader(p,vs);gl.attachShader(p,fs);gl.linkProgram(p);gl.deleteShader(vs);gl.deleteShader(fs);if(!gl.getProgramParameter(p,gl.LINK_STATUS)){const info=gl.getProgramInfoLog(p)||`${label} link failed`;gl.deleteProgram(p);throw new Error(`${label} link\n${info}`);}return p;}
+function bindQuad(program){gl.useProgram(program);gl.bindBuffer(gl.ARRAY_BUFFER,quadBuffer);const loc=gl.getAttribLocation(program,"a_pos");gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);}
 function u1f(p,n,v){const l=gl.getUniformLocation(p,n);if(l!==null)gl.uniform1f(l,v);}
 function u1i(p,n,v){const l=gl.getUniformLocation(p,n);if(l!==null)gl.uniform1i(l,v);}
 function u2f(p,n,a,b){const l=gl.getUniformLocation(p,n);if(l!==null)gl.uniform2f(l,a,b);}
-
-// ---------------------------------------------------------------------------
-// Webcam  (owned entirely by this window — cannot cross WebViews)
-// ---------------------------------------------------------------------------
-
-const video = document.getElementById('webcam-video');
-let cameraOn      = false;
-let activeDeviceId = null;
-let webcamTex      = null;
-
-function initWebcamTex() {
-    webcamTex = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, webcamTex);
-    // 1×1 black placeholder until camera starts
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0,0,0,255]));
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-}
-
-function uploadFrame() {
-    if (!cameraOn || video.readyState < video.HAVE_CURRENT_DATA) return;
-    gl.bindTexture(gl.TEXTURE_2D, webcamTex);
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
-}
-
-function stopStream() {
-    if (video.srcObject) { video.srcObject.getTracks().forEach(t => t.stop()); video.srcObject = null; }
-    cameraOn = false; activeDeviceId = null;
-}
-
-async function doStartCamera(deviceId) {
-    stopStream();
-    try {
-        const constraints = {
-            video: deviceId
-                ? { deviceId: { exact: deviceId }, width: { ideal: 1280 }, height: { ideal: 720 } }
-                : { width: { ideal: 1280 }, height: { ideal: 720 } },
-            audio: false,
-        };
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        video.srcObject = stream; await video.play();
-        const track = stream.getVideoTracks()[0];
-        activeDeviceId = track?.getSettings()?.deviceId || deviceId || null;
-        cameraOn = true;
-        wsSend({ type: 'cam-status', state: 'ok', w: video.videoWidth, h: video.videoHeight });
-        await doEnumerate();
-    } catch (e) {
-        wsSend({ type: 'cam-status', state: 'err', message: e.message });
-    }
-}
-
-function doStopCamera() {
-    stopStream();
-    wsSend({ type: 'cam-status', state: 'stopped' });
-}
-
-async function doEnumerate() {
-    try {
-        const all  = await navigator.mediaDevices.enumerateDevices();
-        const cams = all.filter(d => d.kind === 'videoinput').map(d => ({ deviceId: d.deviceId, label: d.label }));
-        wsSend({ type: 'cam-devices', devices: cams, activeDeviceId });
-    } catch (_) {}
-}
-
-// ---------------------------------------------------------------------------
-// Ping-pong FBOs
-// ---------------------------------------------------------------------------
-
-let fbW = 0, fbH = 0, fbos = [null,null], fbTexs = [null,null], ping = 0;
-let clearPending = false;
-
-function mkFBOTex(w, h) {
-    const type = USE_FLOAT ? gl.FLOAT : gl.UNSIGNED_BYTE;
-    const t    = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, t);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, type, null);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    const f = USE_FLOAT && floatLinExt ? gl.LINEAR : gl.NEAREST;
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, f);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, f);
-    return t;
-}
-
-function initFBOs(w, h) {
-    fbW = w; fbH = h;
-    for (let i = 0; i < 2; i++) {
-        if (fbTexs[i]) gl.deleteTexture(fbTexs[i]);
-        if (fbos[i])   gl.deleteFramebuffer(fbos[i]);
-        fbTexs[i] = mkFBOTex(w, h);
-        fbos[i]   = gl.createFramebuffer();
-        gl.bindFramebuffer(gl.FRAMEBUFFER, fbos[i]);
-        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fbTexs[i], 0);
-    }
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    clearPending = true;
-}
-
-// ---------------------------------------------------------------------------
-// Mouse (you can draw directly on the canvas window too)
-// ---------------------------------------------------------------------------
-
-const mouse = { x: 0.5, y: 0.5, down: false };
-function canvasUV(e) {
-    const r = canvas.getBoundingClientRect();
-    return { x: (e.clientX - r.left) / r.width, y: 1.0 - (e.clientY - r.top) / r.height };
-}
-canvas.addEventListener('mousedown',  e => { const uv=canvasUV(e); mouse.x=uv.x; mouse.y=uv.y; mouse.down=true; });
-canvas.addEventListener('mousemove',  e => { if(!mouse.down) return; const uv=canvasUV(e); mouse.x=uv.x; mouse.y=uv.y; });
-canvas.addEventListener('mouseup',    () => mouse.down = false);
-canvas.addEventListener('mouseleave', () => mouse.down = false);
-
-// ---------------------------------------------------------------------------
-// Render loop
-// ---------------------------------------------------------------------------
-
-const t0 = performance.now();
-
-function render() {
-    const elapsed = (performance.now() - t0) / 1000;
-    const pong    = 1 - ping;
-
-    uploadFrame();
-
-    // Sim pass: read pong FBO + webcam → write to ping FBO
-    gl.bindFramebuffer(gl.FRAMEBUFFER, fbos[ping]);
-    gl.viewport(0, 0, fbW, fbH);
-    gl.useProgram(simProg); bindQuad(simProg);
-
-    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, fbTexs[pong]); u1i(simProg,'u_prev',0);
-    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, webcamTex);    u1i(simProg,'u_webcam',1);
-
-    u1f(simProg,'u_time',      elapsed);
-    u2f(simProg,'u_res',       fbW, fbH);
-    u1i(simProg,'u_mode',      params.mode);
-    u1f(simProg,'u_decay',     params.decay);
-    u1f(simProg,'u_camMix',    params.camMix);
-    u1f(simProg,'u_speed',     params.speed);
-    u1f(simProg,'u_scale',     params.scale);
-    u1f(simProg,'u_intensity', params.intensity);
-    u1f(simProg,'u_brushSize', params.brush);
-    u2f(simProg,'u_mouse',     mouse.x, mouse.y);
-    u1f(simProg,'u_mouseDown', mouse.down ? 1.0 : 0.0);
-    u1f(simProg,'u_clearFlag', clearPending ? 1.0 : 0.0);
-
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    clearPending = false;
-
-    // Display pass: ping FBO → screen with palette
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    gl.viewport(0, 0, canvas.width, canvas.height);
-    gl.useProgram(displayProg); bindQuad(displayProg);
-
-    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, fbTexs[ping]); u1i(displayProg,'u_fbo',0);
-    u1i(displayProg,'u_mode',    params.mode);
-    u1f(displayProg,'u_hue',     params.hue);
-    u1i(displayProg,'u_palette', params.palette);
-    u1f(displayProg,'u_time',    elapsed);
-
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-
-    ping = pong;
-    requestAnimationFrame(render);
-}
-
-// ---------------------------------------------------------------------------
-// WS
-// ---------------------------------------------------------------------------
-
-let ws = null;
-
-function wsSend(obj) {
-    if (!ws || ws.readyState !== WebSocket.OPEN) return;
-    try { ws.send(JSON.stringify(obj)); } catch (_) {}
-}
-
-function connectWS() {
-    const dot = document.getElementById('ws-dot');
-    ws = new WebSocket('ws://127.0.0.1:2727');
-
-    ws.onopen = () => {
-        if (dot) { dot.textContent = 'WS ●'; setTimeout(() => dot.classList.add('hidden'), 2000); }
-        ws.send(JSON.stringify({ type: 'hello', role: 'canvas' }));
-    };
-
-    ws.onmessage = (event) => {
-        let msg; try { msg = JSON.parse(event.data); } catch (_) { return; }
-
-        if (msg.type === 'param' && msg.name !== undefined) {
-            params[msg.name] = (msg.name === 'palette') ? Math.round(msg.value) : msg.value;
-
-        } else if (msg.type === 'action') {
-            if (msg.action === 'mode')  { params.mode = msg.value; clearPending = true; }
-            if (msg.action === 'clear') clearPending = true;
-
-        } else if (msg.type === 'cam') {
-            // Camera commands arrive from the controls window
-            if      (msg.action === 'start')     doStartCamera(msg.deviceId || null);
-            else if (msg.action === 'stop')      doStopCamera();
-            else if (msg.action === 'enumerate') doEnumerate();
-        }
-    };
-
-    ws.onclose = e => {
-        if (dot) { dot.textContent = `WS ○ (${e.code})`; dot.classList.remove('hidden'); }
-        setTimeout(connectWS, 1500);
-    };
-    ws.onerror = () => {};
-}
-
-// ---------------------------------------------------------------------------
-// Resize
-// ---------------------------------------------------------------------------
-
-function resize() {
-    canvas.width  = window.innerWidth;
-    canvas.height = window.innerHeight;
-    initFBOs(Math.floor(canvas.width / 2), Math.floor(canvas.height / 2));
-}
-new ResizeObserver(resize).observe(document.body);
-
-// ---------------------------------------------------------------------------
-// Startup
-// ---------------------------------------------------------------------------
-
-document.addEventListener('DOMContentLoaded', () => {
-    resize();
-    initWebcamTex();
-    connectWS();
-    requestAnimationFrame(render);
-});
+function createTexture(width=1,height=1,data=null,type=gl.UNSIGNED_BYTE){const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,width,height,0,gl.RGBA,type,data);return t;}
+function destroyBuffers(){framebuffers.forEach(f=>f&&gl.deleteFramebuffer(f));frameTextures.forEach(t=>t&&gl.deleteTexture(t));framebuffers=[null,null];frameTextures=[null,null];}
+function allocateBuffers(){if(!gl)return;const scale=Math.max(.1,Math.min(1,Number(params.bufferScale)||.5));fbW=Math.max(2,Math.floor(canvas.width*scale));fbH=Math.max(2,Math.floor(canvas.height*scale));destroyBuffers();for(let i=0;i<2;i++){const tex=createTexture(fbW,fbH,null,gl.UNSIGNED_BYTE);const fbo=gl.createFramebuffer();gl.bindFramebuffer(gl.FRAMEBUFFER,fbo);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,tex,0);if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE)throw new Error("Feedback framebuffer is incomplete.");frameTextures[i]=tex;framebuffers[i]=fbo;}gl.bindFramebuffer(gl.FRAMEBUFFER,null);ping=0;clearPending=true;document.getElementById("bufferReadout").textContent=`${fbW} × ${fbH} history`;}
+function initializeGpu(){gl=canvas.getContext("webgl",{alpha:false,antialias:false,preserveDrawingBuffer:true});if(!gl)throw new Error("WebGL 1 is unavailable.");simProgram=buildProgram(SIM,"Simulation");displayProgram=buildProgram(DISPLAY,"Display");quadBuffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,quadBuffer);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);sourceTexture=createTexture(1,1,new Uint8Array([0,0,0,255]));shaderReady=true;diagnostics="Simulation vertex: OK\nSimulation fragment: OK\nSimulation link: OK\nDisplay vertex: OK\nDisplay fragment: OK\nDisplay link: OK\nFeedback framebuffers: OK";badge("shaderBadge","PIPELINE OK","ok");setError("");resizeCanvas(true);const dbg=gl.getExtension("WEBGL_debug_renderer_info");const renderer=dbg?gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER);document.getElementById("rendererReadout").textContent=renderer||"WebGL 1";}
+function resizeCanvas(force=false){const dpr=Math.max(1,Math.min(window.devicePixelRatio||1,2));const w=Math.max(2,Math.floor(stage.clientWidth*dpr)),h=Math.max(2,Math.floor(stage.clientHeight*dpr));if(force||canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;document.getElementById("sizeReadout").textContent=`${w} × ${h}`;if(gl)allocateBuffers();}}
+function drawGenerated(now){const w=generated.width,h=generated.height,t=now*.001;const g=generatedCtx.createLinearGradient(0,0,w,h);g.addColorStop(0,`hsl(${(t*35)%360} 80% 18%)`);g.addColorStop(.5,`hsl(${(t*55+120)%360} 90% 50%)`);g.addColorStop(1,`hsl(${(t*25+240)%360} 85% 15%)`);generatedCtx.fillStyle=g;generatedCtx.fillRect(0,0,w,h);generatedCtx.strokeStyle="rgba(255,255,255,.32)";generatedCtx.lineWidth=2;for(let x=0;x<w;x+=40){generatedCtx.beginPath();generatedCtx.moveTo(x,0);generatedCtx.lineTo(x,h);generatedCtx.stroke();}for(let y=0;y<h;y+=40){generatedCtx.beginPath();generatedCtx.moveTo(0,y);generatedCtx.lineTo(w,y);generatedCtx.stroke();}generatedCtx.fillStyle="#fff";generatedCtx.font="700 42px system-ui";generatedCtx.textAlign="center";generatedCtx.fillText("JUNKPILE 09",w/2,h/2-10);generatedCtx.font="18px monospace";generatedCtx.fillText("GENERATED FEEDBACK SOURCE",w/2,h/2+30);}
+function uploadSource(now){gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,sourceTexture);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);try{if(cameraOn&&video.readyState>=HTMLMediaElement.HAVE_CURRENT_DATA){if(video.currentTime!==lastVideoTime){lastVideoTime=video.currentTime;gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,video);sourceFrames++;sourceWidth=video.videoWidth||sourceWidth;sourceHeight=video.videoHeight||sourceHeight;}}else{drawGenerated(now);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,generated);sourceFrames++;sourceWidth=generated.width;sourceHeight=generated.height;}}catch(error){send({type:"cam-status",state:"error",title:"Texture upload failed",message:String(error?.message||error)});}}
+function render(now){const dt=Math.min(Math.max((now-lastFrame)/1000,0),.1);lastFrame=now;if(!paused)elapsed+=dt;if(gl&&shaderReady&&!gl.isContextLost()&&framebuffers[0]){resizeCanvas();if(!paused){uploadSource(now);const write=ping,read=1-ping;gl.bindFramebuffer(gl.FRAMEBUFFER,framebuffers[write]);gl.viewport(0,0,fbW,fbH);bindQuad(simProgram);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,frameTextures[read]);u1i(simProgram,"u_prev",0);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,sourceTexture);u1i(simProgram,"u_webcam",1);u1f(simProgram,"u_time",elapsed);u2f(simProgram,"u_res",fbW,fbH);u1i(simProgram,"u_mode",Math.round(params.mode));u1f(simProgram,"u_decay",params.decay);u1f(simProgram,"u_camMix",params.camMix);u1f(simProgram,"u_speed",params.speed);u1f(simProgram,"u_scale",params.scale);u1f(simProgram,"u_intensity",params.intensity);u2f(simProgram,"u_mouse",pointer.x,pointer.y);u1f(simProgram,"u_mouseDown",pointer.down?1:0);u1f(simProgram,"u_brushSize",params.brush);u1f(simProgram,"u_clearFlag",clearPending?1:0);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);clearPending=false;gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,canvas.width,canvas.height);bindQuad(displayProgram);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,frameTextures[write]);u1i(displayProgram,"u_fbo",0);u1i(displayProgram,"u_mode",Math.round(params.mode));u1f(displayProgram,"u_hue",params.hue);u1i(displayProgram,"u_palette",Math.round(params.palette));u1f(displayProgram,"u_time",elapsed);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);ping=read;}else{gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,canvas.width,canvas.height);bindQuad(displayProgram);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,frameTextures[1-ping]||sourceTexture);u1i(displayProgram,"u_fbo",0);u1i(displayProgram,"u_mode",Math.round(params.mode));u1f(displayProgram,"u_hue",params.hue);u1i(displayProgram,"u_palette",Math.round(params.palette));u1f(displayProgram,"u_time",elapsed);gl.drawArrays(gl.TRIANGLE_STRIP,0,4);}}fpsFrames++;if(now-fpsWindow>=600){fps=Math.round(fpsFrames*1000/(now-fpsWindow));fpsFrames=0;fpsWindow=now;document.getElementById("fpsReadout").textContent=String(fps);}if(now-sourceWindow>=1000){sourceFps=Math.round(sourceFrames*1000/(now-sourceWindow));sourceFrames=0;sourceWindow=now;document.getElementById("cameraFpsReadout").textContent=String(sourceFps);}requestAnimationFrame(render);}
+function telemetry(){const dbg=gl?.getExtension("WEBGL_debug_renderer_info");const renderer=gl?(dbg?gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER)):"WebGL unavailable";send({type:"telemetry",fps,sourceFps,width:canvas.width,height:canvas.height,bufferWidth:fbW,bufferHeight:fbH,renderer,shaderReady,diagnostics,mode:params.mode,camera:{on:cameraOn,width:sourceWidth,height:sourceHeight}});}
+function constraints(preset,deviceId){const map={"480":[640,480],"720":[1280,720],"1080":[1920,1080]};const video={};if(deviceId)video.deviceId={exact:deviceId};if(preset==="highest"){video.width={ideal:3840};video.height={ideal:2160};}else{const [w,h]=map[preset]||map["720"];video.width={ideal:w};video.height={ideal:h};}return {video,audio:false};}
+async function enumerateCameras(){try{const devices=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==="videoinput").map(d=>({deviceId:d.deviceId,label:d.label}));send({type:"cam-devices",devices,activeDeviceId});}catch(error){send({type:"cam-status",state:"error",title:"Device refresh failed",message:String(error?.message||error)});}}
+function stopCamera(notify=true){if(cameraStream)cameraStream.getTracks().forEach(t=>t.stop());cameraStream=null;video.srcObject=null;cameraOn=false;activeDeviceId="";document.getElementById("sourceName").textContent="Generated calibration source";badge("cameraBadge","GENERATED","pending");if(notify)send({type:"cam-status",state:"stopped",title:"Generated source",message:"Camera stopped; generated source restored."});}
+async function startCamera(deviceId="",preset="720"){stopCamera(false);try{cameraStream=await navigator.mediaDevices.getUserMedia(constraints(preset,deviceId));video.srcObject=cameraStream;await video.play();const track=cameraStream.getVideoTracks()[0],settings=track?.getSettings?.()||{};activeDeviceId=settings.deviceId||deviceId||"";cameraOn=true;sourceWidth=video.videoWidth||settings.width||1280;sourceHeight=video.videoHeight||settings.height||720;document.getElementById("sourceName").textContent=track?.label||"Live camera";badge("cameraBadge","CAMERA LIVE","ok");send({type:"cam-status",state:"ok",title:"Camera live",message:`${track?.label||"Camera"} · ${sourceWidth} × ${sourceHeight}`,deviceId:activeDeviceId,width:sourceWidth,height:sourceHeight,label:track?.label||"Camera"});await enumerateCameras();}catch(error){stopCamera(false);badge("cameraBadge","CAMERA ERROR","error");send({type:"cam-status",state:"error",title:"Camera error",message:String(error?.message||error)});}}
+function applySnapshot(msg){Object.assign(params,DEFAULT_PARAMS,msg.params||{});paused=Boolean(msg.paused);document.getElementById("pauseBadge").classList.toggle("hidden",!paused);if(msg.clearHistory)clearPending=true;if(msg.resetClock)elapsed=0;if(msg.camera?.on)startCamera(msg.camera.deviceId||"",msg.camera.preset||"720");else if(cameraOn)stopCamera(false);if(framebuffers[0])allocateBuffers();document.getElementById("modeBadge").textContent=MODE_NAMES[Math.round(params.mode)].toUpperCase();}
+function handle(msg){if(msg.type==="state_snapshot")applySnapshot(msg);else if(msg.type==="param_batch"){const oldScale=params.bufferScale;Object.assign(params,msg.values||{});if(params.bufferScale!==oldScale)allocateBuffers();document.getElementById("modeBadge").textContent=MODE_NAMES[Math.round(params.mode)].toUpperCase();}else if(msg.type==="action"){if(msg.name==="set_paused"){paused=Boolean(msg.value);document.getElementById("pauseBadge").classList.toggle("hidden",!paused);}if(msg.name==="clear_history")clearPending=true;}else if(msg.type==="cam"){if(msg.action==="start")startCamera(msg.deviceId||"",msg.preset||"720");if(msg.action==="stop")stopCamera();if(msg.action==="enumerate")enumerateCameras();}}
+function connect(){if(socket&&(socket.readyState===WebSocket.OPEN||socket.readyState===WebSocket.CONNECTING))return;badge("connectionBadge","CONNECTING","pending");socket=new WebSocket("ws://127.0.0.1:2727");socket.addEventListener("open",()=>{reconnectDelay=600;badge("connectionBadge","CONNECTED","ok");send({type:"hello",role:"canvas"});send({type:"request_state"});enumerateCameras();});socket.addEventListener("message",event=>{if(typeof event.data!=="string")return;try{handle(JSON.parse(event.data));}catch(error){console.warn(error);}});socket.addEventListener("close",()=>{badge("connectionBadge","DISCONNECTED","error");reconnectTimer=setTimeout(connect,reconnectDelay);reconnectDelay=Math.min(4000,Math.round(reconnectDelay*1.5));});socket.addEventListener("error",()=>badge("connectionBadge","RELAY ERROR","error"));}
+function pointerUv(event){const r=canvas.getBoundingClientRect();return{x:Math.min(1,Math.max(0,(event.clientX-r.left)/r.width)),y:Math.min(1,Math.max(0,1-(event.clientY-r.top)/r.height))};}
+canvas.addEventListener("pointerdown",event=>{const p=pointerUv(event);pointer.x=p.x;pointer.y=p.y;pointer.down=true;canvas.setPointerCapture(event.pointerId);});canvas.addEventListener("pointermove",event=>{if(!pointer.down)return;const p=pointerUv(event);pointer.x=p.x;pointer.y=p.y;});["pointerup","pointercancel"].forEach(name=>canvas.addEventListener(name,event=>{pointer.down=false;if(canvas.hasPointerCapture?.(event.pointerId))canvas.releasePointerCapture(event.pointerId);}));
+canvas.addEventListener("webglcontextlost",event=>{event.preventDefault();shaderReady=false;diagnostics="WebGL context lost. Waiting for restoration…";badge("shaderBadge","CONTEXT LOST","error");setError(diagnostics);});canvas.addEventListener("webglcontextrestored",()=>{try{initializeGpu();}catch(error){diagnostics=String(error?.message||error);setError(diagnostics);}});
+window.addEventListener("keydown",event=>{if(event.key.toLowerCase()==="f"){const invoke=window.__TAURI__?.invoke||window.__TAURI__?.tauri?.invoke;if(invoke)invoke("toggle_current_fullscreen").catch(console.error);}});
+window.addEventListener("beforeunload",()=>stopCamera(false));if(navigator.mediaDevices?.addEventListener)navigator.mediaDevices.addEventListener("devicechange",enumerateCameras);new ResizeObserver(()=>resizeCanvas()).observe(stage);
+function start(){try{initializeGpu();}catch(error){shaderReady=false;diagnostics=String(error?.message||error);badge("shaderBadge","PIPELINE ERROR","error");setError(diagnostics);}connect();setInterval(telemetry,650);lastFrame=performance.now();requestAnimationFrame(render);}
+document.addEventListener("DOMContentLoaded",start,{once:true});

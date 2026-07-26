@@ -1,60 +1,42 @@
-// =============================================================================
-// sketch.js — Webcam → Ping-Pong Framebuffer Feedback
-// =============================================================================
-//
-// WHY WEBCAM + PING-PONG
-// ───────────────────────
-//   The webcam frame is injected into the simulation every tick as u_webcam.
-//   The previous FBO output is available as u_prev. Each mode mixes these two
-//   inputs differently — but all of them would be impossible without u_prev:
-//
-//   Echo Trail   — prev × decay + webcam × camMix → trails follow your body
-//   Fluid Smear  — prev advected through curl field seeded by webcam edges
-//   React-Diff   — webcam luminance continuously injects V chemical → you grow coral
-//   Thermal      — webcam brightness = heat source → you radiate and burn outward
-//   Mirror Echo  — webcam through folded symmetry, feedback builds the mandala
-//   Glitch Mem   — webcam + glitched prev → VHS ghost accumulation
-//
-// TWO-PROGRAM ARCHITECTURE
-// ─────────────────────────
-//   sim.frag    reads u_prev + u_webcam → writes new state to ping FBO
-//   display.frag reads ping FBO → tone-maps to screen with palette
-//
-//   This separation keeps simulation state in full precision and lets the
-//   display layer do colour work without affecting the simulation.
-//
-// TEXTURE UNITS
-//   TEXTURE0 — u_prev    (previous FBO frame)
-//   TEXTURE1 — u_webcam  (current camera frame, uploaded every tick)
-//
-// =============================================================================
-
+// Junkpile · Tauri v1 Essentials · Example 08
+// Single-window raw WebGL ping-pong feedback with webcam or generated input.
 'use strict';
 
-// ---------------------------------------------------------------------------
-// Params
-// ---------------------------------------------------------------------------
-
-const params = {
-    mode: 0, decay: 0.97, camMix: 0.3,
-    speed: 1.0, scale: 1.0, intensity: 1.0,
-    hue: 0.0, palette: 0, brush: 0.03,
-};
-
+const MODE_NAMES = ['Echo Trail', 'Fluid Smear', 'Reaction-Diffusion', 'Thermal', 'Mirror Echo', 'Glitch Memory'];
 const MODE_DESCS = [
-    'Your webcam frame decays and accumulates — movement leaves glowing trails.',
-    'Webcam edges seed a curl-noise flow field. You become liquid.',
-    'Webcam luminance injects V chemical each frame — your silhouette grows coral.',
-    'Webcam brightness is a continuous heat source. You radiate and erode.',
-    'Webcam folded into 6-way symmetry — you become a live mandala.',
-    'Webcam + glitched accumulated memory. VHS ghost of everything you did.',
+  'The previous frame decays while the source is reinjected, leaving luminous motion trails.',
+  'Source edges stir a curl-noise field that advects accumulated color like liquid.',
+  'Source luminance injects activator into a Gray-Scott reaction-diffusion state.',
+  'Source brightness becomes heat that diffuses outward and decays through time.',
+  'A six-way fold accumulates the source into an evolving live mandala.',
+  'Aberrated source frames combine with displaced memory to produce a VHS-like recursive smear.'
 ];
 
-const PALETTE_NAMES = ['Fire', 'Ice', 'Acid', 'Void', 'Rainbow'];
+const DEFAULTS = {
+  mode: 0,
+  decay: 0.97,
+  camMix: 0.30,
+  speed: 1.0,
+  scale: 1.0,
+  intensity: 1.0,
+  hue: 0.0,
+  palette: 0,
+  brush: 0.03,
+  fitMode: 1,
+  mirror: true,
+  bufferScale: 0.5
+};
 
-// ---------------------------------------------------------------------------
-// Shaders
-// ---------------------------------------------------------------------------
+const PRESETS = {
+  echo:    { mode:0, decay:0.982, camMix:0.24, speed:0.75, scale:1.0, intensity:1.05, hue:0.0, palette:4, brush:0.035 },
+  fluid:   { mode:1, decay:0.991, camMix:0.08, speed:1.25, scale:1.7, intensity:1.15, hue:-0.08, palette:1, brush:0.045 },
+  reaction:{ mode:2, decay:0.999, camMix:0.34, speed:0.75, scale:1.0, intensity:1.0, hue:0.12, palette:2, brush:0.028 },
+  thermal: { mode:3, decay:0.976, camMix:0.18, speed:1.2, scale:1.0, intensity:1.45, hue:-0.03, palette:0, brush:0.05 },
+  mirror:  { mode:4, decay:0.976, camMix:0.25, speed:0.9, scale:1.0, intensity:1.1, hue:0.04, palette:4, brush:0.035 },
+  glitch:  { mode:5, decay:0.955, camMix:0.36, speed:1.45, scale:1.0, intensity:1.25, hue:0.08, palette:3, brush:0.025 }
+};
+
+const params = { ...DEFAULTS };
 
 const VERT = `
     precision highp float;
@@ -62,10 +44,6 @@ const VERT = `
     varying   vec2 v_uv;
     void main() { v_uv = a_pos*0.5+0.5; gl_Position = vec4(a_pos,0.0,1.0); }
 `;
-
-// ── Simulation shader ──────────────────────────────────────────────────────
-// u_prev   = previous FBO (the feedback source)
-// u_webcam = live camera frame (the input driving every mode)
 const SIM = `
     precision highp float;
 
@@ -80,6 +58,10 @@ const SIM = `
     uniform float u_speed;
     uniform float u_scale;
     uniform float u_intensity;
+    uniform float u_cameraAspect;
+    uniform float u_outputAspect;
+    uniform int   u_fitMode;
+    uniform float u_mirror;
 
     uniform vec2  u_mouse;
     uniform float u_mouseDown;
@@ -106,23 +88,50 @@ const SIM = `
 
     float luma(vec3 c) { return dot(c, vec3(0.299,0.587,0.114)); }
 
+    vec4 cameraSample(vec2 uv) {
+        vec2 mapped = uv;
+        float sourceAspect = max(u_cameraAspect, 0.0001);
+        float targetAspect = max(u_outputAspect, 0.0001);
+
+        if (u_fitMode == 0) {
+            if (targetAspect > sourceAspect) {
+                mapped.x = (uv.x - 0.5) * (targetAspect / sourceAspect) + 0.5;
+            } else {
+                mapped.y = (uv.y - 0.5) * (sourceAspect / targetAspect) + 0.5;
+            }
+        } else if (u_fitMode == 1) {
+            if (targetAspect > sourceAspect) {
+                mapped.y = (uv.y - 0.5) * (sourceAspect / targetAspect) + 0.5;
+            } else {
+                mapped.x = (uv.x - 0.5) * (targetAspect / sourceAspect) + 0.5;
+            }
+        }
+
+        if (u_mirror > 0.5) mapped.x = 1.0 - mapped.x;
+        if (any(lessThan(mapped, vec2(0.0))) || any(greaterThan(mapped, vec2(1.0)))) {
+            return vec4(0.0, 0.0, 0.0, 1.0);
+        }
+        return texture2D(u_webcam, mapped);
+    }
+
+
     // Sobel on webcam — gives edge map used by Fluid mode
     float edges(vec2 uv) {
         vec2 px = 1.0/u_res;
         float gx =
-            -luma(texture2D(u_webcam,uv+vec2(-px.x,-px.y)).rgb) +
-             luma(texture2D(u_webcam,uv+vec2( px.x,-px.y)).rgb) +
-          -2.0*luma(texture2D(u_webcam,uv+vec2(-px.x, 0.0)).rgb) +
-           2.0*luma(texture2D(u_webcam,uv+vec2( px.x, 0.0)).rgb) +
-            -luma(texture2D(u_webcam,uv+vec2(-px.x, px.y)).rgb) +
-             luma(texture2D(u_webcam,uv+vec2( px.x, px.y)).rgb);
+            -luma(cameraSample(uv+vec2(-px.x,-px.y)).rgb) +
+             luma(cameraSample(uv+vec2( px.x,-px.y)).rgb) +
+          -2.0*luma(cameraSample(uv+vec2(-px.x, 0.0)).rgb) +
+           2.0*luma(cameraSample(uv+vec2( px.x, 0.0)).rgb) +
+            -luma(cameraSample(uv+vec2(-px.x, px.y)).rgb) +
+             luma(cameraSample(uv+vec2( px.x, px.y)).rgb);
         float gy =
-            -luma(texture2D(u_webcam,uv+vec2(-px.x,-px.y)).rgb) +
-          -2.0*luma(texture2D(u_webcam,uv+vec2( 0.0,-px.y)).rgb) +
-            -luma(texture2D(u_webcam,uv+vec2( px.x,-px.y)).rgb) +
-             luma(texture2D(u_webcam,uv+vec2(-px.x, px.y)).rgb) +
-           2.0*luma(texture2D(u_webcam,uv+vec2( 0.0, px.y)).rgb) +
-             luma(texture2D(u_webcam,uv+vec2( px.x, px.y)).rgb);
+            -luma(cameraSample(uv+vec2(-px.x,-px.y)).rgb) +
+          -2.0*luma(cameraSample(uv+vec2( 0.0,-px.y)).rgb) +
+            -luma(cameraSample(uv+vec2( px.x,-px.y)).rgb) +
+             luma(cameraSample(uv+vec2(-px.x, px.y)).rgb) +
+           2.0*luma(cameraSample(uv+vec2( 0.0, px.y)).rgb) +
+             luma(cameraSample(uv+vec2( px.x, px.y)).rgb);
         return clamp(sqrt(gx*gx+gy*gy)*3.0, 0.0, 1.0);
     }
 
@@ -131,9 +140,7 @@ const SIM = `
     // Reveals the core idea: without u_prev, there are no trails.
     vec4 modeEcho(vec2 uv) {
         vec3 prev = texture2D(u_prev, uv).rgb * u_decay;
-        vec3 cam  = texture2D(u_webcam, uv).rgb;
-        // Mirror webcam horizontally (feels more natural for self-view)
-        cam = texture2D(u_webcam, vec2(1.0-uv.x, uv.y)).rgb;
+        vec3 cam  = cameraSample(uv).rgb;
         return vec4(prev + cam * u_camMix * u_intensity, 1.0);
     }
 
@@ -145,7 +152,7 @@ const SIM = `
         float edge = edges(uv);
         vec2  flow = curl(uv * u_scale * 3.0, t) * (0.003 + edge * 0.006) * u_speed;
         vec3  prev = texture2D(u_prev, uv + flow).rgb * u_decay;
-        vec3  cam  = texture2D(u_webcam, vec2(1.0-uv.x, uv.y)).rgb;
+        vec3  cam  = cameraSample(uv).rgb;
         // Inject webcam into the flowing prev
         prev += cam * u_camMix * u_intensity;
         // Slight hue drift gives rainbow advection trails
@@ -179,7 +186,7 @@ const SIM = `
         float newV = clamp(V + dt*(Dv*lapV + uvv - (f+k)*V),  0.0, 1.0);
 
         // Webcam luminance continuously injects V (activator)
-        float camLum = luma(texture2D(u_webcam, vec2(1.0-uv.x, uv.y)).rgb);
+        float camLum = luma(cameraSample(uv).rgb);
         newV = max(newV, camLum * u_camMix * 0.7);
         newU = max(0.0, newU - camLum * u_camMix * 0.3);
 
@@ -207,7 +214,7 @@ const SIM = `
         vec3 state = mix(cur, diff, 0.15*u_speed) * u_decay;
 
         // Webcam is a heat source — bright pixels keep warm
-        float heat = luma(texture2D(u_webcam, vec2(1.0-uv.x, uv.y)).rgb);
+        float heat = luma(cameraSample(uv).rgb);
         state += heat * u_camMix * u_intensity * vec3(0.9, 0.5, 0.2);
 
         // Supersaturation bloom on hottest areas
@@ -233,7 +240,7 @@ const SIM = `
 
         // Sample webcam through the fold
         vec2  camUV = vec2(cos(th),sin(th))*r + 0.5;
-        vec3  cam   = texture2D(u_webcam, camUV).rgb;
+        vec3  cam   = cameraSample(camUV).rgb;
 
         // Also fold the prev frame lookup with a slight zoom spiral
         vec2  prevUV = vec2(cos(th),sin(th)) * r*(1.0-0.002*u_speed) + 0.5;
@@ -263,7 +270,7 @@ const SIM = `
         vec3  prev = vec3(pr,pg,pb) * u_decay;
 
         // Webcam injected with matching aberration
-        vec3 cam = texture2D(u_webcam, vec2(1.0-uv.x+dx*0.5, uv.y)).rgb;
+        vec3 cam = cameraSample(uv + vec2(dx*0.5, 0.0)).rgb;
         return vec4(prev + cam * u_camMix * u_intensity, 1.0);
     }
 
@@ -302,8 +309,6 @@ const SIM = `
         gl_FragColor = clamp(state, 0.0, 2.0);
     }
 `;
-
-// ── Display shader ─────────────────────────────────────────────────────────
 const DISPLAY = `
     precision highp float;
     uniform sampler2D u_fbo;
@@ -345,312 +350,579 @@ const DISPLAY = `
     }
 `;
 
-// ---------------------------------------------------------------------------
-// WebGL init
-// ---------------------------------------------------------------------------
+const $ = (id) => document.getElementById(id);
+const canvas = $('glcanvas');
+const container = $('canvas-container');
+const video = $('webcam-video');
+const generatedCanvas = $('generated-source');
+const generatedCtx = generatedCanvas.getContext('2d');
 
-const canvas = document.getElementById('glcanvas');
-const gl     = canvas.getContext('webgl');
-if (!gl) { document.body.innerHTML = '<p style="color:#f88;padding:2rem">WebGL not supported.</p>'; throw new Error('no webgl'); }
+let gl = null;
+let simProgram = null;
+let displayProgram = null;
+let quadBuffer = null;
+let sourceTexture = null;
+let historyTextures = [null, null];
+let historyFramebuffers = [null, null];
+let readIndex = 0;
+let historyWidth = 0;
+let historyHeight = 0;
+let clearPending = true;
+let paused = false;
+let contextLost = false;
+let accumulatedTime = 0;
+let previousFrameTime = performance.now();
+let renderFrames = 0;
+let renderFps = 0;
+let fpsWindowStart = performance.now();
+let cameraFrames = 0;
+let cameraFps = 0;
+let cameraWindowStart = performance.now();
+let lastVideoTime = -1;
+let stream = null;
+let activeDeviceId = '';
+let sourceWidth = generatedCanvas.width;
+let sourceHeight = generatedCanvas.height;
+let resizeQueued = false;
+const pointer = { x: 0.5, y: 0.5, down: false };
 
-const floatExt = gl.getExtension('OES_texture_float');
-const floatLinExt = gl.getExtension('OES_texture_float_linear');
-const USE_FLOAT = !!floatExt;
-
-function mkShader(type, src) {
-    const s = gl.createShader(type);
-    gl.shaderSource(s, src); gl.compileShader(s);
-    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
-    return s;
-}
-function mkProg(vs, fs) {
-    const p = gl.createProgram();
-    gl.attachShader(p, mkShader(gl.VERTEX_SHADER, vs));
-    gl.attachShader(p, mkShader(gl.FRAGMENT_SHADER, fs));
-    gl.linkProgram(p);
-    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
-    return p;
-}
-
-const simProg     = mkProg(VERT, SIM);
-const displayProg = mkProg(VERT, DISPLAY);
-
-const qBuf = gl.createBuffer();
-gl.bindBuffer(gl.ARRAY_BUFFER, qBuf);
-gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
-
-function bindQuad(prog) {
-    const l = gl.getAttribLocation(prog, 'a_pos');
-    gl.bindBuffer(gl.ARRAY_BUFFER, qBuf);
-    gl.enableVertexAttribArray(l);
-    gl.vertexAttribPointer(l, 2, gl.FLOAT, false, 0, 0);
-}
-
-function u1f(p,n,v){const l=gl.getUniformLocation(p,n);if(l!==null)gl.uniform1f(l,v);}
-function u1i(p,n,v){const l=gl.getUniformLocation(p,n);if(l!==null)gl.uniform1i(l,v);}
-function u2f(p,n,a,b){const l=gl.getUniformLocation(p,n);if(l!==null)gl.uniform2f(l,a,b);}
-
-// ---------------------------------------------------------------------------
-// Webcam texture
-// ---------------------------------------------------------------------------
-
-const video = document.getElementById('webcam-video');
-let cameraOn = false;
-let webcamTex = null;
-let activeDeviceId = null;
-
-function mkTex(w, h, isFloat) {
-    const t = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, t);
-    if (w && h) {
-        const type = isFloat ? gl.FLOAT : gl.UNSIGNED_BYTE;
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, type, null);
-    }
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    const filter = (isFloat && floatLinExt) ? gl.LINEAR : gl.NEAREST;
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, isFloat ? filter : gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, isFloat ? filter : gl.LINEAR);
-    return t;
+function setStatus(message, kind = 'ok') {
+  $('statusText').textContent = message;
+  $('canvasBadge').className = `canvas-badge ${kind === 'warning' ? 'paused' : kind === 'ok' ? 'live' : ''}`;
 }
 
-function initWebcamTex() {
-    webcamTex = mkTex(null, null, false);
-    // 1×1 black placeholder until camera starts
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0,0,0,255]));
+function writeDiagnostics(lines, kind = 'ok') {
+  const list = Array.isArray(lines) ? lines : [String(lines)];
+  $('diagnostics').textContent = list.join('\n');
+  $('compileStatus').textContent = kind === 'ok' ? 'Pipeline ready' : 'Pipeline error';
+  $('compileDot').className = `status-dot ${kind}`;
 }
 
-function uploadFrame() {
-    if (!cameraOn || video.readyState < video.HAVE_CURRENT_DATA) return;
-    gl.bindTexture(gl.TEXTURE_2D, webcamTex);
-    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
+function shaderStageName(type) {
+  return type === gl.VERTEX_SHADER ? 'vertex shader' : 'fragment shader';
 }
 
-// ---------------------------------------------------------------------------
-// Ping-pong FBOs
-// ---------------------------------------------------------------------------
+function compileShader(type, source) {
+  const shader = gl.createShader(type);
+  gl.shaderSource(shader, source);
+  gl.compileShader(shader);
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    const info = gl.getShaderInfoLog(shader) || 'Unknown compiler error';
+    gl.deleteShader(shader);
+    throw new Error(`${shaderStageName(type)}:
+${info}`);
+  }
+  return shader;
+}
 
-let fbW = 0, fbH = 0;
-let fbos = [null, null], fbTexs = [null, null], ping = 0;
-let clearPending = false;
+function linkProgram(vertexSource, fragmentSource, label) {
+  const vertex = compileShader(gl.VERTEX_SHADER, vertexSource);
+  const fragment = compileShader(gl.FRAGMENT_SHADER, fragmentSource);
+  const program = gl.createProgram();
+  gl.attachShader(program, vertex);
+  gl.attachShader(program, fragment);
+  gl.linkProgram(program);
+  gl.deleteShader(vertex);
+  gl.deleteShader(fragment);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    const info = gl.getProgramInfoLog(program) || 'Unknown linker error';
+    gl.deleteProgram(program);
+    throw new Error(`${label} link:
+${info}`);
+  }
+  return program;
+}
 
-function initFBOs(w, h) {
-    fbW = w; fbH = h;
-    for (let i = 0; i < 2; i++) {
-        if (fbTexs[i]) gl.deleteTexture(fbTexs[i]);
-        if (fbos[i])   gl.deleteFramebuffer(fbos[i]);
-        fbTexs[i] = mkTex(w, h, USE_FLOAT);
-        fbos[i]   = gl.createFramebuffer();
-        gl.bindFramebuffer(gl.FRAMEBUFFER, fbos[i]);
-        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, fbTexs[i], 0);
-    }
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+function compilePipeline() {
+  if (!gl || contextLost) return false;
+  try {
+    const nextSim = linkProgram(VERT, SIM, 'simulation program');
+    const nextDisplay = linkProgram(VERT, DISPLAY, 'display program');
+    if (simProgram) gl.deleteProgram(simProgram);
+    if (displayProgram) gl.deleteProgram(displayProgram);
+    simProgram = nextSim;
+    displayProgram = nextDisplay;
+    const debug = gl.getExtension('WEBGL_debug_renderer_info');
+    const renderer = debug ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
+    writeDiagnostics([
+      '✓ simulation shader compiled',
+      '✓ display shader compiled',
+      '✓ both programs linked',
+      `✓ renderer: ${renderer}`,
+      '✓ history format: RGBA8 ping-pong'
+    ]);
     clearPending = true;
+    return true;
+  } catch (error) {
+    writeDiagnostics(error.message, 'error');
+    setStatus('Shader pipeline failed; check diagnostics.', 'error');
+    return false;
+  }
 }
 
-// ---------------------------------------------------------------------------
-// Render loop
-// ---------------------------------------------------------------------------
-
-const t0 = performance.now();
-const mouse = { x: 0.5, y: 0.5, down: false };
-
-function render() {
-    const elapsed = (performance.now() - t0) / 1000;
-    const pong    = 1 - ping;
-
-    uploadFrame();
-
-    // ── Sim pass ──────────────────────────────────────────────────────────
-    gl.bindFramebuffer(gl.FRAMEBUFFER, fbos[ping]);
-    gl.viewport(0, 0, fbW, fbH);
-    gl.useProgram(simProg);
-    bindQuad(simProg);
-
-    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, fbTexs[pong]); u1i(simProg,'u_prev',0);
-    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, webcamTex);    u1i(simProg,'u_webcam',1);
-
-    u1f(simProg,'u_time',      elapsed);
-    u2f(simProg,'u_res',       fbW, fbH);
-    u1i(simProg,'u_mode',      params.mode);
-    u1f(simProg,'u_decay',     params.decay);
-    u1f(simProg,'u_camMix',    params.camMix);
-    u1f(simProg,'u_speed',     params.speed);
-    u1f(simProg,'u_scale',     params.scale);
-    u1f(simProg,'u_intensity', params.intensity);
-    u1f(simProg,'u_brushSize', params.brush);
-    u2f(simProg,'u_mouse',     mouse.x, mouse.y);
-    u1f(simProg,'u_mouseDown', mouse.down ? 1.0 : 0.0);
-    u1f(simProg,'u_clearFlag', clearPending ? 1.0 : 0.0);
-
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    clearPending = false;
-
-    // ── Display pass ──────────────────────────────────────────────────────
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    gl.viewport(0, 0, canvas.width, canvas.height);
-    gl.useProgram(displayProg);
-    bindQuad(displayProg);
-
-    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, fbTexs[ping]); u1i(displayProg,'u_fbo',0);
-    u1i(displayProg,'u_mode',    params.mode);
-    u1f(displayProg,'u_hue',     params.hue);
-    u1i(displayProg,'u_palette', params.palette);
-    u1f(displayProg,'u_time',    elapsed);
-
-    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-
-    ping = pong;
-    requestAnimationFrame(render);
+function createTexture(width = 1, height = 1, data = null) {
+  const texture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
+  return texture;
 }
 
-// ---------------------------------------------------------------------------
-// Camera management  (same pattern as webcam single template)
-// ---------------------------------------------------------------------------
-
-function enableCameraControls(enabled) {
-    document.getElementById('cam-select').disabled  = !enabled;
-    document.getElementById('cam-refresh').disabled = !enabled;
-    document.getElementById('cam-refresh').style.opacity = enabled ? '1' : '0.4';
-    document.getElementById('cam-refresh').style.cursor  = enabled ? 'pointer' : 'not-allowed';
+function destroyHistory() {
+  historyTextures.forEach((texture) => texture && gl.deleteTexture(texture));
+  historyFramebuffers.forEach((framebuffer) => framebuffer && gl.deleteFramebuffer(framebuffer));
+  historyTextures = [null, null];
+  historyFramebuffers = [null, null];
 }
 
-async function enumerateDevices(selectId) {
-    const sel = document.getElementById('cam-select');
-    const target = selectId !== undefined ? selectId : activeDeviceId;
-    try {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const cams    = devices.filter(d => d.kind === 'videoinput');
-        sel.innerHTML = '';
-        if (cams.length === 0) { sel.innerHTML = '<option value="">No cameras found</option>'; return; }
-        cams.forEach((cam, i) => {
-            const o = document.createElement('option');
-            o.value = cam.deviceId; o.textContent = cam.label || `Camera ${i+1}`;
-            sel.appendChild(o);
-        });
-        if (target && sel.querySelector(`option[value="${target}"]`)) sel.value = target;
-    } catch (_) { sel.innerHTML = '<option value="">Permission denied</option>'; }
+function allocateHistory() {
+  if (!gl || !canvas.width || !canvas.height || contextLost) return;
+  destroyHistory();
+  historyWidth = Math.max(2, Math.floor(canvas.width * params.bufferScale));
+  historyHeight = Math.max(2, Math.floor(canvas.height * params.bufferScale));
+  for (let index = 0; index < 2; index += 1) {
+    historyTextures[index] = createTexture(historyWidth, historyHeight);
+    historyFramebuffers[index] = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, historyFramebuffers[index]);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, historyTextures[index], 0);
+    const status = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+    if (status !== gl.FRAMEBUFFER_COMPLETE) throw new Error(`Feedback framebuffer ${index} is incomplete: 0x${status.toString(16)}`);
+    gl.viewport(0, 0, historyWidth, historyHeight);
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+  }
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  readIndex = 0;
+  clearPending = true;
+  $('bufferReadout').textContent = `${historyWidth} × ${historyHeight}`;
 }
 
-function stopStream() {
-    if (video.srcObject) { video.srcObject.getTracks().forEach(t => t.stop()); video.srcObject = null; }
-    cameraOn = false; activeDeviceId = null;
+function initializeGpuResources() {
+  gl = canvas.getContext('webgl', { alpha: false, antialias: false, preserveDrawingBuffer: true });
+  if (!gl) throw new Error('WebGL 1 is unavailable in this WebView.');
+  quadBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+  sourceTexture = createTexture(1, 1, new Uint8Array([0, 0, 0, 255]));
+  compilePipeline();
+  resizeCanvas(true);
 }
 
-async function startCamera() {
-    const sel  = document.getElementById('cam-select');
-    const stat = document.getElementById('cam-status');
-    const btn  = document.getElementById('cam-btn');
-    stopStream();
-    const did = sel.value || undefined;
-    stat.textContent = 'requesting…'; stat.className = '';
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-            video: did ? { deviceId:{exact:did}, width:{ideal:1280}, height:{ideal:720} }
-                       : { width:{ideal:1280}, height:{ideal:720} },
-            audio: false,
-        });
-        video.srcObject = stream; await video.play();
-        const track = stream.getVideoTracks()[0];
-        activeDeviceId = track?.getSettings()?.deviceId || did || null;
-        cameraOn = true;
-        stat.textContent = `${video.videoWidth}×${video.videoHeight}`; stat.className = 'ok';
-        btn.textContent  = '■ Stop';
-        enableCameraControls(true);
-        await enumerateDevices(activeDeviceId);
-    } catch (e) {
-        stat.textContent = `Error: ${e.message}`; stat.className = 'err';
+function bindQuad(program) {
+  const location = gl.getAttribLocation(program, 'a_pos');
+  gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer);
+  gl.enableVertexAttribArray(location);
+  gl.vertexAttribPointer(location, 2, gl.FLOAT, false, 0, 0);
+}
+
+function uniform1f(program, name, value) {
+  const location = gl.getUniformLocation(program, name);
+  if (location !== null) gl.uniform1f(location, value);
+}
+function uniform1i(program, name, value) {
+  const location = gl.getUniformLocation(program, name);
+  if (location !== null) gl.uniform1i(location, value);
+}
+function uniform2f(program, name, x, y) {
+  const location = gl.getUniformLocation(program, name);
+  if (location !== null) gl.uniform2f(location, x, y);
+}
+
+function drawGeneratedSource(now) {
+  const width = generatedCanvas.width;
+  const height = generatedCanvas.height;
+  const time = now * 0.001;
+  const gradient = generatedCtx.createLinearGradient(0, 0, width, height);
+  gradient.addColorStop(0, '#07101b');
+  gradient.addColorStop(0.45, '#572875');
+  gradient.addColorStop(1, '#9eff3f');
+  generatedCtx.fillStyle = gradient;
+  generatedCtx.fillRect(0, 0, width, height);
+  generatedCtx.globalAlpha = 0.22;
+  generatedCtx.strokeStyle = '#ffffff';
+  generatedCtx.lineWidth = 1;
+  const spacing = 45;
+  for (let x = 0; x <= width; x += spacing) { generatedCtx.beginPath(); generatedCtx.moveTo(x,0); generatedCtx.lineTo(x,height); generatedCtx.stroke(); }
+  for (let y = 0; y <= height; y += spacing) { generatedCtx.beginPath(); generatedCtx.moveTo(0,y); generatedCtx.lineTo(width,y); generatedCtx.stroke(); }
+  generatedCtx.globalAlpha = 1;
+  const cx = width * (0.5 + Math.sin(time * 0.73) * 0.23);
+  const cy = height * (0.5 + Math.cos(time * 0.91) * 0.25);
+  for (let ring = 5; ring >= 1; ring -= 1) {
+    generatedCtx.beginPath();
+    generatedCtx.arc(cx, cy, ring * 38 + Math.sin(time * 1.7 + ring) * 12, 0, Math.PI * 2);
+    generatedCtx.strokeStyle = `hsla(${(time * 70 + ring * 42) % 360}, 95%, 70%, ${0.14 + ring * 0.08})`;
+    generatedCtx.lineWidth = 7;
+    generatedCtx.stroke();
+  }
+  generatedCtx.fillStyle = '#ffffff';
+  generatedCtx.globalAlpha = 0.75;
+  const barX = width * (0.5 + Math.sin(time * 1.3) * 0.38);
+  generatedCtx.fillRect(barX - 22, 0, 44, height);
+  generatedCtx.globalAlpha = 1;
+}
+
+function uploadSource(now) {
+  gl.activeTexture(gl.TEXTURE1);
+  gl.bindTexture(gl.TEXTURE_2D, sourceTexture);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+  if (stream && video.readyState >= video.HAVE_CURRENT_DATA) {
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
+    sourceWidth = video.videoWidth || 1280;
+    sourceHeight = video.videoHeight || 720;
+    if (video.currentTime !== lastVideoTime) {
+      lastVideoTime = video.currentTime;
+      cameraFrames += 1;
     }
+  } else {
+    drawGeneratedSource(now);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, generatedCanvas);
+    sourceWidth = generatedCanvas.width;
+    sourceHeight = generatedCanvas.height;
+    cameraFrames += 1;
+  }
+}
+
+function renderSimulation() {
+  const writeIndex = 1 - readIndex;
+  gl.bindFramebuffer(gl.FRAMEBUFFER, historyFramebuffers[writeIndex]);
+  gl.viewport(0, 0, historyWidth, historyHeight);
+  gl.useProgram(simProgram);
+  bindQuad(simProgram);
+
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, historyTextures[readIndex]);
+  uniform1i(simProgram, 'u_prev', 0);
+  gl.activeTexture(gl.TEXTURE1);
+  gl.bindTexture(gl.TEXTURE_2D, sourceTexture);
+  uniform1i(simProgram, 'u_webcam', 1);
+
+  uniform1f(simProgram, 'u_time', accumulatedTime);
+  uniform2f(simProgram, 'u_res', historyWidth, historyHeight);
+  uniform1i(simProgram, 'u_mode', params.mode);
+  uniform1f(simProgram, 'u_decay', params.decay);
+  uniform1f(simProgram, 'u_camMix', params.camMix);
+  uniform1f(simProgram, 'u_speed', params.speed);
+  uniform1f(simProgram, 'u_scale', params.scale);
+  uniform1f(simProgram, 'u_intensity', params.intensity);
+  uniform1f(simProgram, 'u_brushSize', params.brush);
+  uniform2f(simProgram, 'u_mouse', pointer.x, pointer.y);
+  uniform1f(simProgram, 'u_mouseDown', pointer.down ? 1 : 0);
+  uniform1f(simProgram, 'u_clearFlag', clearPending ? 1 : 0);
+  uniform1f(simProgram, 'u_cameraAspect', sourceWidth / Math.max(1, sourceHeight));
+  uniform1f(simProgram, 'u_outputAspect', historyWidth / Math.max(1, historyHeight));
+  uniform1i(simProgram, 'u_fitMode', params.fitMode);
+  uniform1f(simProgram, 'u_mirror', params.mirror ? 1 : 0);
+
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  readIndex = writeIndex;
+  clearPending = false;
+}
+
+function renderDisplay() {
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  gl.viewport(0, 0, canvas.width, canvas.height);
+  gl.useProgram(displayProgram);
+  bindQuad(displayProgram);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, historyTextures[readIndex]);
+  uniform1i(displayProgram, 'u_fbo', 0);
+  uniform1i(displayProgram, 'u_mode', params.mode);
+  uniform1f(displayProgram, 'u_hue', params.hue);
+  uniform1i(displayProgram, 'u_palette', params.palette);
+  uniform1f(displayProgram, 'u_time', accumulatedTime);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+}
+
+function updateTelemetry(now) {
+  renderFrames += 1;
+  if (now - fpsWindowStart >= 500) {
+    renderFps = Math.round(renderFrames * 1000 / (now - fpsWindowStart));
+    renderFrames = 0;
+    fpsWindowStart = now;
+    $('fpsReadout').textContent = String(renderFps);
+  }
+  if (now - cameraWindowStart >= 1000) {
+    cameraFps = Math.round(cameraFrames * 1000 / (now - cameraWindowStart));
+    cameraFrames = 0;
+    cameraWindowStart = now;
+    $('cameraFpsReadout').textContent = String(cameraFps);
+  }
+}
+
+function render(now) {
+  const delta = Math.min(0.1, Math.max(0, (now - previousFrameTime) / 1000));
+  previousFrameTime = now;
+  if (!contextLost && gl && simProgram && displayProgram && historyTextures[0]) {
+    uploadSource(now);
+    if (!paused) {
+      accumulatedTime += delta;
+      renderSimulation();
+    }
+    renderDisplay();
+    updateTelemetry(now);
+  }
+  requestAnimationFrame(render);
+}
+
+function resizeCanvas(force = false) {
+  if (!gl || contextLost) return;
+  const rect = container.getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const width = Math.max(2, Math.round(rect.width * dpr));
+  const height = Math.max(2, Math.round(rect.height * dpr));
+  if (!force && width === canvas.width && height === canvas.height) return;
+  canvas.width = width;
+  canvas.height = height;
+  $('canvasReadout').textContent = `${width} × ${height}`;
+  allocateHistory();
+}
+
+function queueResize() {
+  if (resizeQueued) return;
+  resizeQueued = true;
+  requestAnimationFrame(() => { resizeQueued = false; resizeCanvas(); });
+}
+
+function cameraConstraints() {
+  const preset = $('capturePreset').value;
+  const dimensions = {
+    '480': { width: { ideal: 640 }, height: { ideal: 480 } },
+    '720': { width: { ideal: 1280 }, height: { ideal: 720 } },
+    '1080': { width: { ideal: 1920 }, height: { ideal: 1080 } },
+    'highest': { width: { ideal: 3840 }, height: { ideal: 2160 } }
+  }[preset];
+  const deviceId = $('cam-select').value || activeDeviceId;
+  return { audio: false, video: { ...dimensions, ...(deviceId ? { deviceId: { exact: deviceId } } : {}) } };
+}
+
+async function enumerateCameras(preferred = activeDeviceId) {
+  if (!navigator.mediaDevices?.enumerateDevices) {
+    $('cameraMessage').textContent = 'Media-device enumeration is unavailable.';
+    return;
+  }
+  try {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const cameras = devices.filter((device) => device.kind === 'videoinput');
+    $('cam-select').innerHTML = '';
+    if (!cameras.length) {
+      $('cam-select').innerHTML = '<option value="">Default camera</option>';
+      $('cameraMessage').textContent = 'No labeled cameras yet. Start the default camera to request permission.';
+      return;
+    }
+    cameras.forEach((camera, index) => {
+      const option = document.createElement('option');
+      option.value = camera.deviceId;
+      option.textContent = camera.label || `Camera ${index + 1}`;
+      $('cam-select').appendChild(option);
+    });
+    if (preferred && [...$('cam-select').options].some((option) => option.value === preferred)) $('cam-select').value = preferred;
+    $('cameraMessage').textContent = `${cameras.length} camera${cameras.length === 1 ? '' : 's'} available.`;
+  } catch (error) {
+    $('cameraMessage').textContent = `Could not enumerate cameras: ${error.message}`;
+  }
 }
 
 function stopCamera() {
-    stopStream(); enableCameraControls(false);
-    document.getElementById('cam-status').textContent = 'stopped';
-    document.getElementById('cam-status').className   = '';
-    document.getElementById('cam-btn').textContent    = '▶ Start';
+  if (stream) stream.getTracks().forEach((track) => track.stop());
+  stream = null;
+  video.srcObject = null;
+  lastVideoTime = -1;
+  $('cam-btn').textContent = 'Start camera';
+  $('cameraState').textContent = 'Generated source';
+  $('cameraDot').className = 'status-dot ok';
+  $('cameraMessage').textContent = 'Camera stopped. The generated source is active.';
+  $('canvasBadge').textContent = 'GENERATED SOURCE';
+  $('sourceName').textContent = 'Generated calibration source';
+  $('sourceDetails').textContent = 'Start a camera to inject live frames';
 }
 
-// ---------------------------------------------------------------------------
-// Mouse
-// ---------------------------------------------------------------------------
-
-function canvasUV(e) {
-    const r = canvas.getBoundingClientRect();
-    const cx = e.touches ? e.touches[0].clientX : e.clientX;
-    const cy = e.touches ? e.touches[0].clientY : e.clientY;
-    return { x:(cx-r.left)/r.width, y:1.0-(cy-r.top)/r.height };
+async function startCamera() {
+  if (!navigator.mediaDevices?.getUserMedia) {
+    $('cameraMessage').textContent = 'getUserMedia() is unavailable in this WebView.';
+    $('cameraDot').className = 'status-dot error';
+    return;
+  }
+  stopCamera();
+  $('cameraState').textContent = 'Requesting permission…';
+  $('cameraDot').className = 'status-dot warning';
+  try {
+    stream = await navigator.mediaDevices.getUserMedia(cameraConstraints());
+    video.srcObject = stream;
+    await video.play();
+    const track = stream.getVideoTracks()[0];
+    const settings = track.getSettings();
+    activeDeviceId = settings.deviceId || $('cam-select').value || '';
+    sourceWidth = settings.width || video.videoWidth || 1280;
+    sourceHeight = settings.height || video.videoHeight || 720;
+    $('cam-btn').textContent = 'Stop camera';
+    $('cameraState').textContent = track.label || 'Camera live';
+    $('cameraDot').className = 'status-dot ok';
+    $('cameraMessage').textContent = `${sourceWidth} × ${sourceHeight} requested through getUserMedia().`;
+    $('canvasBadge').textContent = 'CAMERA LIVE';
+    $('sourceName').textContent = track.label || 'Live camera';
+    $('sourceDetails').textContent = `${sourceWidth} × ${sourceHeight} · browser media texture`;
+    await enumerateCameras(activeDeviceId);
+  } catch (error) {
+    stream = null;
+    $('cameraState').textContent = 'Camera unavailable';
+    $('cameraDot').className = 'status-dot error';
+    $('cameraMessage').textContent = `${error.name || 'Camera error'}: ${error.message}`;
+    $('canvasBadge').textContent = 'GENERATED SOURCE';
+  }
 }
-canvas.addEventListener('mousedown',  e => { const uv=canvasUV(e); mouse.x=uv.x; mouse.y=uv.y; mouse.down=true; });
-canvas.addEventListener('mousemove',  e => { if(!mouse.down)return; const uv=canvasUV(e); mouse.x=uv.x; mouse.y=uv.y; });
-canvas.addEventListener('mouseup',    () => mouse.down=false);
-canvas.addEventListener('mouseleave', () => mouse.down=false);
 
-// ---------------------------------------------------------------------------
-// Controls wiring
-// ---------------------------------------------------------------------------
+function setMode(mode) {
+  params.mode = Number(mode);
+  document.querySelectorAll('.mode-btn').forEach((button) => button.classList.toggle('active', Number(button.dataset.mode) === params.mode));
+  $('modeName').textContent = MODE_NAMES[params.mode];
+  $('mode-desc').textContent = MODE_DESCS[params.mode];
+  clearPending = true;
+}
 
-const SLIDER_FMT = {
-    decay:     v => v.toFixed(3),
-    camMix:    v => v.toFixed(2),
-    speed:     v => v.toFixed(2),
-    scale:     v => v.toFixed(2),
-    intensity: v => v.toFixed(2),
-    hue:       v => v.toFixed(3),
-    palette:   v => PALETTE_NAMES[Math.round(v)],
-    brush:     v => v.toFixed(3),
+const sliderFormatters = {
+  decay: (value) => value.toFixed(3),
+  camMix: (value) => value.toFixed(2),
+  speed: (value) => `${value.toFixed(2)}×`,
+  scale: (value) => value.toFixed(2),
+  intensity: (value) => value.toFixed(2),
+  hue: (value) => value.toFixed(3),
+  brush: (value) => value.toFixed(3)
 };
 
+function syncControls() {
+  Object.entries(sliderFormatters).forEach(([id, formatter]) => {
+    $(id).value = String(params[id]);
+    $(`${id}-val`).textContent = formatter(params[id]);
+  });
+  $('palette').value = String(params.palette);
+  $('fitMode').value = String(params.fitMode);
+  $('mirror').checked = params.mirror;
+  $('bufferScale').value = String(params.bufferScale);
+  setMode(params.mode);
+}
+
+function applyPreset(name) {
+  Object.assign(params, PRESETS[name]);
+  syncControls();
+  clearPending = true;
+  setStatus(`${MODE_NAMES[params.mode]} preset loaded.`, 'ok');
+}
+
+function resetState() {
+  Object.assign(params, DEFAULTS);
+  accumulatedTime = 0;
+  syncControls();
+  allocateHistory();
+  setStatus('Feedback state reset.', 'ok');
+}
+
+function togglePause() {
+  paused = !paused;
+  $('pauseBtn').textContent = paused ? 'Resume render' : 'Pause render';
+  $('canvasBadge').className = `canvas-badge ${paused ? 'paused' : 'live'}`;
+  if (paused) $('canvasBadge').textContent = 'PAUSED';
+  else $('canvasBadge').textContent = stream ? 'CAMERA LIVE' : 'GENERATED SOURCE';
+  setStatus(paused ? 'Simulation paused; the current history remains visible.' : 'Simulation resumed.', paused ? 'warning' : 'ok');
+}
+
+async function toggleFullscreen() {
+  try {
+    const invoke = window.__TAURI__?.tauri?.invoke;
+    if (invoke) await invoke('toggle_fullscreen');
+    else if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+    else await document.exitFullscreen();
+  } catch (error) {
+    setStatus(`Fullscreen failed: ${error.message}`, 'error');
+  }
+}
+
+function pointerUv(event) {
+  const rect = canvas.getBoundingClientRect();
+  return {
+    x: Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width)),
+    y: Math.min(1, Math.max(0, 1 - (event.clientY - rect.top) / rect.height))
+  };
+}
+
 function wireControls() {
-    Object.keys(SLIDER_FMT).forEach(id => {
-        const input = document.getElementById(id);
-        const valEl = document.getElementById(`${id}-val`);
-        if (!input) return;
-        input.addEventListener('input', () => {
-            const val = parseFloat(input.value);
-            params[id] = (id === 'palette') ? Math.round(val) : val;
-            if (valEl) valEl.textContent = SLIDER_FMT[id](val);
-        });
+  Object.entries(sliderFormatters).forEach(([id, formatter]) => {
+    $(id).addEventListener('input', () => {
+      params[id] = Number($(id).value);
+      $(`${id}-val`).textContent = formatter(params[id]);
     });
+  });
+  $('palette').addEventListener('change', () => { params.palette = Number($('palette').value); });
+  $('fitMode').addEventListener('change', () => { params.fitMode = Number($('fitMode').value); });
+  $('mirror').addEventListener('change', () => { params.mirror = $('mirror').checked; });
+  $('bufferScale').addEventListener('change', () => { params.bufferScale = Number($('bufferScale').value); allocateHistory(); });
+  document.querySelectorAll('.mode-btn').forEach((button) => button.addEventListener('click', () => setMode(button.dataset.mode)));
+  document.querySelectorAll('[data-preset]').forEach((button) => button.addEventListener('click', () => applyPreset(button.dataset.preset)));
+  $('cam-refresh').addEventListener('click', () => enumerateCameras());
+  $('cam-select').addEventListener('change', () => { activeDeviceId = $('cam-select').value; if (stream) startCamera(); });
+  $('capturePreset').addEventListener('change', () => { if (stream) startCamera(); });
+  $('cam-btn').addEventListener('click', () => stream ? stopCamera() : startCamera());
+  $('clearBtn').addEventListener('click', () => { clearPending = true; setStatus('Feedback history cleared.', 'ok'); });
+  $('resetBtn').addEventListener('click', resetState);
+  $('pauseBtn').addEventListener('click', togglePause);
+  $('fullscreenBtn').addEventListener('click', toggleFullscreen);
+  $('compileBtn').addEventListener('click', compilePipeline);
 
-    document.querySelectorAll('.mode-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            params.mode = parseInt(btn.dataset.mode);
-            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            document.getElementById('mode-desc').textContent = MODE_DESCS[params.mode];
-            clearPending = true;
-        });
-    });
+  canvas.addEventListener('pointerdown', (event) => {
+    const uv = pointerUv(event);
+    pointer.x = uv.x; pointer.y = uv.y; pointer.down = true;
+    canvas.setPointerCapture(event.pointerId);
+  });
+  canvas.addEventListener('pointermove', (event) => {
+    if (!pointer.down) return;
+    const uv = pointerUv(event);
+    pointer.x = uv.x; pointer.y = uv.y;
+  });
+  const release = (event) => { pointer.down = false; if (event.pointerId !== undefined && canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId); };
+  canvas.addEventListener('pointerup', release);
+  canvas.addEventListener('pointercancel', release);
 
-    document.getElementById('cam-btn').addEventListener('click', () => {
-        if (cameraOn) stopCamera(); else startCamera();
-    });
-    document.getElementById('cam-select').addEventListener('change', () => startCamera());
-    document.getElementById('cam-refresh').addEventListener('click', () => enumerateDevices());
-    document.getElementById('clear-btn').addEventListener('click', () => { clearPending = true; });
+  document.addEventListener('keydown', (event) => {
+    if (['INPUT', 'SELECT', 'TEXTAREA'].includes(event.target.tagName)) return;
+    if (event.code === 'Space') { event.preventDefault(); togglePause(); }
+    if (event.key.toLowerCase() === 'x') { clearPending = true; }
+    if (event.key.toLowerCase() === 'r') resetState();
+    if (event.key.toLowerCase() === 'f') toggleFullscreen();
+  });
 }
 
-// ---------------------------------------------------------------------------
-// Resize
-// ---------------------------------------------------------------------------
-
-function resize() {
-    const c = document.getElementById('canvas-container');
-    canvas.width  = c.clientWidth;
-    canvas.height = c.clientHeight;
-    initFBOs(Math.floor(c.clientWidth / 2), Math.floor(c.clientHeight / 2));
-}
-new ResizeObserver(resize).observe(document.getElementById('canvas-container'));
-
-// ---------------------------------------------------------------------------
-// Startup
-// ---------------------------------------------------------------------------
-
-document.addEventListener('DOMContentLoaded', () => {
-    wireControls();
-    resize();
-    initWebcamTex();
-    enumerateDevices();
-    requestAnimationFrame(render);
+canvas.addEventListener('webglcontextlost', (event) => {
+  event.preventDefault();
+  contextLost = true;
+  writeDiagnostics('WebGL context lost. Waiting for restoration…', 'warning');
+  setStatus('WebGL context lost.', 'error');
 });
+
+canvas.addEventListener('webglcontextrestored', () => {
+  contextLost = false;
+  try { initializeGpuResources(); setStatus('WebGL context restored.', 'ok'); }
+  catch (error) { writeDiagnostics(error.message, 'error'); }
+});
+
+window.addEventListener('beforeunload', stopCamera);
+if (navigator.mediaDevices?.addEventListener) navigator.mediaDevices.addEventListener('devicechange', () => enumerateCameras());
+new ResizeObserver(queueResize).observe(container);
+
+function start() {
+  wireControls();
+  syncControls();
+  enumerateCameras();
+  try {
+    initializeGpuResources();
+    setStatus('Feedback pipeline ready. Generated source active.', 'ok');
+  } catch (error) {
+    writeDiagnostics(error.message, 'error');
+    setStatus(error.message, 'error');
+  }
+  previousFrameTime = performance.now();
+  requestAnimationFrame(render);
+}
+
+start();

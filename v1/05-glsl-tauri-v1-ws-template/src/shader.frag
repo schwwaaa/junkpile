@@ -2,9 +2,9 @@
 // shader.frag — default fBm fractal noise fragment shader
 // =============================================================================
 //
-// This file is loaded at runtime via fetch() by canvas.js / sketch.js.
-// To swap the shader: replace this file's contents, or (in the WS template)
-// load a new .frag file in the controls window and send it over WebSocket.
+// This file is loaded at runtime via fetch() by sketch.js.
+// To swap the shader: replace this file's contents, use the file picker,
+// or drag a compatible .frag/.glsl file into the application window.
 //
 // UNIFORMS EXPECTED BY THE RENDER LOOP
 // ──────────────────────────────────────

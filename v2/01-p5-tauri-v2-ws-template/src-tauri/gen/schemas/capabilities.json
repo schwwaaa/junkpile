@@ -1,1 +1,1 @@
-{}
+{"default":{"identifier":"default","description":"Core IPC access for Junkpile Tauri v2 Example 01","local":true,"windows":["controls","canvas"],"permissions":["core:default"]}}

@@ -1,29 +1,27 @@
-// =============================================================================
-// src-tauri/src/main.rs  (Tauri v2)
-// =============================================================================
-//
-// HOW THE FILE SERVING WORKS (v1 vs v2)
-// ──────────────────────────────────────
-//
-// v1: You declared `custom-protocol = ["tauri/custom-protocol"]` in Cargo.toml
-//     and set `devPath/distDir` in tauri.conf.json. Tauri used the
-//     custom-protocol feature to serve your src/ files via tauri://localhost.
-//
-// v2: You just set `frontendDist: "../src"` in tauri.conf.json.
-//     The Tauri v2 CLI reads that and automatically enables the built-in
-//     asset server — no feature flags, no manual wiring. Same result:
-//     your files are served via tauri://localhost with no external server.
-//
-//     `tauri dev`   → CLI spins up built-in hot-reload server from ../src
-//     `tauri build` → files are embedded in the binary, served at runtime
-//
-// This file is intentionally minimal. All app logic lives in src/.
-// =============================================================================
-
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
+use tauri::Manager;
+
+#[tauri::command]
+fn toggle_fullscreen(app: tauri::AppHandle) -> Result<bool, String> {
+    let window = app
+        .get_webview_window("main")
+        .ok_or_else(|| "Main window is unavailable".to_string())?;
+
+    let next = !window
+        .is_fullscreen()
+        .map_err(|error| format!("Could not read fullscreen state: {error}"))?;
+
+    window
+        .set_fullscreen(next)
+        .map_err(|error| format!("Could not change fullscreen state: {error}"))?;
+
+    Ok(next)
+}
 
 fn main() {
     tauri::Builder::default()
+        .invoke_handler(tauri::generate_handler![toggle_fullscreen])
         .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .expect("error while running Junkpile Tauri v2 Example 00");
 }

@@ -1,190 +1,156 @@
 <!doctype html>
-<!--
-  single-window webcam processing — Tauri v1
-  This document contains camera controls and the output canvas. sketch.js owns MediaDevices, video texture upload, effect selection, and frame rendering.
-  See the adjacent README.md for setup, architecture, extension points, and troubleshooting.
--->
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Webcam · Tauri · Single Window</title>
-  <style>
-    :root { color-scheme: dark; }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body {
-      width: 100vw; height: 100vh; overflow: hidden;
-      background: #0a0a0c; color: #e0e0e8;
-      font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px;
-    }
-    #app { display: flex; width: 100vw; height: 100vh; }
-
-    #panel {
-      flex: 0 0 260px; height: 100vh; overflow-y: auto;
-      background: #0d0d0f; border-right: 1px solid #1e1e26;
-      display: flex; flex-direction: column; padding: 12px; gap: 6px;
-    }
-    #panel::-webkit-scrollbar { width: 3px; }
-    #panel::-webkit-scrollbar-thumb { background: #2a2a36; border-radius: 2px; }
-
-    .panel-title {
-      font-size: 13px; font-weight: 700; letter-spacing: 0.12em;
-      text-transform: uppercase; color: #7c9fff;
-      padding-bottom: 8px; border-bottom: 1px solid #1e1e26; margin-bottom: 2px;
-    }
-    .section-label {
-      font-size: 9px; font-weight: 700; letter-spacing: 0.2em;
-      text-transform: uppercase; color: #7c9fff;
-      padding: 8px 0 3px; border-top: 1px solid #1e1e26; margin-top: 4px;
-    }
-    .param-row {
-      display: flex; align-items: center; gap: 7px; padding: 5px 7px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.07); border-radius: 6px;
-      transition: border-color 0.15s;
-    }
-    .param-row:hover { border-color: rgba(124,159,255,0.3); }
-    .param-row label {
-      flex: 0 0 90px; font-size: 10px; color: rgba(255,255,255,0.4);
-      letter-spacing: 0.05em; text-transform: uppercase; user-select: none;
-    }
-    input[type=range] {
-      -webkit-appearance: none; flex: 1; height: 2px;
-      background: rgba(255,255,255,0.15); border-radius: 1px; outline: none; cursor: pointer;
-    }
-    input[type=range]::-webkit-slider-thumb {
-      -webkit-appearance: none; width: 10px; height: 10px;
-      border-radius: 50%; background: #7c9fff;
-    }
-    input[type=range]:hover::-webkit-slider-thumb { background: #aac5ff; transform: scale(1.25); }
-    .param-value {
-      flex: 0 0 38px; text-align: right; font-size: 10px; color: #7c9fff;
-      font-variant-numeric: tabular-nums;
-    }
-    .toggle-row {
-      display: flex; align-items: center; gap: 7px; padding: 5px 7px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.07); border-radius: 6px;
-    }
-    .toggle-row label {
-      flex: 1; font-size: 10px; color: rgba(255,255,255,0.4);
-      letter-spacing: 0.05em; text-transform: uppercase; user-select: none; cursor: pointer;
-    }
-    input[type=checkbox] { accent-color: #7c9fff; width: 13px; height: 13px; cursor: pointer; }
-
-    #cam-btn {
-      width: 100%; padding: 7px 10px;
-      background: rgba(124,159,255,0.12);
-      border: 1px solid rgba(124,159,255,0.35); border-radius: 6px;
-      color: #7c9fff; font-family: inherit; font-size: 10px;
-      letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer;
-      transition: background 0.15s;
-    }
-    #cam-btn:hover { background: rgba(124,159,255,0.22); }
-    #cam-status { font-size: 9px; color: rgba(255,255,255,0.25); text-align: center; padding: 2px 0; }
-    #cam-status.ok  { color: #7fff9f; }
-    #cam-status.err { color: #ff8080; }
-    #cam-select {
-      width: 100%; padding: 5px 7px;
-      background: #111115; border: 1px solid #2a2a36; border-radius: 6px;
-      color: #e0e0e8; font-family: inherit; font-size: 10px; cursor: pointer;
-    }
-
-    .panel-footer {
-      margin-top: auto; padding-top: 10px; font-size: 9px;
-      color: rgba(255,255,255,0.18); text-align: center; border-top: 1px solid #1e1e26;
-    }
-
-    #canvas-container { flex: 1; position: relative; overflow: hidden; background: #000; }
-    #glcanvas { display: block; width: 100%; height: 100%; }
-    #webcam-video { display: none; }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>06 · Webcam Texture Single Window</title>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-<div id="app">
-  <div id="panel">
-    <div class="panel-title">Webcam · tauri</div>
+  <main class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">JUNKPILE · TAURI V1 ESSENTIALS</p>
+        <h1>06 · Webcam Texture Single Window</h1>
+        <p class="subtitle">Capture a browser camera stream, upload each decoded frame into a WebGL texture, process it with GLSL, and feed the result through a persistent ping-pong history buffer—all inside one Tauri v1 WebView.</p>
+      </div>
+      <div class="top-actions">
+        <button id="compileBtn" type="button">Recompile</button>
+        <button id="clearBtn" type="button">Clear trails</button>
+        <button id="resetBtn" type="button">Reset</button>
+        <button id="pauseBtn" type="button" class="primary">Pause render</button>
+        <button id="fullscreenBtn" type="button">Fullscreen</button>
+      </div>
+    </header>
 
-    <div class="section-label">Camera</div>
-    <div style="display:flex;gap:5px;align-items:center">
-      <select id="cam-select" style="flex:1" disabled><option value="">Start camera first…</option></select>
-      <button id="cam-refresh" title="Refresh camera list" disabled style="flex:0 0 28px;padding:5px 0;background:rgba(124,159,255,0.04);border:1px solid rgba(124,159,255,0.12);border-radius:6px;color:rgba(124,159,255,0.3);font-size:13px;cursor:not-allowed;line-height:1">↺</button>
-    </div>
-    <button id="cam-btn">▶ Start Camera</button>
-    <div id="cam-status">not started</div>
+    <section class="workspace">
+      <section class="preview-panel panel">
+        <div class="panel-head">
+          <div>
+            <span class="label">LIVE OUTPUT</span>
+            <strong id="statusText" aria-live="polite">Preparing WebGL and camera controls…</strong>
+          </div>
+          <div class="telemetry">
+            <span><b id="fpsReadout">0</b> render fps</span>
+            <span><b id="cameraFpsReadout">0</b> camera fps</span>
+            <span><b id="sizeReadout">0 × 0</b></span>
+            <span><b id="inputReadout">No camera</b></span>
+          </div>
+        </div>
 
-    <div class="section-label">Effect</div>
-    <div class="param-row">
-      <label for="effect">Mode</label>
-      <input id="effect" type="range" min="0" max="5" step="1" value="0">
-      <span class="param-value" id="effect-val">0</span>
-    </div>
-    <div class="param-row">
-      <label for="distortion">Distort</label>
-      <input id="distortion" type="range" min="0" max="1" step="0.01" value="0.0">
-      <span class="param-value" id="distortion-val">0.00</span>
-    </div>
-    <div class="param-row">
-      <label for="feedback">Feedback</label>
-      <input id="feedback" type="range" min="0" max="0.98" step="0.01" value="0.0">
-      <span class="param-value" id="feedback-val">0.00</span>
-    </div>
-    <div class="param-row">
-      <label for="zoom">Zoom</label>
-      <input id="zoom" type="range" min="0.5" max="3.0" step="0.05" value="1.0">
-      <span class="param-value" id="zoom-val">1.00</span>
-    </div>
-    <div class="param-row">
-      <label for="speed">Warp Spd</label>
-      <input id="speed" type="range" min="0" max="2" step="0.01" value="0.3">
-      <span class="param-value" id="speed-val">0.30</span>
-    </div>
+        <div id="canvas-container" class="canvas-wrap">
+          <canvas id="glcanvas" aria-label="Webcam processed through a raw WebGL fragment shader"></canvas>
+          <div class="canvas-badge" id="canvasBadge">NO CAMERA</div>
+          <div class="source-card" id="sourceCard">
+            <span id="sourceName">Generated calibration source</span>
+            <b id="sourceDetails">Start a camera to replace it</b>
+          </div>
+          <div class="canvas-help">SPACE pause · R reset · X clear trails · F fullscreen</div>
+        </div>
 
-    <div class="section-label">Color</div>
-    <div class="param-row">
-      <label for="hue">Hue Shift</label>
-      <input id="hue" type="range" min="0" max="360" step="1" value="0">
-      <span class="param-value" id="hue-val">0</span>
-    </div>
-    <div class="param-row">
-      <label for="saturation">Saturation</label>
-      <input id="saturation" type="range" min="0" max="2" step="0.01" value="1.0">
-      <span class="param-value" id="saturation-val">1.00</span>
-    </div>
-    <div class="param-row">
-      <label for="brightness">Brightness</label>
-      <input id="brightness" type="range" min="0" max="2" step="0.01" value="1.0">
-      <span class="param-value" id="brightness-val">1.00</span>
-    </div>
-    <div class="param-row">
-      <label for="contrast">Contrast</label>
-      <input id="contrast" type="range" min="0" max="3" step="0.01" value="1.0">
-      <span class="param-value" id="contrast-val">1.00</span>
-    </div>
+        <div class="signal-strip">
+          <span><code>getUserMedia()</code></span><i>→</i><span><code>&lt;video&gt;</code></span><i>→</i><span><code>texImage2D()</code></span><i>→</i><span>GLSL effect</span><i>→</i><span>history FBO</span><i>→</i><span>canvas</span>
+        </div>
+      </section>
 
-    <div class="section-label">Toggles</div>
-    <div class="toggle-row">
-      <label for="mirror">Mirror X</label>
-      <input id="mirror" type="checkbox">
-    </div>
-    <div class="toggle-row">
-      <label for="invert">Invert</label>
-      <input id="invert" type="checkbox">
-    </div>
-    <div class="toggle-row">
-      <label for="greyscale">Greyscale</label>
-      <input id="greyscale" type="checkbox">
-    </div>
+      <aside class="controls-panel panel">
+        <div class="controls-scroll">
+          <section class="control-section intro-card">
+            <span class="label">ARCHITECTURE</span>
+            <h2>Browser media → browser GPU</h2>
+            <p>The WebView owns both camera capture and WebGL. Rust only launches the native application and handles window fullscreen; no camera frame crosses the JavaScript/Rust boundary.</p>
+          </section>
 
-    <div class="panel-footer">webcam · tauri · single-window template</div>
-  </div>
+          <section class="control-section camera-card">
+            <div class="section-head compact">
+              <div><span class="label">CAMERA INPUT</span><strong id="cameraState">Not started</strong></div>
+              <span class="status-dot" id="cameraDot" aria-hidden="true"></span>
+            </div>
+            <div class="select-line">
+              <select id="cam-select" aria-label="Camera device"><option value="">Default camera</option></select>
+              <button id="cam-refresh" type="button" title="Refresh camera list">Refresh</button>
+            </div>
+            <div class="select-line two">
+              <label>Request
+                <select id="capturePreset">
+                  <option value="480">640 × 480</option>
+                  <option value="720" selected>1280 × 720</option>
+                  <option value="1080">1920 × 1080</option>
+                  <option value="highest">Highest available</option>
+                </select>
+              </label>
+              <label>Framing
+                <select id="fitMode">
+                  <option value="0">Contain</option>
+                  <option value="1" selected>Cover</option>
+                  <option value="2">Stretch</option>
+                </select>
+              </label>
+            </div>
+            <button id="cam-btn" class="wide primary" type="button">Start camera</button>
+            <p id="cameraMessage" class="microcopy">Camera labels may remain generic until permission is approved.</p>
+          </section>
 
-  <div id="canvas-container">
-    <canvas id="glcanvas"></canvas>
-  </div>
-</div>
+          <section class="control-section diagnostics-card">
+            <div class="section-head compact">
+              <div><span class="label">WEBGL STATUS</span><strong id="compileStatus">Not compiled</strong></div>
+              <span class="status-dot" id="compileDot" aria-hidden="true"></span>
+            </div>
+            <pre id="diagnostics" aria-live="polite">Waiting for shader compilation…</pre>
+          </section>
 
-<video id="webcam-video" autoplay playsinline muted></video>
-<script src="sketch.js"></script>
+          <section class="control-section">
+            <div class="section-head"><div><span class="label">QUICK STATES</span><strong>Camera-processing presets</strong></div></div>
+            <div class="preset-grid">
+              <button type="button" data-preset="clean">Clean</button>
+              <button type="button" data-preset="echo">Echo</button>
+              <button type="button" data-preset="prism">Prism</button>
+              <button type="button" data-preset="edge">Edge</button>
+            </div>
+          </section>
+
+          <section class="control-section">
+            <div class="section-head"><div><span class="label">EFFECT</span><strong>Texture processing</strong></div></div>
+            <label class="select-row" for="effect"><span>Mode</span>
+              <select id="effect">
+                <option value="0">Passthrough</option>
+                <option value="1">Wave distort</option>
+                <option value="2">Radial warp</option>
+                <option value="3">Kaleidoscope</option>
+                <option value="4">Edge detect</option>
+                <option value="5">Glitch bands</option>
+              </select>
+            </label>
+            <label class="parameter-row" for="distortion"><span>Distortion</span><output id="distortion-val">0.00</output><input id="distortion" type="range" min="0" max="1" step="0.01" value="0" /></label>
+            <label class="parameter-row" for="feedback"><span>Feedback</span><output id="feedback-val">0.00</output><input id="feedback" type="range" min="0" max="0.98" step="0.01" value="0" /></label>
+            <label class="parameter-row" for="zoom"><span>Zoom</span><output id="zoom-val">1.00</output><input id="zoom" type="range" min="0.5" max="3" step="0.05" value="1" /></label>
+            <label class="parameter-row" for="speed"><span>Warp speed</span><output id="speed-val">0.30×</output><input id="speed" type="range" min="0" max="2" step="0.01" value="0.3" /></label>
+          </section>
+
+          <section class="control-section">
+            <div class="section-head"><div><span class="label">COLOR</span><strong>Final grade</strong></div></div>
+            <label class="parameter-row" for="hue"><span>Hue shift</span><output id="hue-val">0°</output><input id="hue" type="range" min="-180" max="180" step="1" value="0" /></label>
+            <label class="parameter-row" for="saturation"><span>Saturation</span><output id="saturation-val">1.00</output><input id="saturation" type="range" min="0" max="2" step="0.01" value="1" /></label>
+            <label class="parameter-row" for="brightness"><span>Brightness</span><output id="brightness-val">1.00</output><input id="brightness" type="range" min="0" max="2" step="0.01" value="1" /></label>
+            <label class="parameter-row" for="contrast"><span>Contrast</span><output id="contrast-val">1.00</output><input id="contrast" type="range" min="0" max="3" step="0.01" value="1" /></label>
+          </section>
+
+          <section class="control-section">
+            <div class="section-head"><div><span class="label">SWITCHES</span><strong>Texture flags</strong></div></div>
+            <label class="toggle-row" for="mirror"><span>Mirror camera</span><input id="mirror" type="checkbox" /></label>
+            <label class="toggle-row" for="invert"><span>Invert colors</span><input id="invert" type="checkbox" /></label>
+            <label class="toggle-row" for="greyscale"><span>Greyscale</span><input id="greyscale" type="checkbox" /></label>
+          </section>
+
+          <section class="control-section lesson-card">
+            <span class="label">WHY THIS EXAMPLE?</span>
+            <p>This is the first foundational template where a live media source becomes a GPU texture. The same upload pattern later supports video files, image sequences, compositing, keying, switching, feedback, and recording.</p>
+          </section>
+        </div>
+      </aside>
+    </section>
+  </main>
+  <video id="webcam-video" autoplay playsinline muted></video>
+  <script src="sketch.js"></script>
 </body>
 </html>

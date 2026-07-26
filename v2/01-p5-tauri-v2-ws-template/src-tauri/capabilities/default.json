@@ -1,0 +1,9 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Core IPC access for Junkpile Tauri v2 Example 01",
+  "windows": ["controls", "canvas"],
+  "permissions": [
+    "core:default"
+  ]
+}

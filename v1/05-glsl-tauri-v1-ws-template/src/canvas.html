@@ -1,32 +1,32 @@
 <!doctype html>
-<!--
-  canvas.html — shader output window (two-window WS template)
-  Receives param updates AND shader source swaps over WebSocket.
-  Boots with src/shader.frag loaded via fetch().
--->
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Shader Output</title>
-  <style>
-    :root { color-scheme: dark; }
-    *, *::before, *::after { box-sizing: border-box; }
-    html, body { margin: 0; width: 100vw; height: 100vh; overflow: hidden; background: #000; }
-    #glcanvas { display: block; width: 100vw; height: 100vh; }
-    #overlay {
-      position: fixed; top: 10px; right: 12px;
-      font-family: 'SF Mono', monospace; font-size: 10px;
-      color: rgba(255,255,255,0.3);
-      pointer-events: none;
-      transition: opacity 1s ease; z-index: 10;
-    }
-    #overlay.hidden { opacity: 0; }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>05 · External GLSL WebSocket Output</title>
+  <link rel="stylesheet" href="canvas.css" />
 </head>
 <body>
-  <div id="overlay">WS: connecting…</div>
-  <canvas id="glcanvas"></canvas>
+  <main id="canvas-container" class="canvas-stage">
+    <canvas id="glcanvas" aria-label="External GLSL shader output"></canvas>
+    <header class="output-hud">
+      <div>
+        <p>JUNKPILE · V1 · EXAMPLE 05</p>
+        <strong>External GLSL WebSocket Output</strong>
+        <small id="rendererReadout">Starting WebGL…</small>
+        <small id="sourceReadout">Loading shader.frag…</small>
+      </div>
+      <div class="output-telemetry">
+        <span id="connectionBadge" class="badge pending">CONNECTING</span>
+        <span id="shaderBadge" class="badge pending">LOADING</span>
+        <span><b id="fpsReadout">0</b> fps</span>
+        <span id="sizeReadout">0 × 0</span>
+      </div>
+    </header>
+    <div id="pauseBadge" class="pause-badge hidden">PAUSED</div>
+    <pre id="errorPanel" class="error-panel hidden"></pre>
+    <div class="output-help">F fullscreen · shader source + uniforms arrive through ws://127.0.0.1:2727</div>
+  </main>
   <script src="canvas.js"></script>
 </body>
 </html>

@@ -1,8 +1,20 @@
 {
   "name": "p5-tauri-osc-template",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
-  "scripts": { "dev": "tauri dev", "build": "tauri build", "tauri": "tauri" },
-  "devDependencies": { "@tauri-apps/cli": "^1.6.3" }
+  "scripts": {
+    "sync:p5": "node scripts/sync-p5.mjs",
+    "predev": "npm run sync:p5",
+    "dev": "tauri dev",
+    "prebuild": "npm run sync:p5",
+    "build": "tauri build",
+    "tauri": "tauri"
+  },
+  "dependencies": {
+    "p5": "1.11.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^1.6.3"
+  }
 }

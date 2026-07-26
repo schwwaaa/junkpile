@@ -1,13 +1,16 @@
 {
   "name": "p5-tauri-single-template",
   "private": true,
-  "version": "0.1.0",
-  "type": "module",
-  "description": "Single-window Tauri + p5.js template",
+  "version": "0.2.0",
+  "description": "Junkpile Tauri v1 Essential 00: a polished single-window p5.js and WebGL shader foundation",
   "scripts": {
-    "dev":   "tauri dev",
-    "build": "tauri build",
+    "sync:p5": "node scripts/sync-p5.mjs",
+    "dev": "npm run sync:p5 && tauri dev",
+    "build": "npm run sync:p5 && tauri build",
     "tauri": "tauri"
+  },
+  "dependencies": {
+    "p5": "1.11.0"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^1.6.3"

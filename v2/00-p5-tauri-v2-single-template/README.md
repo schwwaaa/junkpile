@@ -1,118 +1,153 @@
-# p5.js Shader · Tauri v2 · Single Window
+# 00 · Tauri v2 p5.js Single Window
 
-> **Baseline:** p5.js shader baseline  
-> **Tauri:** 2.x  
-> **Window topology:** single window  
-> **Input:** DOM controls  
-> **Renderer:** p5.js in WEBGL mode, backed by the WebView WebGL implementation
+A focused foundation for running a p5.js WebGL shader and its HTML controls inside one Tauri v2 WebView.
 
-## Purpose
+This folder intentionally retains its original repository name:
 
-A compact baseline for rendering a full-window GLSL fragment shader through p5.js. It keeps the shader pipeline approachable while exposing the state, uniform, and control wiring developers need to replace the visual with their own work.
-
-This example is intentionally a baseline: it exposes the complete path from input to pixels without introducing an application-specific product architecture. Start here, confirm the baseline works, then replace the visual or input mapping with your own idea.
-
-## What you should learn
-
-- Create a p5.js `WEBGL` canvas inside a Tauri WebView.
-- Compile embedded vertex and fragment shader strings with `createShader()`.
-- Map HTML controls to a shared parameter object and upload uniforms each frame.
-- Use a fixed-bound loop with an early exit for WebGL 1 / GLSL ES 1.0 compatibility.
-
-## Architecture
-
-```mermaid
-flowchart LR
-  Controls[DOM controls] --> Params[Shared params object]
-  Params --> Render[JavaScript render loop]
-  Render --> Shader[p5.js in WEBGL mode, backed by the WebView WebGL implementation]
-  Shader --> Canvas[Canvas in one Tauri V2 window]
+```text
+p5-tauri-v2-single-template
 ```
 
-### Runtime data flow
+The visible example number is **00** so it aligns with the complete Junkpile Tauri v2 Essentials sequence.
 
-1. The HTML creates the controls and canvas layout in one WebView document.
-2. Input handlers write directly into the shared `params` object.
-3. The p5 `setup()` function creates the WEBGL canvas and compiles the shader.
-4. The p5 `draw()` function uploads uniforms and draws a full-screen rectangle each frame.
+## What this example teaches
 
-## Prerequisites
+- Hosting a p5.js sketch inside Tauri v2
+- Attaching a p5 canvas to a specific HTML layout region
+- Running a GLSL ES 1.00 fragment shader through `createShader()`
+- Sending HTML slider values directly into a shared JavaScript object
+- Uploading that state as shader uniforms every frame
+- Resizing a WebGL canvas with its containing panel
+- Calling a Rust command through Tauri v2 `core.invoke`
+- Scoping WebView permissions through a Tauri v2 capability file
 
-1. Install the operating-system dependencies required by Tauri.
-2. Install a current Rust toolchain with `rustup`.
-3. Install Node.js and npm.
-4. Install project dependencies from this directory.
+## Signal flow
+
+```text
+HTML range / checkbox
+        ↓
+     params{}
+        ↓
+   p5 draw loop
+        ↓
+ shader.setUniform()
+        ↓
+ GLSL fragment shader
+        ↓
+ WebGL canvas in the same WebView
+```
+
+There is no WebSocket or inter-window relay. Controls and rendering share one page and one JavaScript thread.
+
+## Run
 
 ```bash
 npm install
 npm run dev
 ```
 
-Build an installable application with:
+`npm run dev` copies the pinned p5.js build from `node_modules` into `src/vendor/` before Tauri launches. The application therefore has no runtime CDN dependency.
+
+## Production build
 
 ```bash
 npm run build
 ```
 
-> The p5 examples load p5.js from cdnjs. A network connection is required unless you vendor `p5.min.js` locally and update the script tag.
-
-## Controls and inputs
-
-`hue`, `saturation`, `brightness`, `zoom`, `speed`, `distortion`, `complexity`, `symmetry`, `glow`, `invert`, `pulse`, and `rotate`.
-
-The HTML control defaults and the JavaScript `params` defaults are intended to match. When adding a parameter, update both so a fresh launch and the first user interaction produce the same state.
-
-## File map
-
-| File | Responsibility |
-|---|---|
-| `package.json` | Node scripts and the project-local Tauri CLI version. |
-| `src/index.html` | Single-window controls, canvas layout, and script loading. |
-| `src/sketch.js` | Visual state, shaders, rendering loop, and UI/input integration. |
-| `src-tauri/Cargo.toml` | Rust package metadata and native dependencies. |
-| `src-tauri/build.rs` | Project metadata or source file. |
-| `src-tauri/src/main.rs` | Tauri entry point. |
-| `src-tauri/tauri.conf.json` | Tauri 2 window, frontend, security, and bundle configuration. |
-
-Generated schemas, icon assets, and lock files are omitted from this table because they do not define the example's runtime architecture.
-
-## Tauri 2.x notes
-
-This project uses Tauri 2: `tauri = "2"`, the v2 configuration schema, top-level product metadata, `build.frontendDist`, and the v2 `app` configuration object. The visual pipeline still runs inside the WebView; Tauri 2 does not make this example a native wgpu renderer.
-
-Read [`../../docs/V1_V2_ARCHITECTURE.md`](../../docs/V1_V2_ARCHITECTURE.md) for the repository-wide comparison.
-
-## Extending the example
-
-1. Edit `FRAG_SHADER` in the rendering JavaScript file.
-2. Add a control in the HTML, a default in `params`, and a matching uniform upload.
-3. Replace the CDN p5.js dependency with a vendored copy when offline operation is required.
-
-Before adding a unique behavior, preserve a runnable baseline commit or branch. This makes it possible to distinguish framework/integration failures from failures introduced by the new visual idea.
-
-## Troubleshooting
-
-| Symptom | Check |
-|---|---|
-| App does not start | Confirm the OS-specific Tauri prerequisites, run `npm install`, then run `npm run dev` from this project directory. |
-| Blank or frozen canvas | Open the WebView developer tools, check shader compiler output, and confirm WebGL is available. |
-
-## Screenshot placeholder
-
-Add a screenshot after the example has been run on a target platform:
+On macOS, generated bundles appear under:
 
 ```text
-docs/images/p5-tauri-v2-single-template.png
+src-tauri/target/release/bundle/
 ```
 
-Then replace this section with:
+Unsigned builds may trigger Gatekeeper on another Mac. Public distribution generally requires Apple signing and notarization.
 
-```markdown
-![p5.js Shader · Tauri v2 · Single Window running](../../docs/images/p5-tauri-v2-single-template.png)
+## Tauri v2 architecture
+
+The native shell is intentionally small:
+
+```text
+src-tauri/src/main.rs
+  └── toggle_fullscreen command
+
+src-tauri/capabilities/default.json
+  └── grants core access to the main WebView
+
+src/sketch.js
+  └── window.__TAURI__.core.invoke("toggle_fullscreen")
 ```
 
-## Related examples
+Unlike the v1 counterpart, Tauri v2 uses:
 
-- Browse the complete comparison in [`../../docs/EXAMPLE_MATRIX.md`](../../docs/EXAMPLE_MATRIX.md).
-- Use the paired Tauri 1 version to compare framework-generation changes.
-- Use the paired two-window version to compare direct state with transport-based state.
+- `frontendDist` instead of `devPath` / `distDir`
+- `app.windows` instead of `tauri.windows`
+- capability files for WebView permissions
+- `window.__TAURI__.core.invoke` when `withGlobalTauri` is enabled
+
+## Controls
+
+| Section | Parameter | Purpose |
+|---|---|---|
+| Color | Hue shift | Rotates the shader palette |
+| Color | Saturation | Moves from monochrome to vivid color |
+| Color | Brightness | Multiplies final output brightness |
+| Motion | Zoom | Scales shader coordinates |
+| Motion | Speed | Advances the accumulated animation clock |
+| Motion | Distortion | Strengthens domain warping |
+| Pattern | Complexity | Changes the fBm octave count |
+| Pattern | Symmetry | Changes rotational folding |
+| Pattern | Glow | Brightens the center of the field |
+| Switches | Invert | Inverts the final color |
+| Switches | Pulse | Enables rhythmic brightness modulation |
+| Switches | Rotate | Rotates the complete coordinate field |
+
+Keyboard shortcuts:
+
+| Key | Action |
+|---|---|
+| Space | Pause or resume animation |
+| R | Restore defaults and reset time |
+| F | Toggle native-window fullscreen |
+
+## Project structure
+
+```text
+p5-tauri-v2-single-template/
+├── README.md
+├── MODERNIZATION-NOTES.md
+├── package.json
+├── scripts/
+│   └── sync-p5.mjs
+├── src/
+│   ├── index.html
+│   ├── sketch.js
+│   ├── styles.css
+│   └── vendor/
+│       └── p5.min.js        generated after npm install
+└── src-tauri/
+    ├── capabilities/
+    │   └── default.json
+    ├── Cargo.toml
+    ├── tauri.conf.json
+    └── src/main.rs
+```
+
+## Add a new shader parameter
+
+1. Add a range input and matching `<output>` in `src/index.html`.
+2. Add its default to `DEFAULT_PARAMS` in `src/sketch.js`.
+3. Add its ID to `SLIDER_IDS`.
+4. Declare a matching uniform in `FRAG_SHADER`.
+5. Upload the value in `draw()` with `shaderProgram.setUniform()`.
+6. Use the uniform in the shader.
+
+## GLSL ES 1.00 note
+
+WebGL 1 requires fixed compile-time loop bounds. The `fbm()` function loops to a fixed maximum of eight iterations and exits early using the float `u_complexity` uniform.
+
+## Known limitations
+
+- This example is deliberately single-window.
+- It uses p5.js WebGL rather than native wgpu.
+- `pixelDensity(1)` prioritizes predictable performance over retina-resolution rendering.
+- Shader compile diagnostics are intentionally basic here; the dedicated shader playground provides a full mini terminal.

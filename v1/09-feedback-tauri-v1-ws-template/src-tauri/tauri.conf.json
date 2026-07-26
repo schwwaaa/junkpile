@@ -1,52 +1,14 @@
 {
-  "$schema": "https://schema.tauri.app/config/1",
-  "build": {
-    "beforeBuildCommand": "",
-    "beforeDevCommand": "",
-    "devPath": "../src",
-    "distDir": "../src"
-  },
-  "package": {
-    "productName": "feedback-ws-template",
-    "version": "0.1.0"
-  },
-  "tauri": {
-    "windows": [
-      {
-        "label": "controls",
-        "title": "Controls",
-        "url": "controls.html",
-        "width": 280,
-        "height": 800,
-        "resizable": true,
-        "x": 40,
-        "y": 60
-      },
-      {
-        "label": "canvas",
-        "title": "Feedback Output",
-        "url": "canvas.html",
-        "width": 1000,
-        "height": 780,
-        "resizable": true,
-        "x": 360,
-        "y": 60
-      }
+  "$schema":"https://schema.tauri.app/config/1",
+  "build":{"beforeBuildCommand":"","beforeDevCommand":"","devPath":"../src","distDir":"../src","withGlobalTauri":true},
+  "package":{"productName":"Junkpile 09 · Feedback WebSocket","version":"0.2.0"},
+  "tauri":{
+    "allowlist":{"all":false},
+    "windows":[
+      {"label":"controls","title":"09 · Tauri v1 · Feedback WebSocket Controls","url":"controls.html","width":500,"height":880,"minWidth":410,"minHeight":640,"resizable":true,"decorations":true,"fullscreen":false,"x":40,"y":45},
+      {"label":"canvas","title":"09 · Tauri v1 · Feedback WebSocket Output","url":"canvas.html","width":960,"height":720,"minWidth":480,"minHeight":360,"resizable":true,"decorations":true,"fullscreen":false,"x":560,"y":45}
     ],
-    "bundle": {
-      "active": true,
-      "identifier": "com.example.feedback-ws-v1",
-      "icon": [
-        "icons/icon.icns",
-        "icons/icon.png",
-        "icons/icon.ico"
-      ],
-      "macOS": {
-        "entitlements": "entitlements.plist"
-      }
-    },
-    "security": {
-      "csp": "default-src 'self'; connect-src ws://127.0.0.1:2727 ws://[::1]:2727; media-src 'self' blob: mediastream:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
-    }
+    "bundle":{"active":true,"identifier":"com.schwwaaa.junkpile.v1.feedback-websocket","icon":["icons/icon.icns","icons/icon.png","icons/icon.ico"],"macOS":{"entitlements":"entitlements.plist"}},
+    "security":{"csp":"default-src 'self'; connect-src 'self' ws://127.0.0.1:2727 ws://[::1]:2727; media-src 'self' blob: mediastream:; img-src 'self' data: blob:; script-src 'self'; style-src 'self' 'unsafe-inline'"}
   }
 }

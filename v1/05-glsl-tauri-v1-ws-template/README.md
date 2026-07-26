@@ -1,125 +1,180 @@
-# External GLSL Shader · Tauri v1 · Two-Window WebSocket
+# 05 · Tauri v1 External GLSL WebSocket
 
-> **Baseline:** external GLSL file baseline  
-> **Tauri:** 1.x  
-> **Window topology:** two windows with an embedded WebSocket relay  
-> **Input:** WebSocket controls + shader file  
-> **Renderer:** raw WebGL 1 with a fragment shader loaded from `shader.frag`
+A two-window raw-WebGL example where the fragment shader is stored as an external project file, selected from the controls window, sent through an embedded Rust WebSocket relay, and compiled in a separate output WebView.
 
-## Purpose
+The repository folder remains:
 
-A raw WebGL baseline that separates the artwork into an editable `.frag` file. The app loads, compiles, and reports shader errors at runtime; the two-window form can also send replacement shader source from the controls window.
-
-This example is intentionally a baseline: it exposes the complete path from input to pixels without introducing an application-specific product architecture. Start here, confirm the baseline works, then replace the visual or input mapping with your own idea.
-
-## What you should learn
-
-- Fetch a shader asset from the Tauri frontend bundle.
-- Compile replacement shader source at runtime and preserve the last valid program on failure.
-- Surface GLSL compiler messages in the interface.
-- Keep shader source separate from application and transport code.
-
-## Architecture
-
-```mermaid
-flowchart LR
-  Controls[controls.html] -->|JSON over ws://127.0.0.1:2727| Relay[Rust WebSocket relay]
-  Relay -->|broadcast to other clients| CanvasJS[canvas.html JavaScript]
-  CanvasJS --> Render[Render loop + shader uniforms]
-  Render --> Output[Canvas window]
-  CanvasJS -. camera status / device list .-> Relay
-  Relay -. status messages .-> Controls
+```text
+glsl-tauri-v1-ws-template
 ```
 
-### Runtime data flow
+The visible number is **05** in the Junkpile Tauri v1 Essentials sequence.
 
-1. `controls.js` serializes state changes as JSON messages.
-2. Rust `main.rs` hosts the loopback WebSocket relay and broadcasts messages to other connected clients.
-3. `canvas.js` receives messages, updates local state, and owns the visual render loop.
-4. The JavaScript fetches `shader.frag`, compiles it, and reports compiler errors without discarding the last valid program.
-5. The rendering path uploads the documented uniform contract on every frame.
+## What this example teaches
 
-## Prerequisites
+- Loading an external `src/shader.frag` project asset
+- Reading local `.frag` / `.glsl` files in the controls WebView
+- Sending shader source and uniform state through a Rust WebSocket relay
+- Compiling and linking replacement fragment shaders in a separate output window
+- Keeping the last valid GPU program active after a failed replacement
+- Reporting compiler results back to the controls window
+- Re-synchronizing shader source and parameter state after either window reconnects
+- Controlling a second native Tauri v1 window
 
-1. Install the operating-system dependencies required by Tauri.
-2. Install a current Rust toolchain with `rustup`.
-3. Install Node.js and npm.
-4. Install project dependencies from this directory.
+## Signal flow
+
+```text
+src/shader.frag or local shader file
+                  ↓
+           Controls WebView
+                  ↓ JSON source + uniforms
+     ws://127.0.0.1:2727
+                  ↓
+          Embedded Rust relay
+                  ↓
+            Output WebView
+                  ↓
+       WebGL compile + link
+                  ↓
+             gl.drawArrays()
+```
+
+## Run
 
 ```bash
 npm install
 npm run dev
 ```
 
-Build an installable application with:
+## Production build
 
 ```bash
 npm run build
 ```
 
-## Controls and inputs
-
-Shader file loading plus `hue`, `saturation`, `brightness`, `zoom`, `speed`, `distortion`, `complexity`, `symmetry`, `glow`, `invert`, `pulse`, and `rotate`.
-
-The HTML control defaults and the JavaScript `params` defaults are intended to match. When adding a parameter, update both so a fresh launch and the first user interaction produce the same state.
-
-## File map
-
-| File | Responsibility |
-|---|---|
-| `package.json` | Node scripts and the project-local Tauri CLI version. |
-| `src/canvas.html` | Output-window canvas and status overlay. |
-| `src/canvas.js` | Output-window state receiver and rendering pipeline. |
-| `src/controls.html` | Control-window markup and styling. |
-| `src/controls.js` | Control-window state serialization and WebSocket client. |
-| `src/shader.frag` | Runtime-loaded GLSL ES 1.0 fragment shader. |
-| `src-tauri/Cargo.toml` | Rust package metadata and native dependencies. |
-| `src-tauri/build.rs` | Project metadata or source file. |
-| `src-tauri/src/main.rs` | Tauri entry point and embedded WebSocket relay. |
-| `src-tauri/tauri.conf.json` | Tauri 1 window, frontend, security, and bundle configuration. |
-
-Generated schemas, icon assets, and lock files are omitted from this table because they do not define the example's runtime architecture.
-
-## Tauri 1.x notes
-
-This project uses Tauri 1: `tauri = "1"`, the v1 configuration schema, `build.devPath`/`build.distDir`, and the v1 `tauri` configuration object. The embedded WebSocket relay design is intentionally the same in both generations; most migration differences are configuration and dependency changes.
-
-Read [`../../docs/V1_V2_ARCHITECTURE.md`](../../docs/V1_V2_ARCHITECTURE.md) for the repository-wide comparison.
-
-## Extending the example
-
-1. Replace `src/shader.frag` while preserving the documented uniform contract.
-2. Change the uniform contract only after updating the JavaScript upload path.
-3. Use the compile-error overlay as the starting point for a richer shader editor.
-
-Before adding a unique behavior, preserve a runnable baseline commit or branch. This makes it possible to distinguish framework/integration failures from failures introduced by the new visual idea.
-
-## Troubleshooting
-
-| Symptom | Check |
-|---|---|
-| App does not start | Confirm the OS-specific Tauri prerequisites, run `npm install`, then run `npm run dev` from this project directory. |
-| Blank or frozen canvas | Open the WebView developer tools, check shader compiler output, and confirm WebGL is available. |
-| Controls remain disconnected | Confirm no other template is using TCP port 2727. Check the Rust console for IPv4/IPv6 listener errors. |
-| Canvas opens but does not update | Verify both pages send the hello handshake and that `WS_URL` matches the Rust `PORT` constant. |
-| Replacement shader fails | Read the compiler overlay and preserve the expected uniform names and GLSL ES 1.0 syntax. |
-
-## Screenshot placeholder
-
-Add a screenshot after the example has been run on a target platform:
+On macOS, bundles are written under:
 
 ```text
-docs/images/glsl-tauri-v1-ws-template.png
+src-tauri/target/release/bundle/
 ```
 
-Then replace this section with:
+Public distribution usually requires Apple signing and notarization.
 
-```markdown
-![External GLSL Shader · Tauri v1 · Two-Window WebSocket running](../../docs/images/glsl-tauri-v1-ws-template.png)
+## Shader workflow
+
+The default shader is:
+
+```text
+src/shader.frag
 ```
 
-## Related examples
+The controls window can:
 
-- Browse the complete comparison in [`../../docs/EXAMPLE_MATRIX.md`](../../docs/EXAMPLE_MATRIX.md).
-- Use the paired Tauri 2 version to compare framework-generation changes.
-- Use the paired single-window version to compare direct state with transport-based state.
+- open a `.frag`, `.glsl`, `.fs`, or text file;
+- accept a dropped shader file;
+- resend the current source;
+- restore the project shader;
+- display output compiler/linker results.
+
+A failed shader does **not** replace the active program. The output window displays the compiler error while the previous valid shader continues rendering.
+
+## Shader contract
+
+Replacement source targets **GLSL ES 1.00 / WebGL 1** and should include:
+
+```glsl
+precision highp float;
+varying vec2 vTexCoord;
+
+void main() {
+    gl_FragColor = vec4(vTexCoord, 0.0, 1.0);
+}
+```
+
+The renderer supplies:
+
+```glsl
+uniform float u_time;
+uniform vec2  u_resolution;
+uniform float u_hue;
+uniform float u_saturation;
+uniform float u_brightness;
+uniform float u_zoom;
+uniform float u_distortion;
+uniform float u_rotate;
+uniform float u_complexity;
+uniform float u_symmetry;
+uniform float u_glow;
+uniform float u_invert;
+uniform float u_pulse;
+```
+
+Unused uniforms are safe; WebGL simply optimizes them away.
+
+## Common imported-shader problems
+
+The controls terminal points out common mismatches:
+
+- `#version 300 es`
+- custom `out vec4` fragment outputs
+- `texture()` instead of `texture2D()`
+- ShaderToy `mainImage()`
+- ShaderToy `iTime`, `iResolution`, or `iMouse`
+- `layout(...)` qualifiers
+- unresolved `#include` directives
+- missing `void main()`
+- missing float precision declaration
+
+## State recovery
+
+When the output reconnects it sends `request_state`. The controls respond with:
+
+1. the complete uniform snapshot;
+2. paused/running state;
+3. the current shader source and metadata.
+
+This prevents an output reload from silently returning to stale controls or the wrong shader.
+
+## Keyboard shortcuts
+
+| Key | Action |
+|---|---|
+| Space | Pause/resume |
+| R | Reset uniforms and time |
+| S | Resend all state and shader source |
+| O | Open shader picker |
+| C | Recompile current shader |
+| F | Toggle output fullscreen |
+
+## Project structure
+
+```text
+glsl-tauri-v1-ws-template/
+├── README.md
+├── MODERNIZATION-NOTES.md
+├── package.json
+├── src/
+│   ├── controls.html
+│   ├── controls.css
+│   ├── controls.js
+│   ├── canvas.html
+│   ├── canvas.css
+│   ├── canvas.js
+│   └── shader.frag
+└── src-tauri/
+    ├── Cargo.toml
+    ├── tauri.conf.json
+    └── src/main.rs
+```
+
+## Why this remains separate
+
+Example 03 demonstrates two-window raw WebGL with an inline shader. Example 05 adds a transferable external-shader workflow: shader source can be edited, generated, exchanged, rejected safely, and re-synchronized independently of the application code.
+
+## Known limitations
+
+- Imported source is held in memory and does not overwrite `src/shader.frag`.
+- The source must fit WebGL 1 / GLSL ES 1.00.
+- Controls are based on the default uniform contract rather than arbitrary uniform reflection.
+- Very large shader strings are sent as WebSocket text messages; this example is intended for normal fragment-shader source sizes.
+- The relay is local-only and intentionally unauthenticated.

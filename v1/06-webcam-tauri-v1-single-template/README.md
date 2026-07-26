@@ -1,124 +1,137 @@
-# Webcam Processing · Tauri v1 · Single Window
+# 06 · Tauri v1 Webcam Texture Single Window
 
-> **Baseline:** webcam processing baseline  
-> **Tauri:** 1.x  
-> **Window topology:** single window  
-> **Input:** Webcam + DOM controls  
-> **Renderer:** raw WebGL 1 using the browser MediaDevices API and a webcam texture
+A focused foundation for capturing a webcam inside a Tauri v1 WebView and uploading each decoded frame into a raw WebGL texture.
 
-## Purpose
+This folder intentionally retains its original repository name:
 
-A baseline for camera acquisition, device selection, video-frame upload, shader processing, and lightweight previous-frame blending. It demonstrates the boundary between OS camera permission, WebView media capture, JavaScript video handling, and GPU texture sampling.
-
-This example is intentionally a baseline: it exposes the complete path from input to pixels without introducing an application-specific product architecture. Start here, confirm the baseline works, then replace the visual or input mapping with your own idea.
-
-## What you should learn
-
-- Enumerate cameras with `navigator.mediaDevices.enumerateDevices()`.
-- Request a stream with `getUserMedia()` and attach it to a hidden video element.
-- Upload video frames into a WebGL texture every animation frame.
-- Apply real-time effects and optional previous-frame feedback in a fragment shader.
-
-## Architecture
-
-```mermaid
-flowchart LR
-  Camera[OS camera] --> Permission[WebView getUserMedia permission]
-  Permission --> Video[Hidden HTML video]
-  Video --> Texture[WebGL webcam texture]
-  Controls[DOM controls] --> Params[params object]
-  Texture --> Render[Webcam fragment shader + optional previous-frame blend]
-  Params --> Render
-  Render --> Canvas[Canvas in one Tauri V1 window]
+```text
+webcam-tauri-v1-single-template
 ```
 
-### Runtime data flow
+The visible example number is **06** so it aligns with the complete Junkpile Tauri v1 Essentials sequence.
 
-1. The HTML creates the controls and canvas layout in one WebView document.
-2. Input handlers write directly into the shared `params` object.
-3. The camera stream feeds a hidden video element.
-4. Each frame uploads the current video image into a WebGL texture before drawing the selected effect.
+## What this example teaches
 
-## Prerequisites
+- Requesting camera permission with `navigator.mediaDevices.getUserMedia()`
+- Enumerating and switching video-input devices
+- Reading the active camera resolution and requested frame rate
+- Uploading an HTML video frame with `gl.texImage2D()`
+- Preserving source aspect ratio with contain, cover, and stretch framing
+- Running multiple GLSL effects against a live media texture
+- Creating two persistent framebuffer textures for visual feedback
+- Using a separate blit program so the processed frame is not graded twice
+- Handling WebGL context loss and native-window fullscreen
+- Packaging camera permissions for macOS
 
-1. Install the operating-system dependencies required by Tauri.
-2. Install a current Rust toolchain with `rustup`.
-3. Install Node.js and npm.
-4. Install project dependencies from this directory.
+## Signal flow
+
+```text
+Camera hardware
+      ↓
+getUserMedia()
+      ↓
+HTMLVideoElement
+      ↓
+gl.texImage2D()
+      ↓
+GLSL effect + color grade
+      ↓
+ping-pong history framebuffer
+      ↓
+blit shader
+      ↓
+WebGL canvas
+```
+
+Camera frames remain entirely inside the WebView. Rust does not copy or process the video stream.
+
+## Run
 
 ```bash
 npm install
 npm run dev
 ```
 
-Build an installable application with:
+Press **Start camera** and approve the operating-system permission prompt. After approval, refresh the camera list if device labels remain generic.
+
+## Production build
 
 ```bash
 npm run build
 ```
 
-> The first camera start triggers an operating-system/WebView permission request. Packaged apps may also require platform permission metadata; the included macOS entitlement file is the starting point.
-
-## Controls and inputs
-
-Camera selection and start/stop, effect mode, `distortion`, `feedback`, `zoom`, `speed`, `hue`, `saturation`, `brightness`, `contrast`, `mirror`, `invert`, and `greyscale`.
-
-The HTML control defaults and the JavaScript `params` defaults are intended to match. When adding a parameter, update both so a fresh launch and the first user interaction produce the same state.
-
-## File map
-
-| File | Responsibility |
-|---|---|
-| `package.json` | Node scripts and the project-local Tauri CLI version. |
-| `src/index.html` | Single-window controls, canvas layout, and script loading. |
-| `src/sketch.js` | Visual state, shaders, rendering loop, and UI/input integration. |
-| `src-tauri/Cargo.toml` | Rust package metadata and native dependencies. |
-| `src-tauri/build.rs` | Project metadata or source file. |
-| `src-tauri/entitlements.plist` | Project metadata or source file. |
-| `src-tauri/src/main.rs` | Tauri entry point. |
-| `src-tauri/tauri.conf.json` | Tauri 1 window, frontend, security, and bundle configuration. |
-
-Generated schemas, icon assets, and lock files are omitted from this table because they do not define the example's runtime architecture.
-
-## Tauri 1.x notes
-
-This project uses Tauri 1: `tauri = "1"`, the v1 configuration schema, `build.devPath`/`build.distDir`, and the v1 `tauri` configuration object. The visual pipeline still runs inside the WebView; Tauri 2 does not make this example a native wgpu renderer.
-
-Read [`../../docs/V1_V2_ARCHITECTURE.md`](../../docs/V1_V2_ARCHITECTURE.md) for the repository-wide comparison.
-
-## Extending the example
-
-1. Add an effect branch in `applyEffect()` and update `EFFECT_NAMES`.
-2. Adjust camera constraints in `startCamera()` for resolution or frame-rate requirements.
-3. Keep camera lifecycle cleanup intact when changing streams or closing the app.
-
-Before adding a unique behavior, preserve a runnable baseline commit or branch. This makes it possible to distinguish framework/integration failures from failures introduced by the new visual idea.
-
-## Troubleshooting
-
-| Symptom | Check |
-|---|---|
-| App does not start | Confirm the OS-specific Tauri prerequisites, run `npm install`, then run `npm run dev` from this project directory. |
-| Blank or frozen canvas | Open the WebView developer tools, check shader compiler output, and confirm WebGL is available. |
-| No camera devices appear | Grant camera permission to the development app, refresh the device list, and verify another application is not exclusively using the camera. |
-| Camera starts but image is black | Check the selected device, video readiness state, and WebGL texture upload errors. |
-
-## Screenshot placeholder
-
-Add a screenshot after the example has been run on a target platform:
+On macOS, generated bundles are placed under:
 
 ```text
-docs/images/webcam-tauri-v1-single-template.png
+src-tauri/target/release/bundle/
 ```
 
-Then replace this section with:
+Public distribution generally requires Apple signing and notarization. The project includes `Info.plist` camera usage text and the camera sandbox entitlement.
 
-```markdown
-![Webcam Processing · Tauri v1 · Single Window running](../../docs/images/webcam-tauri-v1-single-template.png)
+## Controls
+
+| Section | Control | Purpose |
+|---|---|---|
+| Camera | Device | Selects a video-input device |
+| Camera | Request | Requests 480p, 720p, 1080p, or the highest available mode |
+| Camera | Framing | Chooses contain, cover, or stretch source mapping |
+| Effect | Mode | Selects passthrough, wave, radial, kaleidoscope, edge, or glitch processing |
+| Effect | Distortion | Controls the selected spatial effect |
+| Effect | Feedback | Mixes the previous processed frame into the current frame |
+| Effect | Zoom | Scales source coordinates |
+| Effect | Warp speed | Advances time-based effects |
+| Color | Hue / saturation / brightness / contrast | Grades the processed image |
+| Switches | Mirror / invert / greyscale | Enables common camera and color flags |
+
+Keyboard shortcuts:
+
+| Key | Action |
+|---|---|
+| Space | Pause or resume renderer updates without closing the camera |
+| R | Restore defaults and reset animation time |
+| X | Clear both feedback history buffers |
+| F | Toggle native-window fullscreen |
+
+## Project structure
+
+```text
+webcam-tauri-v1-single-template/
+├── README.md
+├── MODERNIZATION-NOTES.md
+├── package.json
+├── src/
+│   ├── index.html
+│   ├── sketch.js
+│   └── styles.css
+└── src-tauri/
+    ├── Cargo.toml
+    ├── Info.plist
+    ├── entitlements.plist
+    ├── tauri.conf.json
+    └── src/main.rs
 ```
 
-## Related examples
+## Camera-device behavior
 
-- Browse the complete comparison in [`../../docs/EXAMPLE_MATRIX.md`](../../docs/EXAMPLE_MATRIX.md).
-- Use the paired Tauri 2 version to compare framework-generation changes.
-- Use the paired two-window version to compare direct state with transport-based state.
+Browsers and WKWebView may hide meaningful camera labels until permission has been granted once. The Refresh button remains available before permission so the UI never becomes permanently locked in an empty state.
+
+Changing the selected device or requested capture size while the camera is active stops the old tracks first and then opens a new stream. This avoids retaining multiple cameras or conflicting tracks.
+
+## Feedback implementation
+
+Two RGBA textures alternate roles each frame:
+
+```text
+Frame N:   history B → effect → history A → screen
+Frame N+1: history A → effect → history B → screen
+```
+
+The screen copy uses a separate blit shader. This avoids applying hue, contrast, effects, or feedback a second time during display.
+
+## Known limitations
+
+- Camera formats and maximum resolutions are decided by the operating system and WebKit.
+- Requested resolution and frame rate are preferences, not guarantees.
+- The camera stays open when renderer updates are paused.
+- This example uses browser WebGL rather than native wgpu.
+- Windows and Linux camera permission behavior should be tested independently.

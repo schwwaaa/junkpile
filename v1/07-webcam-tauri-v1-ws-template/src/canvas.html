@@ -1,34 +1,37 @@
 <!doctype html>
-<!--
-  webcam output window — Tauri v1
-  canvas.js owns camera permission, stream lifecycle, WebGL texture upload, and rendering. It reports camera state back through the relay.
-  See the adjacent README.md for setup, architecture, extension points, and troubleshooting.
--->
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Webcam Output</title>
-  <style>
-    :root { color-scheme: dark; }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { width: 100vw; height: 100vh; overflow: hidden; background: #000; }
-    #glcanvas { display: block; width: 100vw; height: 100vh; }
-    /* Small WS indicator — bottom-right, fades after connect */
-    #ws-dot {
-      position: fixed; bottom: 8px; right: 10px;
-      font-family: monospace; font-size: 9px;
-      color: rgba(255,255,255,0.2); pointer-events: none;
-      transition: opacity 1.5s ease; z-index: 10;
-    }
-    #ws-dot.hidden { opacity: 0; }
-    #webcam-video { display: none; }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>07 · Webcam WebSocket Output</title>
+  <link rel="stylesheet" href="canvas.css" />
 </head>
 <body>
-  <canvas id="glcanvas"></canvas>
-  <div id="ws-dot">WS…</div>
-  <video id="webcam-video" autoplay playsinline muted></video>
+  <main id="canvasStage" class="canvas-stage">
+    <canvas id="glcanvas" aria-label="Live webcam processed through raw WebGL"></canvas>
+    <video id="webcam-video" autoplay playsinline muted></video>
+
+    <header class="output-hud">
+      <div>
+        <p>JUNKPILE · V1 · EXAMPLE 07</p>
+        <strong id="sourceName">Generated calibration source</strong>
+        <small id="rendererReadout">Preparing WebGL…</small>
+      </div>
+      <div class="output-telemetry">
+        <span id="connectionBadge" class="badge pending">CONNECTING</span>
+        <span id="shaderBadge" class="badge pending">COMPILING</span>
+        <span id="cameraBadge" class="badge pending">NO CAMERA</span>
+        <span><b id="fpsReadout">0</b> fps</span>
+        <span><b id="cameraFpsReadout">0</b> cam</span>
+        <span id="sizeReadout">0 × 0</span>
+        <span id="inputReadout">0 × 0 input</span>
+      </div>
+    </header>
+
+    <div id="pauseBadge" class="pause-badge hidden">RENDER PAUSED</div>
+    <pre id="errorPanel" class="error-panel hidden" aria-live="polite"></pre>
+    <div class="output-help">F fullscreen · camera capture remains in this WebView</div>
+  </main>
   <script src="canvas.js"></script>
 </body>
 </html>

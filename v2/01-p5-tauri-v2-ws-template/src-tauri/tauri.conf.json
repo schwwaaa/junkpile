@@ -1,48 +1,52 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-
-  "productName": "p5-ws-template",
-  "version":     "0.1.0",
-  "identifier":  "com.example.p5-ws-template",
-
+  "productName": "Junkpile 01 · Tauri v2 p5.js WebSocket",
+  "version": "0.2.0",
+  "identifier": "com.schwwaaa.junkpile.v2.p5-websocket",
   "build": {
     "beforeBuildCommand": "",
-    "beforeDevCommand":   "",
-    "frontendDist":       "../src"
+    "beforeDevCommand": "",
+    "frontendDist": "../src"
   },
-
   "app": {
+    "withGlobalTauri": true,
     "windows": [
       {
-        "label":       "controls",
-        "title":       "Controls",
-        "url":         "controls.html",
-        "width":       420,
-        "height":      680,
-        "resizable":   true,
+        "label": "controls",
+        "title": "01 · Tauri v2 · p5.js WebSocket Controls",
+        "url": "controls.html",
+        "width": 470,
+        "height": 820,
+        "minWidth": 390,
+        "minHeight": 620,
+        "resizable": true,
         "decorations": true,
+        "fullscreen": false,
         "x": 40,
-        "y": 60
+        "y": 50
       },
       {
-        "label":       "canvas",
-        "title":       "Shader Output",
-        "url":         "canvas.html",
-        "width":       800,
-        "height":      600,
-        "resizable":   true,
+        "label": "canvas",
+        "title": "01 · Tauri v2 · p5.js WebSocket Output",
+        "url": "canvas.html",
+        "width": 960,
+        "height": 720,
+        "minWidth": 480,
+        "minHeight": 360,
+        "resizable": true,
         "decorations": true,
-        "x": 500,
-        "y": 60
+        "fullscreen": false,
+        "x": 530,
+        "y": 50
       }
     ],
     "security": {
-      "csp": "default-src 'self'; connect-src ws://127.0.0.1:2727 ws://[::1]:2727; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'"
+      "csp": "default-src 'self'; connect-src 'self' ws://127.0.0.1:2727 ws://[::1]:2727 ipc: http://ipc.localhost; img-src 'self' data: blob:; script-src 'self'; style-src 'self' 'unsafe-inline'"
     }
   },
-
   "bundle": {
     "active": true,
+    "targets": "all",
     "icon": [
       "icons/icon.icns",
       "icons/icon.png",

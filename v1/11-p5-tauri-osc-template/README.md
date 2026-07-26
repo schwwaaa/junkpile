@@ -1,121 +1,235 @@
-# p5.js + OSC · Tauri v1 · Single Window
+# 11 · Tauri v1 OSC Input
 
-> **Baseline:** Rust OSC bridge baseline  
-> **Tauri:** 1.x  
-> **Window topology:** single window  
-> **Input:** OSC + DOM controls  
-> **Renderer:** p5.js WEBGL shader with OSC UDP input handled by Rust `rosc`
+A modernized Junkpile essential demonstrating how a **Tauri v1 Rust backend** can receive Open Sound Control messages over UDP and route them into a **p5.js WebGL shader instrument**.
 
-## Purpose
+This is the final legacy V1 project modernization. It intentionally remains smaller than the later OSC-driven applications: the goal is to make the native UDP → Tauri event → JavaScript parameter → GLSL path visible and easy to modify.
 
-A Tauri v1 network-control baseline. A Tokio UDP task decodes OSC packets in Rust and emits messages into the WebView, where an address map scales values into the shader parameter ranges.
+## What it demonstrates
 
-This example is intentionally a baseline: it exposes the complete path from input to pixels without introducing an application-specific product architecture. Start here, confirm the baseline works, then replace the visual or input mapping with your own idea.
+- Native UDP input through Rust
+- OSC packet and nested-bundle decoding with `rosc`
+- Tauri v1 commands and frontend events
+- Local-only or LAN-accessible listeners
+- Editable OSC address routes
+- Exact and wildcard-prefix matching
+- Four input scaling modes
+- OSC learn
+- Persistent route configuration
+- A built-in local OSC test burst
+- p5.js WebGL shader control
+- Live packet, sender, value, and rate telemetry
+- A scroll-safe current Junkpile interface
 
-## What you should learn
+## Signal flow
 
-- Bind an OSC UDP listener inside the Tauri process.
-- Decode OSC messages and bundles with `rosc`.
-- Forward normalized messages from Rust to JavaScript.
-- Map controller-friendly 0–1 values into visual parameter ranges.
-
-## Architecture
-
-```mermaid
-flowchart LR
-  Sender[OSC sender] -->|UDP 9000| Rosc[Rust rosc listener]
-  Rosc --> Event[Tauri osc-message]
-  Event --> Map[JavaScript ADDRESS_MAP]
-  Map --> Params[params object]
-  Params --> Shader[p5.js + GLSL uniforms]
-  Shader --> WebView[Tauri WebView window]
+```text
+TouchOSC / Max / Pure Data / SuperCollider / another sender
+                              │
+                              │ OSC over UDP
+                              ▼
+                  Rust UdpSocket listener
+                              │
+                              ▼
+                    rosc packet decoder
+                              │
+                              ▼
+                  Tauri "osc-event" event
+                              │
+                              ▼
+                 address route + value scale
+                              │
+                              ▼
+                    p5.js parameter state
+                              │
+                              ▼
+                        GLSL uniforms
+                              │
+                              ▼
+                       WebGL output
 ```
 
-### Runtime data flow
+The browser cannot open a raw UDP socket. Rust owns that system-level input and forwards structured messages to the WebView.
 
-1. The HTML creates the controls and canvas layout in one WebView document.
-2. Input handlers write directly into the shared `params` object.
-3. A Tokio task receives UDP packets and recursively handles OSC messages or bundles.
-4. Rust emits decoded data and JavaScript scales mapped addresses into shader parameters.
-
-## Prerequisites
-
-1. Install the operating-system dependencies required by Tauri.
-2. Install a current Rust toolchain with `rustup`.
-3. Install Node.js and npm.
-4. Install project dependencies from this directory.
+## Run
 
 ```bash
 npm install
 npm run dev
 ```
 
-Build an installable application with:
+`npm install` installs both the local Tauri CLI and p5.js. The `predev` script copies `p5.min.js` into `src/vendor`, so the app does not require a CDN at runtime.
+
+## Production build
 
 ```bash
 npm run build
 ```
 
-> The p5 examples load p5.js from cdnjs. A network connection is required unless you vendor `p5.min.js` locally and update the script tag.
+On macOS, packaged output is normally created under:
 
-## Controls and inputs
+```text
+src-tauri/target/release/bundle/
+```
 
-OSC addresses `/hue`, `/zoom`, `/speed`, `/brightness`, `/distortion`, `/complexity`, `/invert`, and `/pulse`, plus matching manual controls.
+Unsigned applications may still trigger Gatekeeper warnings when distributed outside your own computer.
 
-The HTML control defaults and the JavaScript `params` defaults are intended to match. When adding a parameter, update both so a fresh launch and the first user interaction produce the same state.
+## First test
 
-## File map
+1. Run the app.
+2. Leave **LAN devices** and port **9000** selected.
+3. Press **Send test burst**.
+4. Confirm that the terminal receives eight packets and the visual changes.
+5. Configure another OSC application to send UDP to one of the listed endpoints.
 
-| File | Responsibility |
+## Listener controls
+
+### Bind mode
+
+- `127.0.0.1` accepts packets only from applications on the same computer.
+- `0.0.0.0` accepts packets sent to the computer from the local network.
+
+### Port
+
+The default is UDP `9000`. Change it when another application already owns that port.
+
+### Endpoint hints
+
+The app displays loopback and likely LAN endpoints. Network interfaces and firewalls vary, so these are practical hints rather than a replacement for operating-system network inspection.
+
+## Default routes
+
+| OSC address | Parameter | Expected input |
+|---|---|---|
+| `/hue` | Hue | 0–1 |
+| `/zoom` | Zoom | 0–1 |
+| `/speed` | Speed | 0–1 |
+| `/brightness` | Brightness | 0–1 |
+| `/distortion` | Distortion | 0–1 |
+| `/complexity` | Complexity | 0–1 |
+| `/saturation` | Saturation | 0–1 |
+| `/glow` | Glow | 0–1 |
+
+Routes can be edited directly. End an address with `*` to match a prefix, such as:
+
+```text
+/visual/*
+```
+
+That route accepts `/visual/a`, `/visual/fader/1`, and any other address sharing the prefix.
+
+## Scaling modes
+
+- **0–1** maps normalized controller values into the parameter range.
+- **0–127** supports MIDI-style integer controllers transported through OSC.
+- **−1–1** maps bipolar values into the parameter range.
+- **Direct** treats the OSC number as the actual parameter value and clamps it to the slider range.
+
+## OSC learn
+
+1. Choose a visual parameter.
+2. Press **Arm learn**.
+3. Send one OSC message.
+4. The incoming address becomes that parameter's route.
+
+Routes are stored in WebView local storage and survive relaunches.
+
+## Supported packet data
+
+The Rust listener reports common OSC argument types including:
+
+- Float
+- Integer
+- Double
+- Long integer
+- Boolean
+- String
+- Blob
+- Nil
+
+The first numeric argument drives visual routing. All arguments remain visible in the packet terminal.
+
+Nested OSC bundles are decoded recursively and report their bundle depth.
+
+## Keyboard shortcuts
+
+| Key | Action |
 |---|---|
-| `package.json` | Node scripts and the project-local Tauri CLI version. |
-| `src/index.html` | Single-window controls, canvas layout, and script loading. |
-| `src/sketch.js` | Visual state, shaders, rendering loop, and UI/input integration. |
-| `src-tauri/Cargo.toml` | Rust package metadata and native dependencies. |
-| `src-tauri/build.rs` | Project metadata or source file. |
-| `src-tauri/src/main.rs` | OSC UDP listener, packet dispatch, and Tauri event emission. |
-| `src-tauri/tauri.conf.json` | Tauri 1 window, frontend, security, and bundle configuration. |
+| `Space` | Pause/resume rendering |
+| `R` | Reset visual values |
+| `F` | Toggle fullscreen |
 
-Generated schemas, icon assets, and lock files are omitted from this table because they do not define the example's runtime architecture.
+## Project structure
 
-## Tauri 1.x notes
+```text
+p5-tauri-osc-template/
+├── README.md
+├── MODERNIZATION-NOTES.md
+├── package.json
+├── scripts/
+│   └── sync-p5.mjs
+├── src/
+│   ├── index.html
+│   ├── styles.css
+│   ├── sketch.js
+│   └── vendor/
+│       └── p5.min.js        generated after npm install
+└── src-tauri/
+    ├── Cargo.toml
+    ├── build.rs
+    ├── tauri.conf.json
+    ├── icons/
+    └── src/
+        └── main.rs
+```
 
-This project uses Tauri 1: `tauri = "1"`, the v1 configuration schema, `build.devPath`/`build.distDir`, and the v1 `tauri` configuration object. The visual pipeline still runs inside the WebView; Tauri 2 does not make this example a native wgpu renderer.
+## Rust architecture
 
-Read [`../../docs/V1_V2_ARCHITECTURE.md`](../../docs/V1_V2_ARCHITECTURE.md) for the repository-wide comparison.
+`main.rs` owns a restartable listener runtime:
 
-## Extending the example
+```text
+OscState
+└── Mutex<Option<OscRuntime>>
+    ├── stop flag
+    ├── listener thread
+    └── active endpoint metadata
+```
 
-1. Edit `ADDRESS_MAP` in `src/sketch.js` to add or remap addresses.
-2. Change the UDP port in Rust and update any sender configuration.
-3. Add sender validation or network binding configuration before exposing the port beyond loopback/LAN use.
-
-Before adding a unique behavior, preserve a runnable baseline commit or branch. This makes it possible to distinguish framework/integration failures from failures introduced by the new visual idea.
+Starting a new listener safely stops and joins the previous listener thread before binding the replacement socket.
 
 ## Troubleshooting
 
-| Symptom | Check |
-|---|---|
-| App does not start | Confirm the OS-specific Tauri prerequisites, run `npm install`, then run `npm run dev` from this project directory. |
-| Blank or frozen canvas | Open the WebView developer tools, check shader compiler output, and confirm WebGL is available. |
-| No OSC messages appear | Confirm the sender targets UDP port 9000 and uses the address names listed above. Check firewall and host/IP settings. |
+### No packets arrive
 
-## Screenshot placeholder
+- Confirm the sender uses UDP, not TCP.
+- Confirm sender and receiver ports match.
+- Use `127.0.0.1` only when both applications run on the same computer.
+- Use LAN mode for phones or other computers.
+- Check macOS or Windows firewall rules.
+- Press **Send test burst** to separate app problems from network problems.
 
-Add a screenshot after the example has been run on a target platform:
+### Port already in use
 
-```text
-docs/images/p5-tauri-osc-template.png
-```
+Another process has bound the selected UDP port. Stop that process or choose a different port.
 
-Then replace this section with:
+### Values move incorrectly
 
-```markdown
-![p5.js + OSC · Tauri v1 · Single Window running](../../docs/images/p5-tauri-osc-template.png)
-```
+Check the selected scaling mode. A sender producing `0–127` values will immediately saturate a route configured for normalized `0–1` values.
 
-## Related examples
+### A sender uses different paths
 
-- Browse the complete comparison in [`../../docs/EXAMPLE_MATRIX.md`](../../docs/EXAMPLE_MATRIX.md).
-- Use the paired Tauri 2 version to compare framework-generation changes.
-- Use the paired two-window version to compare direct state with transport-based state.
+Edit the route fields or use OSC learn. The app does not require the default address names.
+
+## Suggested extensions
+
+- Multiple arguments mapped to multiple parameters
+- OSC output and bidirectional controller feedback
+- Timetag scheduling for bundles
+- Saved named routing profiles
+- Multiple simultaneous UDP ports
+- Authentication or network allowlists for public installations
+- Separate controls and canvas windows
+- Routing into native wgpu rather than p5.js
+
+## Version note
+
+This project intentionally uses **Tauri v1**. It is a WebView graphics example, not a native wgpu surface. The renderer is p5.js/WebGL and Rust supplies native UDP access.

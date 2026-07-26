@@ -1,29 +1,58 @@
 {
   "$schema": "https://schema.tauri.app/config/1",
   "build": {
-    "beforeBuildCommand": "", "beforeDevCommand": "",
-    "devPath": "../src", "distDir": "../src"
+    "beforeBuildCommand": "",
+    "beforeDevCommand": "",
+    "devPath": "../src",
+    "distDir": "../src"
   },
-  "package": { "productName": "glsl-ws-template", "version": "0.1.0" },
+  "package": {
+    "productName": "Junkpile 05 External GLSL WebSocket",
+    "version": "0.2.0"
+  },
   "tauri": {
     "windows": [
       {
-        "label": "controls", "title": "Controls",
-        "url": "controls.html", "width": 420, "height": 720,
-        "resizable": true, "decorations": true, "x": 40, "y": 60
+        "label": "controls",
+        "title": "05 · External GLSL WebSocket Controls",
+        "url": "controls.html",
+        "width": 500,
+        "height": 820,
+        "minWidth": 420,
+        "minHeight": 620,
+        "resizable": true,
+        "decorations": true,
+        "x": 40,
+        "y": 50
       },
       {
-        "label": "canvas", "title": "Shader Output",
-        "url": "canvas.html", "width": 800, "height": 600,
-        "resizable": true, "decorations": true, "x": 500, "y": 60
+        "label": "canvas",
+        "title": "05 · External GLSL WebSocket Output",
+        "url": "canvas.html",
+        "width": 900,
+        "height": 680,
+        "minWidth": 480,
+        "minHeight": 360,
+        "resizable": true,
+        "decorations": true,
+        "x": 560,
+        "y": 50
       }
     ],
     "bundle": {
-      "active": true, "identifier": "com.example.glsl-ws-template",
-      "icon": ["icons/icon.icns","icons/icon.png","icons/icon.ico"]
+      "active": true,
+      "identifier": "com.schwwaaa.junkpile.v1.glslws05",
+      "icon": [
+        "icons/icon.icns",
+        "icons/icon.png",
+        "icons/icon.ico"
+      ]
+    },
+    "allowlist": {
+      "all": false
     },
     "security": {
-      "csp": "default-src 'self'; connect-src ws://127.0.0.1:2727 ws://[::1]:2727; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+      "csp": "default-src 'self'; connect-src ws://127.0.0.1:2727 ws://[::1]:2727; script-src 'self'; style-src 'self'"
     }
   }
 }

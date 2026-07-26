@@ -660,14 +660,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "feedback-tauri-v1-single-template"
-version = "0.1.0"
-dependencies = [
- "tauri",
- "tauri-build",
-]
-
-[[package]]
 name = "field-offset"
 version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1516,6 +1508,14 @@ dependencies = [
  "fluent-uri",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "junkpile_08_tauri_v1_feedback_single_window"
+version = "0.2.0"
+dependencies = [
+ "tauri",
+ "tauri-build",
 ]
 
 [[package]]

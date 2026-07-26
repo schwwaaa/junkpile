@@ -1,118 +1,190 @@
-# External GLSL Shader · Tauri v1 · Single Window
+# 04 · Tauri v1 External GLSL Single Window
 
-> **Baseline:** external GLSL file baseline  
-> **Tauri:** 1.x  
-> **Window topology:** single window  
-> **Input:** DOM controls + shader file  
-> **Renderer:** raw WebGL 1 with a fragment shader loaded from `shader.frag`
+A focused raw-WebGL example where the fragment shader is stored as a real external project file and can be replaced at runtime without rebuilding the Tauri application.
 
-## Purpose
+This folder intentionally retains its original repository name:
 
-A raw WebGL baseline that separates the artwork into an editable `.frag` file. The app loads, compiles, and reports shader errors at runtime; the two-window form can also send replacement shader source from the controls window.
-
-This example is intentionally a baseline: it exposes the complete path from input to pixels without introducing an application-specific product architecture. Start here, confirm the baseline works, then replace the visual or input mapping with your own idea.
-
-## What you should learn
-
-- Fetch a shader asset from the Tauri frontend bundle.
-- Compile replacement shader source at runtime and preserve the last valid program on failure.
-- Surface GLSL compiler messages in the interface.
-- Keep shader source separate from application and transport code.
-
-## Architecture
-
-```mermaid
-flowchart LR
-  Controls[DOM controls] --> Params[Shared params object]
-  Params --> Render[JavaScript render loop]
-  Render --> Shader[raw WebGL 1 with a fragment shader loaded from `shader.frag`]
-  Shader --> Canvas[Canvas in one Tauri V1 window]
+```text
+glsl-tauri-v1-single-template
 ```
 
-### Runtime data flow
+The visible example number is **04** so it aligns with the complete Junkpile Tauri v1 Essentials sequence.
 
-1. The HTML creates the controls and canvas layout in one WebView document.
-2. Input handlers write directly into the shared `params` object.
-3. The JavaScript fetches `shader.frag`, compiles it, and reports compiler errors without discarding the last valid program.
-4. The rendering path uploads the documented uniform contract on every frame.
+## What this example teaches
 
-## Prerequisites
+- Fetching an external `.frag` project asset at startup
+- Reading a local GLSL file with the browser file API
+- Compiling and linking replacement fragment shaders at runtime
+- Keeping the last valid WebGL program active after a compile failure
+- Understanding the uniform contract between JavaScript and an external shader
+- Separating shader source from the application shell and renderer logic
+- Reporting compiler and linker failures without turning the output into a blank window
+- Controlling a native Tauri v1 window from JavaScript
 
-1. Install the operating-system dependencies required by Tauri.
-2. Install a current Rust toolchain with `rustup`.
-3. Install Node.js and npm.
-4. Install project dependencies from this directory.
+## Signal flow
+
+```text
+src/shader.frag or local .frag/.glsl file
+                    ↓
+             fetch() / FileReader
+                    ↓
+       WebGL compile + program link
+                    ↓
+HTML controls → params → uniforms
+                    ↓
+             gl.drawArrays()
+                    ↓
+        WebGL canvas in one WebView
+```
+
+There is no WebSocket, second window, p5.js renderer, or native GPU surface.
+
+## Run
 
 ```bash
 npm install
 npm run dev
 ```
 
-Build an installable application with:
+## Production build
 
 ```bash
 npm run build
 ```
 
-## Controls and inputs
-
-Shader file loading plus `hue`, `saturation`, `brightness`, `zoom`, `speed`, `distortion`, `complexity`, `symmetry`, `glow`, `invert`, `pulse`, and `rotate`.
-
-The HTML control defaults and the JavaScript `params` defaults are intended to match. When adding a parameter, update both so a fresh launch and the first user interaction produce the same state.
-
-## File map
-
-| File | Responsibility |
-|---|---|
-| `package.json` | Node scripts and the project-local Tauri CLI version. |
-| `src/index.html` | Single-window controls, canvas layout, and script loading. |
-| `src/shader.frag` | Runtime-loaded GLSL ES 1.0 fragment shader. |
-| `src/sketch.js` | Visual state, shaders, rendering loop, and UI/input integration. |
-| `src-tauri/Cargo.toml` | Rust package metadata and native dependencies. |
-| `src-tauri/build.rs` | Project metadata or source file. |
-| `src-tauri/src/main.rs` | Tauri entry point. |
-| `src-tauri/tauri.conf.json` | Tauri 1 window, frontend, security, and bundle configuration. |
-
-Generated schemas, icon assets, and lock files are omitted from this table because they do not define the example's runtime architecture.
-
-## Tauri 1.x notes
-
-This project uses Tauri 1: `tauri = "1"`, the v1 configuration schema, `build.devPath`/`build.distDir`, and the v1 `tauri` configuration object. The visual pipeline still runs inside the WebView; Tauri 2 does not make this example a native wgpu renderer.
-
-Read [`../../docs/V1_V2_ARCHITECTURE.md`](../../docs/V1_V2_ARCHITECTURE.md) for the repository-wide comparison.
-
-## Extending the example
-
-1. Replace `src/shader.frag` while preserving the documented uniform contract.
-2. Change the uniform contract only after updating the JavaScript upload path.
-3. Use the compile-error overlay as the starting point for a richer shader editor.
-
-Before adding a unique behavior, preserve a runnable baseline commit or branch. This makes it possible to distinguish framework/integration failures from failures introduced by the new visual idea.
-
-## Troubleshooting
-
-| Symptom | Check |
-|---|---|
-| App does not start | Confirm the OS-specific Tauri prerequisites, run `npm install`, then run `npm run dev` from this project directory. |
-| Blank or frozen canvas | Open the WebView developer tools, check shader compiler output, and confirm WebGL is available. |
-| Replacement shader fails | Read the compiler overlay and preserve the expected uniform names and GLSL ES 1.0 syntax. |
-
-## Screenshot placeholder
-
-Add a screenshot after the example has been run on a target platform:
+On macOS, generated bundles are placed under:
 
 ```text
-docs/images/glsl-tauri-v1-single-template.png
+src-tauri/target/release/bundle/
 ```
 
-Then replace this section with:
+Unsigned applications can trigger Gatekeeper on another Mac. Public distribution generally requires Apple signing and notarization.
 
-```markdown
-![External GLSL Shader · Tauri v1 · Single Window running](../../docs/images/glsl-tauri-v1-single-template.png)
+## External shader workflow
+
+The default fragment shader is:
+
+```text
+src/shader.frag
 ```
 
-## Related examples
+At startup, `src/sketch.js` requests that file with `fetch()` and compiles it. You can then:
 
-- Browse the complete comparison in [`../../docs/EXAMPLE_MATRIX.md`](../../docs/EXAMPLE_MATRIX.md).
-- Use the paired Tauri 2 version to compare framework-generation changes.
-- Use the paired two-window version to compare direct state with transport-based state.
+- Press **Open shader** and select a `.frag`, `.glsl`, `.fs`, or text file.
+- Drag a shader file into the renderer.
+- Press **Recompile** to retry the currently loaded source.
+- Press **Use project shader** or **Reload default** to fetch `shader.frag` again.
+
+If a replacement fails, the diagnostics panel reports the compiler output and the previous valid shader continues rendering.
+
+## Shader contract
+
+A replacement fragment shader must target **GLSL ES 1.00 / WebGL 1** and should include:
+
+```glsl
+precision highp float;
+varying vec2 vTexCoord;
+
+void main() {
+    gl_FragColor = vec4(vTexCoord, 0.0, 1.0);
+}
+```
+
+The renderer supplies these uniforms:
+
+```glsl
+uniform float u_time;
+uniform vec2  u_resolution;
+uniform float u_hue;
+uniform float u_saturation;
+uniform float u_brightness;
+uniform float u_zoom;
+uniform float u_distortion;
+uniform float u_rotate;
+uniform float u_complexity;
+uniform float u_symmetry;
+uniform float u_glow;
+uniform float u_invert;
+uniform float u_pulse;
+```
+
+A shader does not need to use every uniform. WebGL optimizes unused uniforms away, and the renderer safely skips missing locations.
+
+## Common compatibility problems
+
+The diagnostics panel recognizes several common reasons an imported shader may fail:
+
+- `#version 300 es` WebGL 2 source
+- Custom `out vec4` fragment outputs instead of `gl_FragColor`
+- `texture()` instead of WebGL 1 `texture2D()`
+- ShaderToy `mainImage()` and `iTime` / `iResolution` conventions
+- `layout(...)` qualifiers
+- `#include` directives
+- Missing `void main()`
+- Missing float precision declaration
+
+The dedicated shader-playground examples later add full source editing and richer line navigation.
+
+## Controls
+
+| Section | Parameter | Purpose |
+|---|---|---|
+| Color | Hue shift | Rotates the default shader palette |
+| Color | Saturation | Moves from monochrome to vivid color |
+| Color | Brightness | Multiplies final output brightness |
+| Motion | Zoom | Scales shader coordinates |
+| Motion | Speed | Advances the accumulated animation clock |
+| Motion | Distortion | Strengthens domain warping |
+| Pattern | Complexity | Changes the default fBm octave count |
+| Pattern | Symmetry | Changes rotational folding |
+| Pattern | Glow | Brightens the center of the field |
+| Switches | Invert | Inverts the default shader output |
+| Switches | Pulse | Enables rhythmic brightness modulation |
+| Switches | Rotate | Rotates the complete coordinate field |
+
+Loaded shaders can ignore or reinterpret these values.
+
+Keyboard shortcuts:
+
+| Key | Action |
+|---|---|
+| Space | Pause or resume animation |
+| R | Restore uniform defaults and reset time |
+| C | Recompile the loaded shader source |
+| O | Open the shader-file picker |
+| F | Toggle native-window fullscreen |
+
+## Project structure
+
+```text
+glsl-tauri-v1-single-template/
+├── README.md
+├── MODERNIZATION-NOTES.md
+├── package.json
+├── src/
+│   ├── index.html
+│   ├── shader.frag
+│   ├── sketch.js
+│   └── styles.css
+└── src-tauri/
+    ├── Cargo.toml
+    ├── tauri.conf.json
+    └── src/main.rs
+```
+
+## Why this remains a separate example
+
+Example 02 embeds its fragment source directly in JavaScript. Example 04 establishes the external-asset workflow used by larger shader projects:
+
+- shader code can be edited in a dedicated editor;
+- shader files can be generated by another tool;
+- source can be versioned or exchanged independently;
+- the application shell does not need to be rebuilt to try a replacement.
+
+## Known limitations
+
+- The local file picker loads source into memory; it does not overwrite `src/shader.frag`.
+- The imported source must be compatible with WebGL 1 / GLSL ES 1.00.
+- The controls expose the default uniform contract rather than dynamically generating controls for arbitrary uniforms.
+- Browser file APIs do not reveal the original file path to JavaScript.
+- This example intentionally remains single-window and uses browser WebGL rather than native wgpu.

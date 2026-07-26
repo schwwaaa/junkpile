@@ -1,121 +1,164 @@
-# p5.js + MIDI · Tauri v1 · Single Window
+# 10 · Tauri v1 MIDI Input
 
-> **Baseline:** Rust MIDI bridge baseline  
-> **Tauri:** 1.x  
-> **Window topology:** single window  
-> **Input:** MIDI + DOM controls  
-> **Renderer:** p5.js WEBGL shader with native MIDI input handled by Rust `midir`
+A modernized Junkpile foundation for receiving native MIDI through Rust and using it to control a p5.js WebGL shader inside one Tauri v1 window.
 
-## Purpose
+The repository folder intentionally keeps its original name:
 
-A Tauri v1 hardware-input baseline. Rust enumerates and opens MIDI ports, parses incoming bytes, and emits normalized events to the WebView. JavaScript maps those events to shader parameters while retaining manual controls.
-
-This example is intentionally a baseline: it exposes the complete path from input to pixels without introducing an application-specific product architecture. Start here, confirm the baseline works, then replace the visual or input mapping with your own idea.
-
-## What you should learn
-
-- Expose Rust MIDI functions as Tauri commands.
-- Keep a native MIDI connection alive in managed Rust state.
-- Parse CC, note, and pitch-bend messages.
-- Emit events from Rust and subscribe through `window.__TAURI__.event`.
-
-## Architecture
-
-```mermaid
-flowchart LR
-  Device[MIDI controller] --> Midir[Rust midir callback]
-  Midir --> Event[Tauri midi-event]
-  Event --> Map[JavaScript CC_MAP]
-  Map --> Params[params object]
-  Params --> Shader[p5.js + GLSL uniforms]
-  Shader --> WebView[Tauri WebView window]
+```text
+p5-tauri-midi-template
 ```
 
-### Runtime data flow
+## What this example teaches
 
-1. The HTML creates the controls and canvas layout in one WebView document.
-2. Input handlers write directly into the shared `params` object.
-3. Rust commands enumerate and connect ports; a callback parses MIDI bytes.
-4. Rust emits structured events and JavaScript maps them into the shared shader parameters.
+- Why Web MIDI is not the dependable path inside Tauri v1 WebViews
+- Receiving CoreMIDI, ALSA, or WinMM input through Rust `midir`
+- Parsing channel voice messages into structured Tauri events
+- Listening for those events in JavaScript
+- Scaling MIDI CC values into useful visual parameter ranges
+- Mapping controls with MIDI learn
+- Combining hardware input with manual HTML controls
+- Driving p5.js shader uniforms from the resulting state
 
-## Prerequisites
+## Signal flow
 
-1. Install the operating-system dependencies required by Tauri.
-2. Install a current Rust toolchain with `rustup`.
-3. Install Node.js and npm.
-4. Install project dependencies from this directory.
+```text
+MIDI controller / virtual MIDI port
+        ↓
+Rust midir callback
+        ↓
+parse_midi()
+        ↓
+window.emit("midi-event")
+        ↓
+JavaScript mapping + parameter state
+        ↓
+p5 draw loop
+        ↓
+GLSL uniforms
+```
+
+## Run
 
 ```bash
 npm install
 npm run dev
 ```
 
-Build an installable application with:
+`npm install` provides both the local Tauri v1 CLI and p5.js. The pre-development script copies the pinned p5 build into `src/vendor/`, so the app does not require a CDN at runtime.
+
+## Production build
 
 ```bash
 npm run build
 ```
 
-> The p5 examples load p5.js from cdnjs. A network connection is required unless you vendor `p5.min.js` locally and update the script tag.
-
-## Controls and inputs
-
-MIDI port refresh/connect/disconnect/debug, manual `hue`, `zoom`, `speed`, and `brightness`, plus the CC map defined in `sketch.js`.
-
-The HTML control defaults and the JavaScript `params` defaults are intended to match. When adding a parameter, update both so a fresh launch and the first user interaction produce the same state.
-
-## File map
-
-| File | Responsibility |
-|---|---|
-| `package.json` | Node scripts and the project-local Tauri CLI version. |
-| `src/index.html` | Single-window controls, canvas layout, and script loading. |
-| `src/sketch.js` | Visual state, shaders, rendering loop, and UI/input integration. |
-| `src-tauri/Cargo.toml` | Rust package metadata and native dependencies. |
-| `src-tauri/build.rs` | Project metadata or source file. |
-| `src-tauri/src/main.rs` | Tauri commands, MIDI connection state, parser, and event emission. |
-| `src-tauri/tauri.conf.json` | Tauri 1 window, frontend, security, and bundle configuration. |
-
-Generated schemas, icon assets, and lock files are omitted from this table because they do not define the example's runtime architecture.
-
-## Tauri 1.x notes
-
-This project uses Tauri 1: `tauri = "1"`, the v1 configuration schema, `build.devPath`/`build.distDir`, and the v1 `tauri` configuration object. The visual pipeline still runs inside the WebView; Tauri 2 does not make this example a native wgpu renderer.
-
-Read [`../../docs/V1_V2_ARCHITECTURE.md`](../../docs/V1_V2_ARCHITECTURE.md) for the repository-wide comparison.
-
-## Extending the example
-
-1. Edit `CC_MAP` in `src/sketch.js` for a controller-specific layout.
-2. Extend `parse_midi()` in Rust when additional MIDI message types are needed.
-3. Add a Tauri v2 counterpart by migrating commands/events and defining the required v2 capabilities.
-
-Before adding a unique behavior, preserve a runnable baseline commit or branch. This makes it possible to distinguish framework/integration failures from failures introduced by the new visual idea.
-
-## Troubleshooting
-
-| Symptom | Check |
-|---|---|
-| App does not start | Confirm the OS-specific Tauri prerequisites, run `npm install`, then run `npm run dev` from this project directory. |
-| Blank or frozen canvas | Open the WebView developer tools, check shader compiler output, and confirm WebGL is available. |
-| No MIDI ports appear | Verify the device at the operating-system level; on macOS check Audio MIDI Setup, and on Linux ensure ALSA development/runtime support is present. |
-
-## Screenshot placeholder
-
-Add a screenshot after the example has been run on a target platform:
+On macOS, bundles are generated under:
 
 ```text
-docs/images/p5-tauri-midi-template.png
+src-tauri/target/release/bundle/
 ```
 
-Then replace this section with:
+## Default MIDI mapping
 
-```markdown
-![p5.js + MIDI · Tauri v1 · Single Window running](../../docs/images/p5-tauri-midi-template.png)
+| CC | Parameter |
+|---:|---|
+| 1 | Hue |
+| 2 | Zoom |
+| 3 | Speed |
+| 7 | Brightness |
+| 10 | Distortion |
+| 74 | Complexity |
+
+Saturation and glow begin unmapped. Use **MIDI learn** to assign them—or replace any default mapping. The mapping is saved in local storage.
+
+Additional messages:
+
+- Note On creates a velocity-scaled light impulse.
+- Pitch bend rotates the shader field around its center.
+- Note Off, aftertouch, pressure, and program changes appear in the event terminal.
+
+## Test without a physical controller
+
+### macOS
+
+1. Open **Audio MIDI Setup**.
+2. Choose **Window → Show MIDI Studio**.
+3. Double-click **IAC Driver**.
+4. Enable **Device is online**.
+5. Send MIDI to the IAC Bus from Max, Pure Data, Ableton Live, Logic, or another application.
+
+### Linux
+
+Install ALSA development support before compiling:
+
+```bash
+sudo apt install libasound2-dev
 ```
 
-## Related examples
+### Windows
 
-- Browse the complete comparison in [`../../docs/EXAMPLE_MATRIX.md`](../../docs/EXAMPLE_MATRIX.md).
-- Use the paired Tauri 2 version to compare framework-generation changes.
-- Use the paired two-window version to compare direct state with transport-based state.
+Class-compliant devices and virtual WinMM ports should appear automatically.
+
+## Interface
+
+- **Device** scans, connects, disconnects, and prints native port diagnostics.
+- **Quick states** change visual parameters without changing MIDI assignments.
+- **MIDI learn** maps the next received CC to a chosen parameter.
+- **Visual parameters** remain fully operable without hardware.
+- **Mini MIDI terminal** shows parsed messages and raw bytes.
+- **Meters** visualize note velocity, pitch bend, and the latest CC value.
+
+Keyboard shortcuts:
+
+| Key | Action |
+|---|---|
+| Space | Pause or resume animation |
+| R | Restore visual defaults |
+| F | Toggle native fullscreen |
+
+## Project structure
+
+```text
+p5-tauri-midi-template/
+├── README.md
+├── MODERNIZATION-NOTES.md
+├── package.json
+├── scripts/
+│   └── sync-p5.mjs
+├── src/
+│   ├── index.html
+│   ├── sketch.js
+│   ├── styles.css
+│   └── vendor/p5.min.js    generated after npm install
+└── src-tauri/
+    ├── Cargo.toml
+    ├── tauri.conf.json
+    └── src/main.rs
+```
+
+## Rust commands
+
+| Command | Purpose |
+|---|---|
+| `list_midi_ports` | Returns currently visible MIDI inputs |
+| `debug_midi_ports` | Returns a human-readable native port report |
+| `connect_midi_port_by_name` | Opens a port and begins emitting events |
+| `disconnect_midi` | Closes the active connection |
+| `midi_connection_name` | Reports the current connection |
+| `toggle_fullscreen` | Controls the native Tauri window |
+
+## Extend this example
+
+To add another MIDI-controlled shader parameter:
+
+1. Add the parameter to `PARAMS` in `src/sketch.js`.
+2. Add a matching uniform to `FRAG_SHADER`.
+3. Upload it inside `draw()`.
+4. Use MIDI learn to assign a CC, or provide a default `cc` number in the parameter specification.
+
+## Known limitations
+
+- The example accepts one MIDI input connection at a time.
+- MIDI output is outside this example’s scope.
+- The MIDI mapping is intentionally linear; custom curves can be added in `setParam()`.
+- p5.js and WebGL run in the WebView rather than through native wgpu.

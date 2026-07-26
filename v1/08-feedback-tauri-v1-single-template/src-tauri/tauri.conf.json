@@ -4,37 +4,37 @@
     "beforeBuildCommand": "",
     "beforeDevCommand": "",
     "devPath": "../src",
-    "distDir": "../src"
+    "distDir": "../src",
+    "withGlobalTauri": true
   },
   "package": {
-    "productName": "feedback-single-template",
-    "version": "0.1.0"
+    "productName": "Junkpile 08 · Feedback Single Window",
+    "version": "0.2.0"
   },
   "tauri": {
+    "allowlist": { "all": false },
     "windows": [
       {
         "label": "main",
-        "title": "Feedback \u00b7 Tauri v1 \u00b7 Single Window",
+        "title": "08 · Tauri v1 · Feedback Single Window",
         "url": "index.html",
-        "width": 1280,
-        "height": 780,
-        "resizable": true
+        "width": 1320,
+        "height": 840,
+        "minWidth": 980,
+        "minHeight": 650,
+        "resizable": true,
+        "decorations": true,
+        "fullscreen": false
       }
     ],
     "bundle": {
       "active": true,
-      "identifier": "com.example.feedback-single-v1",
-      "icon": [
-        "icons/icon.icns",
-        "icons/icon.png",
-        "icons/icon.ico"
-      ],
-      "macOS": {
-        "entitlements": "entitlements.plist"
-      }
+      "identifier": "com.schwwaaa.junkpile.v1.feedback-single-window",
+      "icon": ["icons/icon.icns", "icons/icon.png", "icons/icon.ico"],
+      "macOS": { "entitlements": "entitlements.plist" }
     },
     "security": {
-      "csp": "default-src 'self'; media-src 'self' blob: mediastream:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+      "csp": "default-src 'self'; media-src 'self' blob: mediastream:; img-src 'self' data: blob:; script-src 'self'; style-src 'self' 'unsafe-inline'"
     }
   }
 }

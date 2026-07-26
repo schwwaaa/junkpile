@@ -1,11 +1,10 @@
 {
   "name": "webgl-tauri-v1-ws-template",
   "private": true,
-  "version": "0.1.0",
-  "type": "module",
-  "description": "Two-window Tauri v1 + raw WebGL + WebSocket template (no p5.js)",
+  "version": "0.2.0",
+  "description": "Junkpile Tauri v1 Essential 03: polished two-window raw WebGL control over an embedded WebSocket relay",
   "scripts": {
-    "dev":   "tauri dev",
+    "dev": "tauri dev",
     "build": "tauri build",
     "tauri": "tauri"
   },

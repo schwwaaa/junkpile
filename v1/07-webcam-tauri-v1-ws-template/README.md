@@ -1,128 +1,131 @@
-# Webcam Processing · Tauri v1 · Two-Window WebSocket
+# 07 · Tauri v1 Webcam WebSocket
 
-> **Baseline:** webcam processing baseline  
-> **Tauri:** 1.x  
-> **Window topology:** two windows with an embedded WebSocket relay  
-> **Input:** Webcam + WebSocket controls  
-> **Renderer:** raw WebGL 1 using the browser MediaDevices API and a webcam texture
+A two-window Tauri v1 example that keeps HTML controls separate from live camera capture and raw WebGL rendering.
 
-## Purpose
-
-A baseline for camera acquisition, device selection, video-frame upload, shader processing, and lightweight previous-frame blending. It demonstrates the boundary between OS camera permission, WebView media capture, JavaScript video handling, and GPU texture sampling.
-
-This example is intentionally a baseline: it exposes the complete path from input to pixels without introducing an application-specific product architecture. Start here, confirm the baseline works, then replace the visual or input mapping with your own idea.
-
-## What you should learn
-
-- Enumerate cameras with `navigator.mediaDevices.enumerateDevices()`.
-- Request a stream with `getUserMedia()` and attach it to a hidden video element.
-- Upload video frames into a WebGL texture every animation frame.
-- Apply real-time effects and optional previous-frame feedback in a fragment shader.
-
-## Architecture
-
-```mermaid
-flowchart LR
-  Controls[controls.html] -->|JSON over ws://127.0.0.1:2727| Relay[Rust WebSocket relay]
-  Relay -->|broadcast to other clients| CanvasJS[canvas.html JavaScript]
-  CanvasJS --> Render[Webcam texture + render loop]
-  Render --> Output[Canvas window]
-  CanvasJS -. camera status / device list .-> Relay
-  Relay -. status messages .-> Controls
+```text
+controls.html
+    │ parameter batches / camera commands
+    ▼
+ws://127.0.0.1:2727
+    │ embedded Rust relay
+    ▼
+canvas.html
+    │ getUserMedia → video → texImage2D
+    ▼
+GLSL effect → ping-pong history → output
 ```
 
-### Runtime data flow
+## What this demonstrates
 
-1. `controls.js` serializes state changes as JSON messages.
-2. Rust `main.rs` hosts the loopback WebSocket relay and broadcasts messages to other connected clients.
-3. `canvas.js` receives messages, updates local state, and owns the visual render loop.
-4. The camera stream feeds a hidden video element.
-5. Each frame uploads the current video image into a WebGL texture before drawing the selected effect.
+- Two Tauri v1 WebViews with explicit `controls` and `canvas` roles
+- An embedded Rust WebSocket relay
+- Camera capture inside the same WebView that owns WebGL
+- Pre-permission device enumeration and post-permission labels
+- Restartable camera selection and capture presets
+- Camera frames uploaded with `gl.texImage2D()`
+- Six GLSL camera effects
+- Persistent ping-pong feedback
+- Separate effect and blit programs
+- Reconnect-safe parameter and camera state synchronization
+- Output FPS, camera FPS, resolution, GPU, shader, and camera telemetry
 
-## Prerequisites
+## Requirements
 
-1. Install the operating-system dependencies required by Tauri.
-2. Install a current Rust toolchain with `rustup`.
-3. Install Node.js and npm.
-4. Install project dependencies from this directory.
+- Rust and Cargo
+- Node.js and npm
+- macOS: Xcode command-line tools
+- A camera or virtual camera for live-input testing
+
+## Development
 
 ```bash
 npm install
 npm run dev
 ```
 
-Build an installable application with:
+Approve camera permission when requested. The output displays a generated calibration field until a camera is running.
+
+## Production build
 
 ```bash
+npm install
 npm run build
 ```
 
-> The first camera start triggers an operating-system/WebView permission request. Packaged apps may also require platform permission metadata; the included macOS entitlement file is the starting point.
-
-## Controls and inputs
-
-Camera selection and start/stop, effect mode, `distortion`, `feedback`, `zoom`, `speed`, `hue`, `saturation`, `brightness`, `contrast`, `mirror`, `invert`, and `greyscale`.
-
-The HTML control defaults and the JavaScript `params` defaults are intended to match. When adding a parameter, update both so a fresh launch and the first user interaction produce the same state.
-
-## File map
-
-| File | Responsibility |
-|---|---|
-| `package.json` | Node scripts and the project-local Tauri CLI version. |
-| `src/canvas.html` | Output-window canvas and status overlay. |
-| `src/canvas.js` | Output-window state receiver and rendering pipeline. |
-| `src/controls.html` | Control-window markup and styling. |
-| `src/controls.js` | Control-window state serialization and WebSocket client. |
-| `src-tauri/Cargo.toml` | Rust package metadata and native dependencies. |
-| `src-tauri/build.rs` | Project metadata or source file. |
-| `src-tauri/entitlements.plist` | Project metadata or source file. |
-| `src-tauri/src/main.rs` | Tauri entry point and embedded WebSocket relay. |
-| `src-tauri/tauri.conf.json` | Tauri 1 window, frontend, security, and bundle configuration. |
-
-Generated schemas, icon assets, and lock files are omitted from this table because they do not define the example's runtime architecture.
-
-## Tauri 1.x notes
-
-This project uses Tauri 1: `tauri = "1"`, the v1 configuration schema, `build.devPath`/`build.distDir`, and the v1 `tauri` configuration object. The embedded WebSocket relay design is intentionally the same in both generations; most migration differences are configuration and dependency changes.
-
-Read [`../../docs/V1_V2_ARCHITECTURE.md`](../../docs/V1_V2_ARCHITECTURE.md) for the repository-wide comparison.
-
-## Extending the example
-
-1. Add an effect branch in `applyEffect()` and update `EFFECT_NAMES`.
-2. Adjust camera constraints in `startCamera()` for resolution or frame-rate requirements.
-3. Keep camera lifecycle cleanup intact when changing streams or closing the app.
-
-Before adding a unique behavior, preserve a runnable baseline commit or branch. This makes it possible to distinguish framework/integration failures from failures introduced by the new visual idea.
-
-## Troubleshooting
-
-| Symptom | Check |
-|---|---|
-| App does not start | Confirm the OS-specific Tauri prerequisites, run `npm install`, then run `npm run dev` from this project directory. |
-| Blank or frozen canvas | Open the WebView developer tools, check shader compiler output, and confirm WebGL is available. |
-| Controls remain disconnected | Confirm no other template is using TCP port 2727. Check the Rust console for IPv4/IPv6 listener errors. |
-| Canvas opens but does not update | Verify both pages send the hello handshake and that `WS_URL` matches the Rust `PORT` constant. |
-| No camera devices appear | Grant camera permission to the development app, refresh the device list, and verify another application is not exclusively using the camera. |
-| Camera starts but image is black | Check the selected device, video readiness state, and WebGL texture upload errors. |
-
-## Screenshot placeholder
-
-Add a screenshot after the example has been run on a target platform:
+The macOS production bundles are created under:
 
 ```text
-docs/images/webcam-tauri-v1-ws-template.png
+src-tauri/target/release/bundle/
 ```
 
-Then replace this section with:
+Unsigned local builds may be stopped by Gatekeeper on another Mac. Distribution requires the normal Apple signing and notarization process.
 
-```markdown
-![Webcam Processing · Tauri v1 · Two-Window WebSocket running](../../docs/images/webcam-tauri-v1-ws-template.png)
-```
+## Window responsibilities
 
-## Related examples
+### Controls window
 
-- Browse the complete comparison in [`../../docs/EXAMPLE_MATRIX.md`](../../docs/EXAMPLE_MATRIX.md).
-- Use the paired Tauri 2 version to compare framework-generation changes.
-- Use the paired single-window version to compare direct state with transport-based state.
+- Owns the current visual parameter state
+- Requests camera start, stop, restart, and device enumeration
+- Sends parameter batches once per animation frame
+- Restores the complete state when the output reconnects
+- Displays renderer and camera telemetry
+
+### Output window
+
+- Owns `navigator.mediaDevices.getUserMedia()`
+- Owns the hidden `<video>` element and `MediaStream`
+- Owns the WebGL context, camera texture, shader programs, and feedback buffers
+- Sends camera/device/render status to the controls window
+
+A `MediaStream` is not transferred between the two windows. The camera stays in the output WebView where its frames are consumed.
+
+## Camera presets
+
+- 640 × 480
+- 1280 × 720
+- 1920 × 1080
+- Highest available
+
+These are ideal constraints, not guarantees. The selected camera may return a different supported format.
+
+## Effects
+
+1. Passthrough
+2. Wave distortion
+3. Radial warp
+4. Kaleidoscope
+5. Edge detection
+6. Glitch bands
+
+## Keyboard shortcuts
+
+From the controls window:
+
+- `Space`: pause/resume rendering
+- `R`: reset parameters
+- `X`: clear feedback history
+- `S`: synchronize the complete state
+- `F`: toggle output fullscreen
+
+From the output window:
+
+- `F`: toggle its own fullscreen state
+
+## macOS permissions
+
+`src-tauri/Info.plist` contains the camera usage explanation. `entitlements.plist` enables camera access in the packaged application.
+
+## Important extension points
+
+- Add a parameter in `controls.html` and `controls.js`
+- Add the corresponding property in `canvas.js`
+- Declare and upload a matching GLSL uniform
+- Add new camera constraints in `captureConstraints()`
+- Extend telemetry without changing the Rust relay
+
+## Known limitations
+
+- Browser camera support depends on the platform WebView and installed codecs/drivers.
+- Capture constraints are requests rather than guaranteed formats.
+- The relay binds to local loopback only.
+- Windows and Linux camera packaging should be verified independently.

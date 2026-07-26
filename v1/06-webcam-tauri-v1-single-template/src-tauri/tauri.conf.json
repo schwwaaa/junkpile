@@ -1,26 +1,40 @@
 {
   "$schema": "https://schema.tauri.app/config/1",
   "build": {
-    "beforeBuildCommand": "", "beforeDevCommand": "",
-    "devPath": "../src", "distDir": "../src"
+    "beforeBuildCommand": "",
+    "beforeDevCommand": "",
+    "devPath": "../src",
+    "distDir": "../src",
+    "withGlobalTauri": true
   },
-  "package": { "productName": "webcam-single-template", "version": "0.1.0" },
+  "package": {
+    "productName": "Junkpile 06 · Webcam Texture Single Window",
+    "version": "0.2.0"
+  },
   "tauri": {
-    "windows": [{
-      "label": "main",
-      "title": "Webcam · Tauri v1 · Single Window",
-      "url": "index.html",
-      "width": 1200, "height": 750,
-      "resizable": true, "decorations": true
-    }],
+    "allowlist": { "all": false },
+    "windows": [
+      {
+        "label": "main",
+        "title": "06 · Tauri v1 · Webcam Texture Single Window",
+        "url": "index.html",
+        "width": 1280,
+        "height": 820,
+        "minWidth": 980,
+        "minHeight": 650,
+        "resizable": true,
+        "decorations": true,
+        "fullscreen": false
+      }
+    ],
     "bundle": {
       "active": true,
-      "identifier": "com.example.webcam-single-template",
-      "icon": ["icons/icon.icns","icons/icon.png","icons/icon.ico"],
+      "identifier": "com.schwwaaa.junkpile.v1.webcam-single-window",
+      "icon": ["icons/icon.icns", "icons/icon.png", "icons/icon.ico"],
       "macOS": { "entitlements": "entitlements.plist" }
     },
     "security": {
-      "csp": "default-src 'self'; media-src 'self' blob: mediastream:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+      "csp": "default-src 'self'; media-src 'self' blob: mediastream:; img-src 'self' data: blob:; script-src 'self'; style-src 'self' 'unsafe-inline'"
     }
   }
 }

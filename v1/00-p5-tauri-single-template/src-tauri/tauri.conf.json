@@ -4,27 +4,34 @@
     "beforeBuildCommand": "",
     "beforeDevCommand": "",
     "devPath": "../src",
-    "distDir": "../src"
+    "distDir": "../src",
+    "withGlobalTauri": true
   },
   "package": {
-    "productName": "p5-single-template",
-    "version": "0.1.0"
+    "productName": "Junkpile 00 · p5.js Single Window",
+    "version": "0.2.0"
   },
   "tauri": {
+    "allowlist": {
+      "all": false
+    },
     "windows": [
       {
         "label": "main",
-        "title": "p5 · Tauri · Single Window",
+        "title": "00 · Tauri v1 · p5.js Single Window",
         "url": "index.html",
-        "width": 1100,
-        "height": 720,
+        "width": 1240,
+        "height": 780,
+        "minWidth": 940,
+        "minHeight": 620,
         "resizable": true,
-        "decorations": true
+        "decorations": true,
+        "fullscreen": false
       }
     ],
     "bundle": {
       "active": true,
-      "identifier": "com.example.p5-single-template",
+      "identifier": "com.schwwaaa.junkpile.v1.p5-single-window",
       "icon": [
         "icons/icon.icns",
         "icons/icon.png",
@@ -32,7 +39,7 @@
       ]
     },
     "security": {
-      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'"
+      "csp": "default-src 'self'; img-src 'self' data: blob:; script-src 'self'; style-src 'self' 'unsafe-inline'"
     }
   }
 }

@@ -1,24 +1,3 @@
-// =============================================================================
-// src-tauri/src/main.rs  (Tauri v1)
-// =============================================================================
-//
-// Two-window WebSocket relay. Identical architecture to the p5 ws v1 template.
-// The relay is frontend-agnostic — it doesn't care whether the canvas window
-// uses p5.js or raw WebGL. Only the HTML/JS files differ between those two.
-//
-// ARCHITECTURE
-// ─────────────
-//   controls.html  ──ws://127.0.0.1:2727──▶  canvas.html
-//                  ◀────────────────────────
-//                              ▲
-//                    Rust WS Relay (this file)
-//                    • Listens IPv4 + IPv6
-//                    • Tracks client roles
-//                    • Broadcasts text to all others
-//                    • Forwards binary only to "canvas" role
-//
-// =============================================================================
-
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use std::{collections::HashMap, net::SocketAddr, sync::Arc};
@@ -26,12 +5,10 @@ use std::{collections::HashMap, net::SocketAddr, sync::Arc};
 use futures_util::{SinkExt, StreamExt};
 use once_cell::sync::Lazy;
 use serde::Deserialize;
+use serde_json::json;
+use tauri::Manager;
 use tokio::{net::TcpListener, sync::Mutex};
 use tokio_tungstenite::{accept_async, tungstenite::Message};
-
-// ---------------------------------------------------------------------------
-// Data structures
-// ---------------------------------------------------------------------------
 
 #[derive(Clone, Debug)]
 struct Client {
@@ -41,165 +18,230 @@ struct Client {
 
 type ClientMap = Arc<Mutex<HashMap<SocketAddr, Client>>>;
 
-static CLIENTS: Lazy<ClientMap> =
-    Lazy::new(|| Arc::new(Mutex::new(HashMap::new())));
+static CLIENTS: Lazy<ClientMap> = Lazy::new(|| Arc::new(Mutex::new(HashMap::new())));
 
 #[derive(Deserialize, Debug)]
-struct HelloMsg {
+struct HelloMessage {
     #[serde(default)]
     r#type: String,
     #[serde(default)]
     role: String,
 }
 
-// ---------------------------------------------------------------------------
-// Configuration
-// ---------------------------------------------------------------------------
-
 const PORT: u16 = 2727;
-
-// ---------------------------------------------------------------------------
-// Listener
-// ---------------------------------------------------------------------------
 
 async fn run_listener(bind_addr: String, clients: ClientMap) -> Result<(), String> {
     let listener = TcpListener::bind(&bind_addr)
         .await
-        .map_err(|e| e.to_string())?;
-    println!("[template] listening on ws://{bind_addr}");
+        .map_err(|error| error.to_string())?;
+    println!("[junkpile 05] listening on ws://{bind_addr}");
+
     loop {
-        let (stream, peer_addr) = listener.accept().await.map_err(|e| e.to_string())?;
+        let (stream, peer_addr) = listener.accept().await.map_err(|error| error.to_string())?;
         let clients = Arc::clone(&clients);
         tokio::spawn(async move {
-            if let Err(e) = handle_ws(stream, peer_addr, clients).await {
-                eprintln!("[template] client {peer_addr} error: {e}");
+            if let Err(error) = handle_ws(stream, peer_addr, clients).await {
+                eprintln!("[junkpile 05] client {peer_addr} error: {error}");
             }
         });
     }
 }
 
-// ---------------------------------------------------------------------------
-// Message routing
-// ---------------------------------------------------------------------------
-
-async fn broadcast_text(clients: &ClientMap, sender: SocketAddr, txt: String) {
+async fn broadcast_text(clients: &ClientMap, sender: SocketAddr, text: String) {
     let map = clients.lock().await;
-    for (addr, c) in map.iter() {
-        if *addr != sender {
-            let _ = c.tx.send(Message::Text(txt.clone()));
+    for (address, client) in map.iter() {
+        if *address != sender {
+            let _ = client.tx.send(Message::Text(text.clone()));
         }
     }
 }
 
-async fn broadcast_binary(clients: &ClientMap, sender: SocketAddr, bin: Vec<u8>) -> usize {
+async fn broadcast_all_text(clients: &ClientMap, text: String) {
+    let map = clients.lock().await;
+    for client in map.values() {
+        let _ = client.tx.send(Message::Text(text.clone()));
+    }
+}
+
+async fn broadcast_presence(clients: &ClientMap) {
+    let (controls, canvas, unknown, total) = {
+        let map = clients.lock().await;
+        let controls = map.values().filter(|client| client.role == "controls").count();
+        let canvas = map.values().filter(|client| client.role == "canvas").count();
+        let unknown = map.values().filter(|client| client.role == "unknown").count();
+        (controls, canvas, unknown, map.len())
+    };
+
+    let message = json!({
+        "type": "presence",
+        "controls": controls,
+        "canvas": canvas,
+        "unknown": unknown,
+        "total": total
+    })
+    .to_string();
+
+    broadcast_all_text(clients, message).await;
+}
+
+async fn broadcast_binary(clients: &ClientMap, sender: SocketAddr, bytes: Vec<u8>) -> usize {
     let map = clients.lock().await;
     let mut sent = 0usize;
-    for (addr, c) in map.iter() {
-        if *addr != sender && c.role == "canvas" {
-            let _ = c.tx.send(Message::Binary(bin.clone()));
+    for (address, client) in map.iter() {
+        if *address != sender && client.role == "canvas" {
+            let _ = client.tx.send(Message::Binary(bytes.clone()));
             sent += 1;
         }
     }
     sent
 }
 
-// ---------------------------------------------------------------------------
-// Per-connection handler
-// ---------------------------------------------------------------------------
-
 async fn handle_ws(
     stream: tokio::net::TcpStream,
     peer_addr: SocketAddr,
     clients: ClientMap,
 ) -> Result<(), String> {
-    let ws_stream = accept_async(stream).await.map_err(|e| e.to_string())?;
+    let ws_stream = accept_async(stream).await.map_err(|error| error.to_string())?;
     let (mut ws_tx, mut ws_rx) = ws_stream.split();
-
     let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel::<Message>();
 
     {
         let mut map = clients.lock().await;
-        map.insert(peer_addr, Client { role: "unknown".to_string(), tx: tx.clone() });
+        map.insert(
+            peer_addr,
+            Client {
+                role: "unknown".to_string(),
+                tx: tx.clone(),
+            },
+        );
     }
-    println!("[template] {peer_addr} connected (role: unknown)");
+    broadcast_presence(&clients).await;
 
     let writer = tokio::spawn(async move {
-        while let Some(msg) = rx.recv().await {
-            if ws_tx.send(msg).await.is_err() { break; }
+        while let Some(message) = rx.recv().await {
+            if ws_tx.send(message).await.is_err() {
+                break;
+            }
         }
     });
 
-    let clients_r = Arc::clone(&clients);
+    let reader_clients = Arc::clone(&clients);
     let reader = tokio::spawn(async move {
-        while let Some(msg) = ws_rx.next().await {
-            match msg {
-                Ok(Message::Text(txt)) => {
-                    if let Ok(parsed) = serde_json::from_str::<HelloMsg>(&txt) {
-                        if parsed.r#type == "hello" && !parsed.role.is_empty() {
-                            let mut map = clients_r.lock().await;
-                            if let Some(c) = map.get_mut(&peer_addr) {
-                                c.role = parsed.role.clone();
-                                println!("[template] {peer_addr} role='{}'", c.role);
+        while let Some(message) = ws_rx.next().await {
+            match message {
+                Ok(Message::Text(text)) => {
+                    if let Ok(hello) = serde_json::from_str::<HelloMessage>(&text) {
+                        if hello.r#type == "hello" && !hello.role.is_empty() {
+                            {
+                                let mut map = reader_clients.lock().await;
+                                if let Some(client) = map.get_mut(&peer_addr) {
+                                    client.role = hello.role.clone();
+                                }
                             }
+                            println!(
+                                "[junkpile 05] {peer_addr} identified as role='{}'",
+                                hello.role
+                            );
+                            broadcast_presence(&reader_clients).await;
                         }
                     }
-                    broadcast_text(&clients_r, peer_addr, txt).await;
+                    broadcast_text(&reader_clients, peer_addr, text).await;
                 }
-                Ok(Message::Binary(bin)) => {
-                    let sent = broadcast_binary(&clients_r, peer_addr, bin).await;
+                Ok(Message::Binary(bytes)) => {
+                    let sent = broadcast_binary(&reader_clients, peer_addr, bytes).await;
                     if sent == 0 {
-                        println!("[template] binary from {peer_addr}, no canvas clients");
+                        println!(
+                            "[junkpile 05] binary data arrived before a canvas client connected"
+                        );
                     }
                 }
-                Ok(Message::Ping(payload)) => { let _ = tx.send(Message::Pong(payload)); }
-                Ok(Message::Close(_))      => break,
-                Ok(_)                      => {}
-                Err(e) => {
-                    eprintln!("[template] error from {peer_addr}: {e}");
+                Ok(Message::Ping(payload)) => {
+                    let _ = tx.send(Message::Pong(payload));
+                }
+                Ok(Message::Close(_)) => break,
+                Ok(_) => {}
+                Err(error) => {
+                    eprintln!("[junkpile 05] receive error from {peer_addr}: {error}");
                     break;
                 }
             }
         }
-        clients_r.lock().await.remove(&peer_addr);
-        println!("[template] {peer_addr} disconnected");
-        Ok::<(), ()>(())
+
+        reader_clients.lock().await.remove(&peer_addr);
+        broadcast_presence(&reader_clients).await;
+        println!("[junkpile 05] {peer_addr} disconnected");
     });
 
     let _ = tokio::join!(writer, reader);
     Ok(())
 }
 
-// ---------------------------------------------------------------------------
-// Entry point
-// ---------------------------------------------------------------------------
+fn canvas_window(app: &tauri::AppHandle) -> Result<tauri::Window, String> {
+    app.get_window("canvas")
+        .ok_or_else(|| "canvas window is unavailable".to_string())
+}
+
+#[tauri::command]
+fn toggle_canvas_fullscreen(app: tauri::AppHandle) -> Result<bool, String> {
+    let window = canvas_window(&app)?;
+    let next = !window.is_fullscreen().map_err(|error| error.to_string())?;
+    window
+        .set_fullscreen(next)
+        .map_err(|error| error.to_string())?;
+    Ok(next)
+}
+
+#[tauri::command]
+fn show_canvas(app: tauri::AppHandle) -> Result<(), String> {
+    let window = canvas_window(&app)?;
+    window.show().map_err(|error| error.to_string())?;
+    window.set_focus().map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+fn focus_canvas(app: tauri::AppHandle) -> Result<(), String> {
+    canvas_window(&app)?
+        .set_focus()
+        .map_err(|error| error.to_string())
+}
+
+#[tauri::command]
+fn toggle_current_fullscreen(window: tauri::Window) -> Result<bool, String> {
+    let next = !window.is_fullscreen().map_err(|error| error.to_string())?;
+    window
+        .set_fullscreen(next)
+        .map_err(|error| error.to_string())?;
+    Ok(next)
+}
 
 fn main() {
     tauri::Builder::default()
         .setup(|_app| {
-            println!("[template] starting WebSocket relay on port {PORT}");
-
             let clients_v4 = Arc::clone(&CLIENTS);
             let clients_v6 = Arc::clone(&CLIENTS);
 
-            // tauri::async_runtime::spawn is required here in both v1 and v2.
-            // .setup() is called before Tokio's reactor is active on this thread,
-            // so tokio::spawn would panic. Tauri's runtime handle dispatches correctly.
             tauri::async_runtime::spawn(async move {
-                let addr = format!("127.0.0.1:{PORT}");
-                if let Err(e) = run_listener(addr, clients_v4).await {
-                    eprintln!("[template] IPv4 error: {e}");
+                let address = format!("127.0.0.1:{PORT}");
+                if let Err(error) = run_listener(address, clients_v4).await {
+                    eprintln!("[junkpile 05] IPv4 listener error: {error}");
                 }
             });
 
             tauri::async_runtime::spawn(async move {
-                let addr = format!("[::1]:{PORT}");
-                if let Err(e) = run_listener(addr, clients_v6).await {
-                    eprintln!("[template] IPv6 error: {e}");
+                let address = format!("[::1]:{PORT}");
+                if let Err(error) = run_listener(address, clients_v6).await {
+                    eprintln!("[junkpile 05] IPv6 listener error: {error}");
                 }
             });
 
             Ok(())
         })
+        .invoke_handler(tauri::generate_handler![
+            toggle_canvas_fullscreen,
+            show_canvas,
+            focus_canvas,
+            toggle_current_fullscreen
+        ])
         .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .expect("error while running Junkpile Example 05");
 }

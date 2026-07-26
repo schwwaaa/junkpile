@@ -1,123 +1,192 @@
-# Raw WebGL Shader · Tauri v1 · Two-Window WebSocket
+# 03 · Tauri v1 Raw WebGL WebSocket
 
-> **Baseline:** raw WebGL shader baseline  
-> **Tauri:** 1.x  
-> **Window topology:** two windows with an embedded WebSocket relay  
-> **Input:** WebSocket controls  
-> **Renderer:** raw WebGL 1 with no graphics framework
+A focused two-window foundation for controlling a raw WebGL 1 shader from a separate Tauri v1 WebView through an embedded Rust WebSocket relay.
 
-## Purpose
+This folder intentionally retains its original repository name:
 
-The same parameterized shader idea as the p5 baseline, but implemented directly with the browser WebGL API. It makes context creation, shader compilation, program linking, buffer setup, uniform lookup, drawing, and resize behavior explicit.
+```text
+webgl-tauri-v1-ws-template
+```
 
-This example is intentionally a baseline: it exposes the complete path from input to pixels without introducing an application-specific product architecture. Start here, confirm the baseline works, then replace the visual or input mapping with your own idea.
+The visible example number is **03** so it aligns with the complete Junkpile Tauri v1 Essentials sequence.
 
-## What you should learn
+## What this example teaches
 
-- Acquire a WebGL context with `canvas.getContext("webgl")`.
-- Compile and link GLSL stages without a helper framework.
-- Render a full-screen quad with `gl.drawArrays()` and `requestAnimationFrame()`.
-- Manage canvas pixel dimensions and the WebGL viewport during resize.
+- Declaring separate controls and output windows in Tauri v1
+- Hosting a local WebSocket relay inside the Rust application
+- Identifying connected WebSocket clients by role
+- Sending complete state and coalesced parameter batches
+- Compiling and linking WebGL shaders without p5.js
+- Creating and drawing a fullscreen vertex buffer
+- Uploading JavaScript values directly as GLSL uniforms
+- Returning renderer telemetry to another WebView
+- Recovering state after a controls/output reload or reconnect
+- Handling WebGL context loss and restoration
 
 ## Architecture
 
-```mermaid
-flowchart LR
-  Controls[controls.html] -->|JSON over ws://127.0.0.1:2727| Relay[Rust WebSocket relay]
-  Relay -->|broadcast to other clients| CanvasJS[canvas.html JavaScript]
-  CanvasJS --> Render[Render loop + shader uniforms]
-  Render --> Output[Canvas window]
-  CanvasJS -. camera status / device list .-> Relay
-  Relay -. status messages .-> Controls
+```text
+controls.html
+    │
+    │  param_batch / state_snapshot
+    ▼
+ws://127.0.0.1:2727
+    │
+    ▼
+Rust WebSocket relay
+    │
+    ▼
+canvas.html
+    │
+    ├── WebGL context
+    ├── shader compile + link
+    ├── fullscreen quad buffer
+    ├── gl.uniform* uploads
+    └── gl.drawArrays(TRIANGLE_STRIP)
+         │
+         └──── telemetry: FPS / size / GPU / shader state ───► controls.html
 ```
 
-### Runtime data flow
+Both windows identify themselves to the relay:
 
-1. `controls.js` serializes state changes as JSON messages.
-2. Rust `main.rs` hosts the loopback WebSocket relay and broadcasts messages to other connected clients.
-3. `canvas.js` receives messages, updates local state, and owns the visual render loop.
-4. The JavaScript compiles the embedded shaders, links a WebGL program, and creates a full-screen quad buffer.
-5. `requestAnimationFrame()` uploads uniforms and calls `gl.drawArrays()` each frame.
+```json
+{ "type": "hello", "role": "controls" }
+{ "type": "hello", "role": "canvas" }
+```
 
-## Prerequisites
+The output requests a complete state snapshot whenever it reconnects. The controls window remains the authoritative parameter state.
 
-1. Install the operating-system dependencies required by Tauri.
-2. Install a current Rust toolchain with `rustup`.
-3. Install Node.js and npm.
-4. Install project dependencies from this directory.
+## Run
 
 ```bash
 npm install
 npm run dev
 ```
 
-Build an installable application with:
+No browser rendering library or runtime CDN is required.
+
+## Production build
 
 ```bash
 npm run build
 ```
 
-## Controls and inputs
-
-`hue`, `saturation`, `brightness`, `zoom`, `speed`, `distortion`, `complexity`, `symmetry`, `glow`, `invert`, `pulse`, and `rotate`.
-
-The HTML control defaults and the JavaScript `params` defaults are intended to match. When adding a parameter, update both so a fresh launch and the first user interaction produce the same state.
-
-## File map
-
-| File | Responsibility |
-|---|---|
-| `package.json` | Node scripts and the project-local Tauri CLI version. |
-| `src/canvas.html` | Output-window canvas and status overlay. |
-| `src/canvas.js` | Output-window state receiver and rendering pipeline. |
-| `src/controls.html` | Control-window markup and styling. |
-| `src/controls.js` | Control-window state serialization and WebSocket client. |
-| `src-tauri/Cargo.toml` | Rust package metadata and native dependencies. |
-| `src-tauri/build.rs` | Project metadata or source file. |
-| `src-tauri/src/main.rs` | Tauri entry point and embedded WebSocket relay. |
-| `src-tauri/tauri.conf.json` | Tauri 1 window, frontend, security, and bundle configuration. |
-
-Generated schemas, icon assets, and lock files are omitted from this table because they do not define the example's runtime architecture.
-
-## Tauri 1.x notes
-
-This project uses Tauri 1: `tauri = "1"`, the v1 configuration schema, `build.devPath`/`build.distDir`, and the v1 `tauri` configuration object. The embedded WebSocket relay design is intentionally the same in both generations; most migration differences are configuration and dependency changes.
-
-Read [`../../docs/V1_V2_ARCHITECTURE.md`](../../docs/V1_V2_ARCHITECTURE.md) for the repository-wide comparison.
-
-## Extending the example
-
-1. Edit the embedded `FRAG_SHADER` string in the rendering JavaScript file.
-2. Add uniforms by updating the shader, parameter state, and `setUniform()` calls.
-3. Use this family when a developer needs WebGL transparency without p5 abstractions.
-
-Before adding a unique behavior, preserve a runnable baseline commit or branch. This makes it possible to distinguish framework/integration failures from failures introduced by the new visual idea.
-
-## Troubleshooting
-
-| Symptom | Check |
-|---|---|
-| App does not start | Confirm the OS-specific Tauri prerequisites, run `npm install`, then run `npm run dev` from this project directory. |
-| Blank or frozen canvas | Open the WebView developer tools, check shader compiler output, and confirm WebGL is available. |
-| Controls remain disconnected | Confirm no other template is using TCP port 2727. Check the Rust console for IPv4/IPv6 listener errors. |
-| Canvas opens but does not update | Verify both pages send the hello handshake and that `WS_URL` matches the Rust `PORT` constant. |
-
-## Screenshot placeholder
-
-Add a screenshot after the example has been run on a target platform:
+On macOS, generated bundles are placed under:
 
 ```text
-docs/images/webgl-tauri-v1-ws-template.png
+src-tauri/target/release/bundle/
 ```
 
-Then replace this section with:
+Unsigned applications may trigger Gatekeeper on another Mac. Public distribution generally requires Apple signing and notarization.
 
-```markdown
-![Raw WebGL Shader · Tauri v1 · Two-Window WebSocket running](../../docs/images/webgl-tauri-v1-ws-template.png)
+## Windows
+
+| Window label | Purpose |
+|---|---|
+| `controls` | Parameters, presets, connection state, output telemetry, and native window actions |
+| `canvas` | Raw WebGL context, GLSL program, fullscreen quad, and output HUD |
+
+The controls window can show, focus, or toggle fullscreen on the output through small Rust commands.
+
+## Message types
+
+| Message | Direction | Purpose |
+|---|---|---|
+| `hello` | Either window → relay | Identifies the client role |
+| `presence` | Relay → all windows | Reports connected role counts |
+| `param_batch` | Controls → output | Sends the newest changed parameters together |
+| `state_snapshot` | Controls → output | Sends the complete current state |
+| `request_state` | Output → controls | Requests a full state after reconnecting |
+| `action` | Controls → output | Pause/resume or reset-clock actions |
+| `telemetry` | Output → controls | FPS, buffer size, GPU renderer, paused state, and shader health |
+
+Slider events are coalesced to at most one WebSocket message per animation frame.
+
+## Raw WebGL lifecycle
+
+```text
+canvas.getContext("webgl")
+    ↓
+gl.createShader / gl.compileShader
+    ↓
+gl.createProgram / gl.linkProgram
+    ↓
+gl.createBuffer / gl.bufferData
+    ↓
+gl.getUniformLocation / gl.uniform*
+    ↓
+gl.drawArrays
 ```
 
-## Related examples
+The output HUD shows shader-link status. A compiler/linker failure leaves an explicit error panel instead of a blank unexplained window.
 
-- Browse the complete comparison in [`../../docs/EXAMPLE_MATRIX.md`](../../docs/EXAMPLE_MATRIX.md).
-- Use the paired Tauri 2 version to compare framework-generation changes.
-- Use the paired single-window version to compare direct state with transport-based state.
+## Controls
+
+| Section | Parameter | Purpose |
+|---|---|---|
+| Color | Hue shift | Rotates the palette |
+| Color | Saturation | Moves from monochrome to vivid color |
+| Color | Brightness | Multiplies output brightness |
+| Motion | Zoom | Scales shader coordinates |
+| Motion | Speed | Advances the renderer clock |
+| Motion | Distortion | Strengthens domain warping |
+| Pattern | Complexity | Selects the fBm octave count |
+| Pattern | Symmetry | Changes rotational folding |
+| Pattern | Glow | Brightens the center of the field |
+| Switches | Invert | Inverts the final color |
+| Switches | Pulse | Enables rhythmic brightness modulation |
+| Switches | Rotate | Rotates the coordinate field |
+
+Keyboard shortcuts in the controls window:
+
+| Key | Action |
+|---|---|
+| Space | Pause or resume output |
+| R | Restore defaults and reset renderer time |
+| S | Send a complete state snapshot |
+| F | Toggle output-window fullscreen |
+
+The output window also accepts **F** for fullscreen.
+
+## Project structure
+
+```text
+webgl-tauri-v1-ws-template/
+├── README.md
+├── MODERNIZATION-NOTES.md
+├── package.json
+├── src/
+│   ├── controls.html
+│   ├── controls.css
+│   ├── controls.js
+│   ├── canvas.html
+│   ├── canvas.css
+│   └── canvas.js
+└── src-tauri/
+    ├── Cargo.toml
+    ├── tauri.conf.json
+    └── src/main.rs
+```
+
+## Add a parameter
+
+1. Add an input and readout to `src/controls.html`.
+2. Add its default to `DEFAULT_PARAMS` in both JavaScript files.
+3. Include its ID in the slider/toggle list in `controls.js`.
+4. Declare a matching uniform in `FRAG_SHADER`.
+5. Upload the value in `render()` with `uniform1f`, `uniform2f`, or another WebGL uniform call.
+6. Use the uniform in GLSL.
+
+The Rust relay does not need to change for ordinary parameters.
+
+## Why this is separate from Example 01
+
+Example 01 demonstrates the same two-window transport with p5.js managing the WebGL lifecycle. Example 03 exposes the browser GPU API directly so developers can see what p5.js ordinarily abstracts.
+
+## Known limitations
+
+- Port `2727` must be available locally.
+- The relay is local-only and intentionally unauthenticated.
+- Closing the output window destroys that WebView; restart the application to recreate it.
+- This is WebGL 1 / GLSL ES 1.0 rather than WebGL 2 or native wgpu.
+- The device-pixel ratio is capped at 2 to avoid unexpectedly large drawing buffers.
