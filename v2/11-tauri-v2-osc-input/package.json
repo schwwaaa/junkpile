@@ -1,0 +1,14 @@
+{
+  "name": "11-tauri-v2-osc-input",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Junkpile Tauri v2 essential: Rust OSC/UDP input, routing, OSC learn, and raw WebGL control",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}

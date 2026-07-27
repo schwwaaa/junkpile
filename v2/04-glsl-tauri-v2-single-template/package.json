@@ -1,0 +1,14 @@
+{
+  "name": "glsl-tauri-v2-single-template",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "description": "Junkpile Example 04: single-window Tauri v2 application teaching external GLSL loading and safe WebGL program replacement.",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}

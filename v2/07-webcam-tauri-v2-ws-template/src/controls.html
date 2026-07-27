@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Junkpile 07 — Webcam Controls</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="controls-page">
+  <main class="controls-shell">
+    <section class="controls-panel" aria-label="Webcam WebSocket controls">
+      <header class="example-header">
+        <p class="eyebrow">Tauri v2 Essentials · Legacy Modernization</p>
+        <div class="title-row">
+          <span class="example-number">07</span>
+          <div>
+            <h1>Webcam Texture</h1>
+            <p>WebSocket Windows · Raw WebGL 1</p>
+          </div>
+        </div>
+        <p class="lesson-copy">
+          Sends camera commands and effect uniforms through an embedded Rust WebSocket relay.
+          The renderer WebView owns camera permission, video decoding, WebGL texture upload, and feedback.
+        </p>
+        <div class="runtime-row">
+          <span id="relay-status" class="status-pill" data-state="starting"><span class="status-dot"></span><span id="relay-label">Relay connecting</span></span>
+          <span id="canvas-status" class="status-pill" data-state="waiting"><span class="status-dot"></span><span id="canvas-label">Renderer waiting</span></span>
+        </div>
+        <span class="architecture-tag">Controls → WS :2727 → Camera + WebGL</span>
+      </header>
+
+      <section class="control-section" aria-labelledby="camera-heading">
+        <div class="section-heading"><h2 id="camera-heading">Camera Source</h2><span>Owned by canvas</span></div>
+        <div class="camera-card">
+          <label class="select-label" for="camera-device">Video input</label>
+          <select id="camera-device"><option value="">Waiting for renderer…</option></select>
+          <div class="camera-actions">
+            <button id="camera-button" class="accent-button" type="button" disabled>Start Camera</button>
+            <button id="refresh-button" type="button" disabled>Refresh Devices</button>
+          </div>
+          <p id="camera-help" class="camera-help">Device names may remain generic until camera permission is granted in the renderer window.</p>
+        </div>
+      </section>
+
+      <section class="control-section" aria-labelledby="effect-heading">
+        <div class="section-heading"><h2 id="effect-heading">Effect</h2><span>Remote uniforms</span></div>
+        <label class="parameter-row effect-row" for="effect"><span class="parameter-copy"><strong>Mode</strong><small>Active camera processor</small></span><input id="effect" type="range" min="0" max="5" step="1" value="0" /><output id="effect-value" class="parameter-value effect-value">Passthrough</output></label>
+        <label class="parameter-row" for="distortion"><span class="parameter-copy"><strong>Distortion</strong><small>Warp or glitch strength</small></span><input id="distortion" type="range" min="0" max="1" step="0.01" value="0" /><output id="distortion-value" class="parameter-value">0.00</output></label>
+        <label class="parameter-row" for="feedback"><span class="parameter-copy"><strong>Feedback</strong><small>Previous-frame mixture</small></span><input id="feedback" type="range" min="0" max="0.98" step="0.01" value="0" /><output id="feedback-value" class="parameter-value">0.00</output></label>
+        <label class="parameter-row" for="zoom"><span class="parameter-copy"><strong>Zoom</strong><small>Camera UV scale</small></span><input id="zoom" type="range" min="0.5" max="3" step="0.05" value="1" /><output id="zoom-value" class="parameter-value">1.00</output></label>
+        <label class="parameter-row" for="speed"><span class="parameter-copy"><strong>Warp Speed</strong><small>Accumulated effect time</small></span><input id="speed" type="range" min="0" max="2" step="0.01" value="0.3" /><output id="speed-value" class="parameter-value">0.30</output></label>
+      </section>
+
+      <section class="control-section" aria-labelledby="color-heading">
+        <div class="section-heading"><h2 id="color-heading">Color</h2><span>Post-process</span></div>
+        <label class="parameter-row" for="hue"><span class="parameter-copy"><strong>Hue Shift</strong><small>Rotation in degrees</small></span><input id="hue" type="range" min="0" max="360" step="1" value="0" /><output id="hue-value" class="parameter-value">0</output></label>
+        <label class="parameter-row" for="saturation"><span class="parameter-copy"><strong>Saturation</strong><small>Color intensity</small></span><input id="saturation" type="range" min="0" max="2" step="0.01" value="1" /><output id="saturation-value" class="parameter-value">1.00</output></label>
+        <label class="parameter-row" for="brightness"><span class="parameter-copy"><strong>Brightness</strong><small>Output gain</small></span><input id="brightness" type="range" min="0" max="2" step="0.01" value="1" /><output id="brightness-value" class="parameter-value">1.00</output></label>
+        <label class="parameter-row" for="contrast"><span class="parameter-copy"><strong>Contrast</strong><small>Midpoint expansion</small></span><input id="contrast" type="range" min="0" max="3" step="0.01" value="1" /><output id="contrast-value" class="parameter-value">1.00</output></label>
+      </section>
+
+      <section class="control-section" aria-labelledby="switches-heading">
+        <div class="section-heading"><h2 id="switches-heading">Switches</h2><span>Boolean → float</span></div>
+        <div class="toggle-grid">
+          <label class="toggle-control"><input id="mirror" type="checkbox" /><span>Mirror X</span></label>
+          <label class="toggle-control"><input id="invert" type="checkbox" /><span>Invert</span></label>
+          <label class="toggle-control"><input id="greyscale" type="checkbox" /><span>Greyscale</span></label>
+        </div>
+      </section>
+
+      <section class="control-section diagnostics-section" aria-labelledby="diagnostics-heading">
+        <div class="section-heading"><h2 id="diagnostics-heading">Renderer Diagnostics</h2><span>Returned over WS</span></div>
+        <dl class="diagnostic-grid">
+          <div><dt>Camera state</dt><dd id="camera-state">Waiting</dd></div>
+          <div><dt>Active device</dt><dd id="camera-name" title="Active camera">—</dd></div>
+          <div><dt>Camera stream</dt><dd id="camera-resolution">—</dd></div>
+          <div><dt>Texture uploads</dt><dd id="upload-fps">0.0 fps</dd></div>
+          <div><dt>Vertex shader</dt><dd id="vertex-status">Waiting</dd></div>
+          <div><dt>Fragment shader</dt><dd id="fragment-status">Waiting</dd></div>
+          <div><dt>Program link</dt><dd id="link-status">Waiting</dd></div>
+          <div><dt>Render FPS</dt><dd id="render-fps">—</dd></div>
+          <div><dt>Drawing buffer</dt><dd id="drawing-resolution">—</dd></div>
+          <div><dt>Renderer</dt><dd id="renderer-name" title="WebGL renderer">Waiting…</dd></div>
+        </dl>
+        <pre id="error-log" class="error-log" hidden aria-live="polite"></pre>
+      </section>
+
+      <footer class="control-footer">
+        <div class="button-row"><button id="pause-button" type="button">Pause</button><button id="reset-button" type="button">Reset</button><button id="fullscreen-button" type="button">Canvas Fullscreen</button></div>
+        <p><kbd>Space</kbd> pause · <kbd>R</kbd> reset · <kbd>C</kbd> camera · <kbd>F</kbd> fullscreen</p>
+        <p class="folder-name">Folder: webcam-tauri-v2-ws-template</p>
+      </footer>
+    </section>
+  </main>
+  <script type="module" src="controls.js"></script>
+</body>
+</html>

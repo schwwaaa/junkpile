@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Junkpile 03 — Raw WebGL Renderer</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="canvas-page">
+  <main id="renderer-panel" class="renderer-panel" aria-label="Live raw WebGL renderer">
+    <canvas id="gl-canvas" aria-label="Domain-warped fBm WebGL output"></canvas>
+    <div class="renderer-hud">
+      <div class="hud-group">
+        <span class="hud-label">JUNKPILE 03</span>
+        <span id="runtime-label">Starting</span>
+      </div>
+      <div class="hud-group hud-group-right">
+        <span id="ws-label">WS connecting</span>
+        <span id="fps-label">— FPS</span>
+        <span id="resolution-label">—</span>
+      </div>
+    </div>
+    <div class="renderer-help">Raw WebGL 1 · parameters arrive over ws://127.0.0.1:2727 · <kbd>F</kbd> fullscreen</div>
+    <div id="renderer-error" class="renderer-error" hidden>
+      <strong>Renderer stopped</strong>
+      <span id="renderer-error-message">Unknown WebGL error.</span>
+    </div>
+  </main>
+  <script src="canvas.js"></script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+{
+  "name": "feedback-tauri-v2-single-template",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "description": "Junkpile Example 08: single-window Tauri v2 application teaching webcam-driven ping-pong feedback simulations in raw WebGL 1.",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}

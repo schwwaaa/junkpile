@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Junkpile 09 — Feedback Renderer</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="canvas-page">
+  <main id="renderer-panel" class="renderer-panel brush-surface" aria-label="Webcam feedback renderer">
+    <canvas id="gl-canvas" aria-label="Webcam-driven WebGL feedback simulation"></canvas>
+    <div class="renderer-hud" aria-hidden="true">
+      <div class="hud-group"><span class="hud-label">09 · FEEDBACK WS</span><span id="hud-mode">ECHO TRAIL</span><span id="hud-camera">NO CAMERA</span><span id="hud-format">RGBA8</span></div>
+      <div class="hud-group hud-group-right"><span id="hud-runtime">INITIALIZING</span><span id="hud-fps">— FPS</span><span id="hud-resolution">—</span></div>
+    </div>
+    <div id="camera-notice" class="renderer-notice">
+      <strong id="camera-notice-title">Camera input idle</strong>
+      <span id="camera-notice-message">Use the controls window to start a camera, or draw directly into the running feedback state.</span>
+    </div>
+    <div id="renderer-error" class="renderer-error" hidden><strong>Renderer unavailable</strong><span id="renderer-error-message">Unknown WebGL error.</span></div>
+    <p class="renderer-help">Camera and feedback textures stay in this WebView. The socket carries only controls, intent, state restoration, and telemetry.</p>
+  </main>
+  <video id="camera-video" autoplay playsinline muted></video>
+  <script type="module" src="canvas.js"></script>
+</body>
+</html>

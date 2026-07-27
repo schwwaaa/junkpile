@@ -1,0 +1,58 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Junkpile 03 — Raw WebGL WS",
+  "version": "0.2.0",
+  "identifier": "com.schwwaaa.junkpile.webgl-v2-ws",
+  "build": {
+    "beforeBuildCommand": "",
+    "beforeDevCommand": "",
+    "frontendDist": "../src"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "controls",
+        "title": "Junkpile 03 — Raw WebGL Controls",
+        "url": "controls.html",
+        "width": 440,
+        "height": 760,
+        "minWidth": 360,
+        "minHeight": 520,
+        "resizable": true,
+        "decorations": true,
+        "fullscreen": false,
+        "x": 24,
+        "y": 44
+      },
+      {
+        "label": "canvas",
+        "title": "Junkpile 03 — Raw WebGL Renderer",
+        "url": "canvas.html",
+        "width": 880,
+        "height": 680,
+        "minWidth": 480,
+        "minHeight": 360,
+        "resizable": true,
+        "decorations": true,
+        "fullscreen": false,
+        "x": 484,
+        "y": 44
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; connect-src 'self' ipc: http://ipc.localhost ws://127.0.0.1:2727 ws://[::1]:2727; img-src 'self' data:; style-src 'self'; script-src 'self'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/icon_32x32.png",
+      "icons/icon_128x128.png",
+      "icons/icon_256x256.png",
+      "icons/icon_512x512.png",
+      "icons/icon.ico"
+    ]
+  }
+}

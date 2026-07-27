@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Junkpile 09 — Feedback Controls</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="controls-page">
+  <main class="controls-shell">
+    <section class="controls-panel" aria-label="Feedback WebSocket controls">
+      <header class="example-header">
+        <p class="eyebrow">Tauri v2 Essentials · Legacy Modernization</p>
+        <div class="title-row">
+          <span class="example-number">09</span>
+          <div>
+            <h1>Feedback Lab</h1>
+            <p>WebSocket Windows · Webcam + Ping-Pong FBO</p>
+          </div>
+        </div>
+        <p class="lesson-copy">
+          Sends camera intent, feedback modes, and simulation uniforms through an embedded Rust WebSocket relay.
+          The renderer WebView owns camera permission, GPU textures, brush input, persistent framebuffer state, and both GLSL passes.
+        </p>
+        <div class="runtime-row">
+          <span id="relay-status" class="status-pill" data-state="starting"><span class="status-dot"></span><span id="relay-label">Relay connecting</span></span>
+          <span id="canvas-status" class="status-pill" data-state="waiting"><span class="status-dot"></span><span id="canvas-label">Renderer waiting</span></span>
+        </div>
+        <span class="architecture-tag">Controls → WS :2727 → Camera + Previous Frame → Simulation → Display</span>
+      </header>
+
+      <section class="control-section" aria-labelledby="camera-heading">
+        <div class="section-heading"><h2 id="camera-heading">Camera Source</h2><span>Owned by canvas</span></div>
+        <div class="camera-card">
+          <label class="select-label" for="camera-device">Video input</label>
+          <select id="camera-device"><option value="">Waiting for renderer…</option></select>
+          <div class="camera-actions">
+            <button id="camera-button" class="accent-button" type="button" disabled>Start Camera</button>
+            <button id="refresh-button" type="button" disabled>Refresh Devices</button>
+          </div>
+          <p id="camera-help" class="camera-help">The simulation remains active with a placeholder texture while camera input is idle.</p>
+        </div>
+      </section>
+
+      <section class="control-section" aria-labelledby="mode-heading">
+        <div class="section-heading"><h2 id="mode-heading">Feedback Mode</h2><span>Remote shader branch</span></div>
+        <div class="mode-grid" role="group" aria-label="Feedback mode">
+          <button class="mode-button active" data-mode="0" type="button">Echo Trail</button>
+          <button class="mode-button" data-mode="1" type="button">Fluid Smear</button>
+          <button class="mode-button" data-mode="2" type="button">React-Diff</button>
+          <button class="mode-button" data-mode="3" type="button">Thermal</button>
+          <button class="mode-button" data-mode="4" type="button">Mirror Echo</button>
+          <button class="mode-button" data-mode="5" type="button">Glitch Memory</button>
+        </div>
+        <p id="mode-description" class="mode-description">The previous frame decays while the current webcam frame is injected, producing persistent motion trails.</p>
+      </section>
+
+      <section class="control-section" aria-labelledby="simulation-heading">
+        <div class="section-heading"><h2 id="simulation-heading">Simulation</h2><span>Frame-state uniforms</span></div>
+        <label class="parameter-row" for="decay"><span class="parameter-copy"><strong>Decay</strong><small>Previous-state retention</small></span><input id="decay" type="range" min="0.8" max="0.999" step="0.001" value="0.97" /><output id="decay-value" class="parameter-value">0.970</output></label>
+        <label class="parameter-row" for="camMix"><span class="parameter-copy"><strong>Camera Mix</strong><small>New-frame injection</small></span><input id="camMix" type="range" min="0" max="1" step="0.01" value="0.3" /><output id="camMix-value" class="parameter-value">0.30</output></label>
+        <label class="parameter-row" for="speed"><span class="parameter-copy"><strong>Speed</strong><small>Continuous simulation time</small></span><input id="speed" type="range" min="0" max="3" step="0.01" value="1" /><output id="speed-value" class="parameter-value">1.00</output></label>
+        <label class="parameter-row" for="scale"><span class="parameter-copy"><strong>Flow Scale</strong><small>Curl field frequency</small></span><input id="scale" type="range" min="0.1" max="4" step="0.05" value="1" /><output id="scale-value" class="parameter-value">1.00</output></label>
+        <label class="parameter-row" for="intensity"><span class="parameter-copy"><strong>Intensity</strong><small>Injection and distortion gain</small></span><input id="intensity" type="range" min="0" max="2" step="0.01" value="1" /><output id="intensity-value" class="parameter-value">1.00</output></label>
+      </section>
+
+      <section class="control-section" aria-labelledby="color-heading">
+        <div class="section-heading"><h2 id="color-heading">Display Color</h2><span>Second program</span></div>
+        <label class="parameter-row" for="hue"><span class="parameter-copy"><strong>Hue Drift</strong><small>Palette phase offset</small></span><input id="hue" type="range" min="0" max="1" step="0.005" value="0" /><output id="hue-value" class="parameter-value">0.000</output></label>
+        <label class="parameter-row palette-row" for="palette"><span class="parameter-copy"><strong>Palette</strong><small>Cosine color family</small></span><input id="palette" type="range" min="0" max="4" step="1" value="0" /><output id="palette-value" class="parameter-value palette-value">Fire</output></label>
+      </section>
+
+      <section class="control-section" aria-labelledby="brush-heading">
+        <div class="section-heading"><h2 id="brush-heading">Brush Injection</h2><span>Canvas-local pointer</span></div>
+        <label class="parameter-row" for="brush"><span class="parameter-copy"><strong>Brush Size</strong><small>Drag directly on renderer</small></span><input id="brush" type="range" min="0.005" max="0.15" step="0.005" value="0.03" /><output id="brush-value" class="parameter-value">0.030</output></label>
+        <button id="clear-button" class="danger-button" type="button">Clear Feedback State</button>
+      </section>
+
+      <section class="control-section diagnostics-section" aria-labelledby="diagnostics-heading">
+        <div class="section-heading"><h2 id="diagnostics-heading">Renderer Diagnostics</h2><span>Returned over WS</span></div>
+        <dl class="diagnostic-grid">
+          <div><dt>Camera state</dt><dd id="camera-state">Waiting</dd></div>
+          <div><dt>Active device</dt><dd id="camera-name" title="Active camera">—</dd></div>
+          <div><dt>Camera stream</dt><dd id="camera-resolution">—</dd></div>
+          <div><dt>Texture uploads</dt><dd id="upload-fps">0.0 fps</dd></div>
+          <div><dt>Vertex shader</dt><dd id="vertex-status">Waiting</dd></div>
+          <div><dt>Simulation shader</dt><dd id="simulation-status">Waiting</dd></div>
+          <div><dt>Display shader</dt><dd id="display-status">Waiting</dd></div>
+          <div><dt>Program links</dt><dd id="link-status">Waiting</dd></div>
+          <div><dt>Feedback targets</dt><dd id="fbo-status">Waiting</dd></div>
+          <div><dt>Target format</dt><dd id="target-format">Waiting</dd></div>
+          <div><dt>Render FPS</dt><dd id="render-fps">—</dd></div>
+          <div><dt>Drawing buffer</dt><dd id="drawing-resolution">—</dd></div>
+          <div><dt>Renderer</dt><dd id="renderer-name" title="WebGL renderer">Waiting…</dd></div>
+        </dl>
+        <pre id="error-log" class="error-log" hidden aria-live="polite"></pre>
+      </section>
+
+      <footer class="control-footer">
+        <div class="button-row"><button id="pause-button" type="button">Pause</button><button id="reset-button" type="button">Reset</button><button id="fullscreen-button" type="button">Canvas Fullscreen</button></div>
+        <p><kbd>C</kbd> camera · <kbd>Space</kbd> pause · <kbd>X</kbd> clear · <kbd>R</kbd> reset · <kbd>F</kbd> fullscreen</p>
+        <p><kbd>1–6</kbd> select mode · drag on renderer to inject feedback state</p>
+        <p class="folder-name">Folder: feedback-tauri-v2-ws-template</p>
+      </footer>
+    </section>
+  </main>
+  <script type="module" src="controls.js"></script>
+</body>
+</html>

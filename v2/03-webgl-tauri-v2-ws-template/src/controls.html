@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Junkpile 03 — Raw WebGL Controls</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="controls-page">
+  <main class="controls-shell">
+    <section class="controls-panel" aria-label="Raw WebGL WebSocket controls">
+      <header class="example-header">
+        <div class="eyebrow">Junkpile / Tauri v2 Essentials</div>
+        <div class="title-row">
+          <span class="example-number">03</span>
+          <div>
+            <h1>Raw WebGL</h1>
+            <p>WebSocket Windows</p>
+          </div>
+        </div>
+        <p class="lesson-copy">
+          Send shader parameters from one Tauri WebView to a second raw WebGL 1
+          renderer through an embedded Rust WebSocket relay.
+        </p>
+        <div class="runtime-row">
+          <span id="relay-status" class="status-pill" data-state="starting">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span id="relay-label">Relay connecting</span>
+          </span>
+          <span id="canvas-status" class="status-pill" data-state="waiting">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span id="canvas-label">Renderer waiting</span>
+          </span>
+        </div>
+        <div class="architecture-tag">Controls → WS :2727 → Canvas</div>
+      </header>
+
+      <section class="control-section" aria-labelledby="color-heading">
+        <div class="section-heading">
+          <h2 id="color-heading">Color</h2>
+          <span>HSB mapping</span>
+        </div>
+
+        <label class="parameter-row" for="hue">
+          <span class="parameter-copy"><strong>Hue Shift</strong><small>Base hue in degrees</small></span>
+          <input id="hue" type="range" min="0" max="360" step="1" value="180" />
+          <output id="hue-value" class="parameter-value" for="hue">180</output>
+        </label>
+
+        <label class="parameter-row" for="saturation">
+          <span class="parameter-copy"><strong>Saturation</strong><small>Color intensity</small></span>
+          <input id="saturation" type="range" min="0" max="1" step="0.01" value="0.8" />
+          <output id="saturation-value" class="parameter-value" for="saturation">0.80</output>
+        </label>
+
+        <label class="parameter-row" for="brightness">
+          <span class="parameter-copy"><strong>Brightness</strong><small>Pattern gain</small></span>
+          <input id="brightness" type="range" min="0" max="2" step="0.01" value="1" />
+          <output id="brightness-value" class="parameter-value" for="brightness">1.00</output>
+        </label>
+      </section>
+
+      <section class="control-section" aria-labelledby="motion-heading">
+        <div class="section-heading">
+          <h2 id="motion-heading">Shape + Motion</h2>
+          <span>UV transformation</span>
+        </div>
+
+        <label class="parameter-row" for="zoom">
+          <span class="parameter-copy"><strong>Zoom</strong><small>UV scale</small></span>
+          <input id="zoom" type="range" min="0.5" max="4" step="0.05" value="1.5" />
+          <output id="zoom-value" class="parameter-value" for="zoom">1.50</output>
+        </label>
+
+        <label class="parameter-row" for="speed">
+          <span class="parameter-copy"><strong>Speed</strong><small>Accumulated shader time</small></span>
+          <input id="speed" type="range" min="0" max="2" step="0.01" value="0.5" />
+          <output id="speed-value" class="parameter-value" for="speed">0.50</output>
+        </label>
+
+        <label class="parameter-row" for="distortion">
+          <span class="parameter-copy"><strong>Distortion</strong><small>Domain-warp strength</small></span>
+          <input id="distortion" type="range" min="0" max="1" step="0.01" value="0.3" />
+          <output id="distortion-value" class="parameter-value" for="distortion">0.30</output>
+        </label>
+      </section>
+
+      <section class="control-section" aria-labelledby="pattern-heading">
+        <div class="section-heading">
+          <h2 id="pattern-heading">Pattern</h2>
+          <span>fBm structure</span>
+        </div>
+
+        <label class="parameter-row" for="complexity">
+          <span class="parameter-copy"><strong>Complexity</strong><small>Active fBm octaves</small></span>
+          <input id="complexity" type="range" min="1" max="8" step="1" value="4" />
+          <output id="complexity-value" class="parameter-value" for="complexity">4</output>
+        </label>
+
+        <label class="parameter-row" for="symmetry">
+          <span class="parameter-copy"><strong>Symmetry</strong><small>Radial sectors</small></span>
+          <input id="symmetry" type="range" min="1" max="8" step="1" value="3" />
+          <output id="symmetry-value" class="parameter-value" for="symmetry">3</output>
+        </label>
+
+        <label class="parameter-row" for="glow">
+          <span class="parameter-copy"><strong>Glow</strong><small>Center-weighted gain</small></span>
+          <input id="glow" type="range" min="0" max="1" step="0.01" value="0.4" />
+          <output id="glow-value" class="parameter-value" for="glow">0.40</output>
+        </label>
+      </section>
+
+      <section class="control-section" aria-labelledby="switches-heading">
+        <div class="section-heading">
+          <h2 id="switches-heading">Switches</h2>
+          <span>Boolean messages</span>
+        </div>
+        <div class="toggle-grid">
+          <label class="toggle-control" for="invert">
+            <input id="invert" type="checkbox" />
+            <span>Invert</span>
+          </label>
+          <label class="toggle-control" for="pulse">
+            <input id="pulse" type="checkbox" checked />
+            <span>Pulse</span>
+          </label>
+          <label class="toggle-control" for="rotate">
+            <input id="rotate" type="checkbox" />
+            <span>Rotate</span>
+          </label>
+        </div>
+      </section>
+
+      <section class="control-section diagnostics-section" aria-labelledby="diagnostics-heading">
+        <div class="section-heading">
+          <h2 id="diagnostics-heading">Renderer Diagnostics</h2>
+          <span>Returned over WebSocket</span>
+        </div>
+        <dl class="diagnostic-grid">
+          <div><dt>Vertex shader</dt><dd id="vertex-status">Waiting</dd></div>
+          <div><dt>Fragment shader</dt><dd id="fragment-status">Waiting</dd></div>
+          <div><dt>Program link</dt><dd id="link-status">Waiting</dd></div>
+          <div><dt>FPS</dt><dd id="fps-value">—</dd></div>
+          <div><dt>Drawing buffer</dt><dd id="resolution-value">—</dd></div>
+          <div><dt>Renderer</dt><dd id="renderer-value" title="WebGL renderer">Waiting…</dd></div>
+          <div><dt>Sent</dt><dd id="sent-value">0</dd></div>
+          <div><dt>Received</dt><dd id="received-value">0</dd></div>
+        </dl>
+        <pre id="error-log" class="error-log" hidden></pre>
+      </section>
+
+      <footer class="control-footer">
+        <div class="button-row">
+          <button id="pause-button" type="button" aria-pressed="false">Pause</button>
+          <button id="reset-button" type="button">Reset</button>
+          <button id="fullscreen-button" type="button">Canvas Fullscreen</button>
+        </div>
+        <p><kbd>Space</kbd> pause · <kbd>R</kbd> reset · <kbd>F</kbd> canvas fullscreen</p>
+        <p class="folder-name">webgl-tauri-v2-ws-template</p>
+      </footer>
+    </section>
+  </main>
+  <script src="controls.js"></script>
+</body>
+</html>

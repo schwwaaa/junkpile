@@ -1,0 +1,61 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Junkpile 07 \u2014 Webcam Texture WS",
+  "version": "0.2.0",
+  "identifier": "com.schwwaaa.junkpile.webcam-v2-ws",
+  "build": {
+    "beforeBuildCommand": "",
+    "beforeDevCommand": "",
+    "frontendDist": "../src"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "controls",
+        "title": "Junkpile 07 \u2014 Webcam Controls",
+        "url": "controls.html",
+        "width": 470,
+        "height": 800,
+        "minWidth": 380,
+        "minHeight": 560,
+        "resizable": true,
+        "decorations": true,
+        "fullscreen": false,
+        "x": 24,
+        "y": 44
+      },
+      {
+        "label": "canvas",
+        "title": "Junkpile 07 \u2014 Webcam Renderer",
+        "url": "canvas.html",
+        "width": 920,
+        "height": 680,
+        "minWidth": 500,
+        "minHeight": 360,
+        "resizable": true,
+        "decorations": true,
+        "fullscreen": false,
+        "x": 514,
+        "y": 44
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; connect-src 'self' ipc: http://ipc.localhost ws://127.0.0.1:2727 ws://[::1]:2727; media-src 'self' blob: mediastream:; img-src 'self' data:; style-src 'self'; script-src 'self'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/icon_32x32.png",
+      "icons/icon_128x128.png",
+      "icons/icon_256x256.png",
+      "icons/icon_512x512.png",
+      "icons/icon.ico"
+    ],
+    "macOS": {
+      "entitlements": "entitlements.plist"
+    }
+  }
+}

@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Junkpile 06 — Webcam Texture</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <section class="app-grid">
+      <aside class="controls-panel" aria-label="Webcam texture controls">
+        <header class="example-header">
+          <p class="eyebrow">Tauri v2 Essentials · Legacy Modernization</p>
+          <div class="title-row">
+            <span class="example-number">06</span>
+            <div>
+              <h1>Webcam Texture</h1>
+              <p>Single Window · Raw WebGL 1</p>
+            </div>
+          </div>
+          <p class="lesson-copy">
+            Captures a browser camera stream, uploads each decoded frame into a WebGL
+            <code>sampler2D</code>, processes it with GLSL, and mixes the result through two
+            ping-pong framebuffers for temporal feedback.
+          </p>
+          <div class="runtime-row">
+            <span id="runtime-status" class="status-pill" data-state="initializing">
+              <span class="status-dot"></span>
+              <span id="runtime-status-text">Initializing WebGL</span>
+            </span>
+            <span class="architecture-tag">Camera → Video → Texture → FBO</span>
+          </div>
+        </header>
+
+        <section class="control-section" aria-labelledby="camera-heading">
+          <div class="section-heading">
+            <h2 id="camera-heading">Camera Source</h2>
+            <span>getUserMedia</span>
+          </div>
+          <div class="camera-card">
+            <label class="select-label" for="camera-device">Video input</label>
+            <select id="camera-device" aria-describedby="camera-help">
+              <option value="">Searching for cameras…</option>
+            </select>
+            <div class="camera-actions">
+              <button id="camera-button" class="accent-button" type="button">Start Camera</button>
+              <button id="refresh-button" type="button">Refresh Devices</button>
+            </div>
+            <p id="camera-help" class="camera-help">
+              Device names may stay generic until camera permission is granted.
+            </p>
+          </div>
+        </section>
+
+        <section class="control-section" aria-labelledby="effect-heading">
+          <div class="section-heading">
+            <h2 id="effect-heading">Effect</h2>
+            <span>GLSL branch</span>
+          </div>
+
+          <label class="parameter-row effect-row" for="effect">
+            <span class="parameter-copy"><strong>Mode</strong><small>Active camera processor</small></span>
+            <input id="effect" type="range" min="0" max="5" step="1" value="0" />
+            <output id="effect-value" class="parameter-value effect-value" for="effect">Passthrough</output>
+          </label>
+
+          <label class="parameter-row" for="distortion">
+            <span class="parameter-copy"><strong>Distortion</strong><small>Warp or glitch strength</small></span>
+            <input id="distortion" type="range" min="0" max="1" step="0.01" value="0" />
+            <output id="distortion-value" class="parameter-value" for="distortion">0.00</output>
+          </label>
+
+          <label class="parameter-row" for="feedback">
+            <span class="parameter-copy"><strong>Feedback</strong><small>Previous-frame mixture</small></span>
+            <input id="feedback" type="range" min="0" max="0.98" step="0.01" value="0" />
+            <output id="feedback-value" class="parameter-value" for="feedback">0.00</output>
+          </label>
+
+          <label class="parameter-row" for="zoom">
+            <span class="parameter-copy"><strong>Zoom</strong><small>Camera UV scale</small></span>
+            <input id="zoom" type="range" min="0.5" max="3" step="0.05" value="1" />
+            <output id="zoom-value" class="parameter-value" for="zoom">1.00</output>
+          </label>
+
+          <label class="parameter-row" for="speed">
+            <span class="parameter-copy"><strong>Warp Speed</strong><small>Accumulated effect time</small></span>
+            <input id="speed" type="range" min="0" max="2" step="0.01" value="0.3" />
+            <output id="speed-value" class="parameter-value" for="speed">0.30</output>
+          </label>
+        </section>
+
+        <section class="control-section" aria-labelledby="color-heading">
+          <div class="section-heading">
+            <h2 id="color-heading">Color</h2>
+            <span>Post-process</span>
+          </div>
+
+          <label class="parameter-row" for="hue">
+            <span class="parameter-copy"><strong>Hue Shift</strong><small>Rotation in degrees</small></span>
+            <input id="hue" type="range" min="0" max="360" step="1" value="0" />
+            <output id="hue-value" class="parameter-value" for="hue">0</output>
+          </label>
+
+          <label class="parameter-row" for="saturation">
+            <span class="parameter-copy"><strong>Saturation</strong><small>Color intensity</small></span>
+            <input id="saturation" type="range" min="0" max="2" step="0.01" value="1" />
+            <output id="saturation-value" class="parameter-value" for="saturation">1.00</output>
+          </label>
+
+          <label class="parameter-row" for="brightness">
+            <span class="parameter-copy"><strong>Brightness</strong><small>Output gain</small></span>
+            <input id="brightness" type="range" min="0" max="2" step="0.01" value="1" />
+            <output id="brightness-value" class="parameter-value" for="brightness">1.00</output>
+          </label>
+
+          <label class="parameter-row" for="contrast">
+            <span class="parameter-copy"><strong>Contrast</strong><small>Midpoint expansion</small></span>
+            <input id="contrast" type="range" min="0" max="3" step="0.01" value="1" />
+            <output id="contrast-value" class="parameter-value" for="contrast">1.00</output>
+          </label>
+        </section>
+
+        <section class="control-section" aria-labelledby="switches-heading">
+          <div class="section-heading">
+            <h2 id="switches-heading">Switches</h2>
+            <span>Float uniforms</span>
+          </div>
+          <div class="toggle-grid">
+            <label class="toggle-control" for="mirror">
+              <input id="mirror" type="checkbox" />
+              <span>Mirror X</span>
+            </label>
+            <label class="toggle-control" for="invert">
+              <input id="invert" type="checkbox" />
+              <span>Invert</span>
+            </label>
+            <label class="toggle-control" for="greyscale">
+              <input id="greyscale" type="checkbox" />
+              <span>Greyscale</span>
+            </label>
+          </div>
+        </section>
+
+        <section class="control-section diagnostics-section" aria-labelledby="diagnostics-heading">
+          <div class="section-heading">
+            <h2 id="diagnostics-heading">Diagnostics</h2>
+            <span>Camera + renderer</span>
+          </div>
+          <dl class="diagnostic-grid">
+            <div><dt>Camera state</dt><dd id="camera-state">Idle</dd></div>
+            <div><dt>Active device</dt><dd id="camera-name" title="Active camera">—</dd></div>
+            <div><dt>Camera stream</dt><dd id="camera-resolution">—</dd></div>
+            <div><dt>Texture uploads</dt><dd id="upload-fps">0 fps</dd></div>
+            <div><dt>Vertex shader</dt><dd id="vertex-status">Pending</dd></div>
+            <div><dt>Fragment shader</dt><dd id="fragment-status">Pending</dd></div>
+            <div><dt>Program link</dt><dd id="link-status">Pending</dd></div>
+            <div><dt>Render FPS</dt><dd id="render-fps">—</dd></div>
+            <div><dt>Drawing buffer</dt><dd id="drawing-resolution">—</dd></div>
+            <div><dt>Renderer</dt><dd id="renderer-name" title="WebGL renderer">Detecting…</dd></div>
+          </dl>
+          <pre id="error-log" class="error-log" hidden aria-live="polite"></pre>
+        </section>
+
+        <footer class="control-footer">
+          <div class="button-row">
+            <button id="pause-button" type="button">Pause</button>
+            <button id="reset-button" type="button">Reset</button>
+            <button id="fullscreen-button" type="button">Fullscreen</button>
+          </div>
+          <p><kbd>C</kbd> camera · <kbd>Space</kbd> pause · <kbd>R</kbd> reset · <kbd>F</kbd> fullscreen</p>
+          <p class="folder-name">webcam-tauri-v2-single-template</p>
+        </footer>
+      </aside>
+
+      <section id="renderer-panel" class="renderer-panel" aria-label="Live webcam WebGL renderer">
+        <canvas id="gl-canvas" aria-label="Webcam processed through WebGL effects"></canvas>
+        <div class="renderer-hud" aria-hidden="true">
+          <span>WEBCAM TEXTURE</span>
+          <span id="hud-effect">Passthrough</span>
+          <span id="hud-camera">NO CAMERA</span>
+          <span id="hud-resolution">—</span>
+        </div>
+        <div id="camera-notice" class="camera-notice">
+          <strong id="camera-notice-title">Camera input idle</strong>
+          <span id="camera-notice-message">Choose a source and press Start Camera. The WebGL pipeline is already running.</span>
+        </div>
+        <div id="renderer-error" class="renderer-error" hidden>
+          <strong>Renderer stopped</strong>
+          <span id="renderer-error-message">Unknown WebGL error.</span>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <video id="camera-video" autoplay playsinline muted></video>
+  <script src="app.js"></script>
+</body>
+</html>

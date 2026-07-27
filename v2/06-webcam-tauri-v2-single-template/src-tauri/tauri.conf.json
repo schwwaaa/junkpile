@@ -1,0 +1,46 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Junkpile 06 — Webcam Texture",
+  "version": "0.2.0",
+  "identifier": "com.schwwaaa.junkpile.webcam-v2-single",
+  "build": {
+    "beforeBuildCommand": "",
+    "beforeDevCommand": "",
+    "frontendDist": "../src"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "main",
+        "title": "Junkpile 06 — Webcam Texture Single Window",
+        "url": "index.html",
+        "width": 1240,
+        "height": 800,
+        "minWidth": 760,
+        "minHeight": 560,
+        "resizable": true,
+        "decorations": true,
+        "fullscreen": false,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; connect-src 'self' ipc: http://ipc.localhost; media-src 'self' blob: mediastream:; img-src 'self' data:; style-src 'self'; script-src 'self'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/icon_32x32.png",
+      "icons/icon_128x128.png",
+      "icons/icon_256x256.png",
+      "icons/icon_512x512.png",
+      "icons/icon.ico"
+    ],
+    "macOS": {
+      "entitlements": "entitlements.plist"
+    }
+  }
+}

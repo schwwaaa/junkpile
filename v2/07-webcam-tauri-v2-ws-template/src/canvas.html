@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark" />
+  <title>Junkpile 07 — Webcam Renderer</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="canvas-page">
+  <main id="renderer-panel" class="renderer-panel" aria-label="Webcam WebGL renderer">
+    <canvas id="gl-canvas" aria-label="Webcam processed through remote WebGL effects"></canvas>
+    <div class="renderer-hud">
+      <div class="hud-group"><span class="hud-label">07 · WEBCAM WS</span><span id="hud-effect">PASSTHROUGH</span><span id="hud-camera">NO CAMERA</span></div>
+      <div class="hud-group hud-group-right"><span id="hud-runtime">INITIALIZING</span><span id="hud-fps">— FPS</span><span id="hud-resolution">—</span></div>
+    </div>
+    <div id="camera-notice" class="renderer-notice"><strong id="camera-notice-title">Camera input idle</strong><span id="camera-notice-message">Use the controls window to choose a camera. The WebGL pipeline is already running.</span></div>
+    <div id="renderer-error" class="renderer-error" hidden><strong>Renderer unavailable</strong><span id="renderer-error-message">Unknown WebGL error.</span></div>
+    <p class="renderer-help">The camera stream never crosses the socket. This WebView owns permission, decoding, texImage2D uploads, GLSL, and feedback.</p>
+  </main>
+  <video id="camera-video" autoplay playsinline muted></video>
+  <script type="module" src="canvas.js"></script>
+</body>
+</html>

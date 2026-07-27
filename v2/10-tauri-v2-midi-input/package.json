@@ -1,0 +1,14 @@
+{
+  "name": "10-tauri-v2-midi-input",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Junkpile Tauri v2 essential: Rust MIDI input bridged into a raw WebGL visual",
+  "scripts": {
+    "dev": "tauri dev",
+    "build": "tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}
