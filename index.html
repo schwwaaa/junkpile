@@ -1,77 +1,231 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1" name="viewport"/>
-<meta content="Junkpile documents 78 standalone Tauri and native wgpu examples for creative graphics, media, input, routing, automation, and export." name="description"/>
-<meta content="#07080B" name="theme-color"/><title>Junkpile · 78 creative graphics systems examples</title>
-<link href="assets/icons/favicon-32x32.png" rel="icon" sizes="32x32"/><link href="assets/site/site.css" rel="stylesheet"/><script defer="" src="assets/site/site.js"></script></head><body>
-<a class="skip-link" href="#main">Skip to content</a>
-<header class="site-header"><div class="header-inner">
-<a class="brand" href="index.html"><img alt="" aria-hidden="true" class="brand-symbol" src="assets/brand/junkpile-amorphous-icon.png"/><span>junkpile<small>creative graphics systems laboratory</small></span></a>
-<button aria-controls="site-nav" aria-expanded="false" class="nav-toggle" data-nav-toggle="">Menu</button>
-<nav aria-label="Primary navigation" class="site-nav" data-site-nav="" id="site-nav">
-<a aria-current="page" href="index.html">Overview</a>
-<a href="docs.html">Documentation</a>
-<a href="docs.html#example-catalog">All 78 examples</a><a href="docs.html#design-system">Design system</a><a href="README.md">README</a></nav>
-</div></header><main id="main">
-<section class="hero"><div class="container hero-grid"><div><p class="eyebrow">Coding templates for live visual art</p><h1 class="display">Run it.<br/><span class="outline">Understand it.</span><br/>Build from it.</h1>
-<p class="lede">Junkpile is a completed laboratory of <strong>78 standalone applications</strong>. Three parallel 00–25 collections expose WebView creative coding, modern Tauri integration, and native Rust/wgpu rendering without hiding the architectural differences between them.</p>
-<div class="hero-actions"><a class="button primary" href="docs.html#quick-start">Run an example</a><a class="button blue" href="docs.html#example-catalog">Browse all 78</a><a class="button ghost" href="docs.html#architecture">Understand the architecture</a></div>
-<div aria-label="Repository statistics" class="stat-strip"><div class="stat"><strong>78</strong><span>Standalone examples</span></div><div class="stat"><strong>26</strong><span>Tauri v1 WebView</span></div><div class="stat"><strong>26</strong><span>Tauri v2 WebView</span></div><div class="stat"><strong>26</strong><span>Native wgpu</span></div></div></div>
-<div class="hero-art"><div class="logo-card"><img alt="Junkpile amorphous shader-form logo" src="assets/brand/junkpile-amorphous-icon.png"/></div><span class="hero-stamp">3 × 26 complete</span></div></div></section>
-<section class="section-dark section"><div class="container"><p class="eyebrow">Three architectural tracks</p><h2 class="section-heading">Similar goals. Different render paths.</h2><p class="section-intro">Tauri version and renderer choice are separate decisions. The v2 WebView collection remains browser-rendered; native wgpu is its own explicit family.</p>
-<div class="path-grid" style="margin-top:36px"><article class="card" style="color:var(--ink)"><div class="card-number">V1</div><h3>Tauri v1 WebView</h3><p>HTML, JavaScript, p5.js, raw WebGL, GLSL, browser media, and Rust bridges inside the first-generation Tauri configuration model.</p><a class="card-link" href="docs.html#v1-track">Explore v1 →</a></article>
-<article class="card" style="color:var(--ink)"><div class="card-number" style="background:var(--signal-3)">V2</div><h3>Tauri v2 WebView</h3><p>The same accessible browser graphics path with Tauri 2 capabilities, current window APIs, native file workflows, and broader production examples.</p><a class="card-link" href="docs.html#v2-track">Explore v2 →</a></article>
-<article class="card" style="color:var(--ink)"><div class="card-number" style="background:var(--signal-2)">GPU</div><h3>Native Rust/wgpu</h3><p>WGSL, native surfaces, compute shaders, resource lifetimes, camera/video bridges, 3D, interop, and resolution-independent export.</p><a class="card-link" href="docs.html#wgpu-track">Explore wgpu →</a></article></div></div></section>
-<section class="section"><div class="container"><div class="truth-card"><p class="eyebrow">Architectural truth</p><h2 class="section-heading">WebView and native GPU are both first-class—but they are not the same.</h2>
-<div class="truth-grid"><div class="truth-pane"><h3>WebView collections</h3><p><strong>HTML / JavaScript / p5.js / WebGL</strong><br/>↓<br/>Tauri v1 or v2 WebView<br/>↓<br/>WKWebView · WebView2 · WebKitGTK</p></div>
-<div class="truth-pane"><h3>Native collection</h3><p><strong>Rust / wgpu / WGSL</strong><br/>↓<br/>Native GPU surface<br/>↓<br/>Metal · Vulkan · Direct3D 12</p></div></div><p>The HTML interface can still control a native renderer through Tauri IPC, but the pixels are produced by a different pipeline.</p></div></div></section>
-<section class="section-signal section"><div class="container"><p class="eyebrow">Development progression</p><h2 class="section-heading">From one pixel path to a modular media ecosystem.</h2>
-<div class="diagram"><p class="diagram-title">Junkpile learning path</p><div class="flow"><div class="flow-node signal"><strong>Foundations</strong><small>surface · shader · controls</small></div><div class="flow-arrow">→</div><div class="flow-node"><strong>Media</strong><small>image · camera · video · audio</small></div><div class="flow-arrow">→</div><div class="flow-node blue"><strong>Processing</strong><small>feedback · compute · multipass</small></div><div class="flow-arrow">→</div><div class="flow-node orange"><strong>Systems</strong><small>routing · automation · outputs</small></div><div class="flow-arrow">→</div><div class="flow-node dark"><strong>Products</strong><small>Scheng components · focused instruments</small></div></div></div></div></section>
-<section class="section"><div class="container"><p class="eyebrow">Representative examples</p><h2 class="section-heading">The library now reaches far beyond shader templates.</h2><div class="example-grid"><article class="example-card" data-example-card="" data-family="p5" data-topology="single-window" data-version="v1">
-<div class="example-card-head"><span class="badge">V1 00</span><span class="card-tag">p5</span></div>
-<div class="example-card-body"><h3>p5.js Shader · Single Window</h3><code>p5-tauri-single-template</code><p>p5.js WebGL shader baseline with controls and renderer in one WebView.</p>
-<div class="example-meta"><span>p5.js WebGL</span><span>single-window</span><span>DOM controls</span></div>
-<div class="example-actions"><a class="mini-button" href="v1/p5-tauri-single-template/README.md">Local README</a><a class="mini-button" href="v1/p5-tauri-single-template/">Project folder</a></div></div></article><article class="example-card" data-example-card="" data-family="webgl" data-topology="single-window" data-version="v2">
-<div class="example-card-head"><span class="badge">V2 02</span><span class="card-tag">webgl</span></div>
-<div class="example-card-body"><h3>Raw WebGL · Single Window</h3><code>webgl-tauri-v2-single-template</code><p>Explicit WebGL 1 context, shader compilation, program linking, fullscreen quad, uniforms, and render loop.</p>
-<div class="example-meta"><span>Raw WebGL 1 / GLSL</span><span>single-window</span><span>DOM controls</span></div>
-<div class="example-actions"><a class="mini-button" href="v2/webgl-tauri-v2-single-template/README.md">Local README</a><a class="mini-button" href="v2/webgl-tauri-v2-single-template/">Project folder</a></div></div></article><article class="example-card" data-example-card="" data-family="foundations" data-topology="native-window" data-version="wgpu">
-<div class="example-card-head"><span class="badge">WGPU 00</span><span class="card-tag">foundations</span></div>
-<div class="example-card-body"><h3>Surface Probe</h3><code>00-wgpu-surface-probe</code><p>Creates a native wgpu surface, selects an adapter, configures presentation, and exposes backend diagnostics.</p>
-<div class="example-meta"><span>Native Rust wgpu</span><span>native-window</span><span>GPU adapter</span></div>
-<div class="example-actions"><a class="mini-button" href="native-wgpu/00-wgpu-surface-probe/README.md">Local README</a><a class="mini-button" href="native-wgpu/00-wgpu-surface-probe/">Project folder</a></div></div></article><article class="example-card" data-example-card="" data-family="3d" data-topology="native-window" data-version="wgpu">
-<div class="example-card-head"><span class="badge">WGPU 11</span><span class="card-tag">3d</span></div>
-<div class="example-card-body"><h3>Volumetric Raymarcher</h3><code>11-wgpu-volumetric-raymarcher</code><p>Ray-marches four procedural 3D scenes with fog, shadows, ambient occlusion, and high-resolution targets.</p>
-<div class="example-meta"><span>Native Rust wgpu</span><span>native-window</span><span>Procedural scene controls</span></div>
-<div class="example-actions"><a class="mini-button" href="native-wgpu/11-wgpu-volumetric-raymarcher/README.md">Local README</a><a class="mini-button" href="native-wgpu/11-wgpu-volumetric-raymarcher/">Project folder</a></div></div></article><article class="example-card" data-example-card="" data-family="compositor" data-topology="hybrid-window" data-version="wgpu">
-<div class="example-card-head"><span class="badge">WGPU 20</span><span class="card-tag">compositor</span></div>
-<div class="example-card-body"><h3>Multi-Input Compositor</h3><code>20-wgpu-multi-input-compositor</code><p>Combines multiple media and generated sources, transport, audio analysis, layers, and GPU compositing.</p>
-<div class="example-meta"><span>Native Rust wgpu</span><span>hybrid-window</span><span>Video/camera/audio/generators</span></div>
-<div class="example-actions"><a class="mini-button" href="native-wgpu/20-wgpu-multi-input-compositor/README.md">Local README</a><a class="mini-button" href="native-wgpu/20-wgpu-multi-input-compositor/">Project folder</a></div></div></article><article class="example-card" data-example-card="" data-family="export" data-topology="native-window" data-version="wgpu">
-<div class="example-card-head"><span class="badge">WGPU 25</span><span class="card-tag">export</span></div>
-<div class="example-card-body"><h3>Ultra-Resolution Export</h3><code>25-wgpu-ultra-resolution-export</code><p>Renders independent HD/4K/6K/8K tiles, reads them back safely, assembles pixels, and exports PNG.</p>
-<div class="example-meta"><span>Native Rust wgpu</span><span>native-window</span><span>Export configuration</span></div>
-<div class="example-actions"><a class="mini-button" href="native-wgpu/25-wgpu-ultra-resolution-export/README.md">Local README</a><a class="mini-button" href="native-wgpu/25-wgpu-ultra-resolution-export/">Project folder</a></div></div></article></div><div class="hero-actions"><a class="button primary" href="docs.html#example-catalog">Open the complete catalog</a><a class="button ghost" href="docs/ADVANCEMENTS_2026.md">Read the advancements report</a></div></div></section>
-<section class="section-dark section"><div class="container"><p class="eyebrow">How to work with Junkpile</p><h2 class="section-heading">See it. Run it. Understand it. Modify it. Build it.</h2><div class="principle-grid"><article class="card"><h3>Preserve the baseline</h3><p>Each example is a complete standalone application. Keep a clean copy before combining systems.</p></article><article class="card"><h3>Change one layer</h3><p>Alter the input, transport, shader, resource model, or output independently before merging concerns.</p></article><article class="card"><h3>Keep boundaries visible</h3><p>Document which window owns media, which thread owns GPU resources, and how state survives reconnects.</p></article><article class="card"><h3>Package real applications</h3><p>Every example includes development and production-build paths rather than ending as a browser sketch.</p></article></div></div></section>
-<section class="section brand-section" id="design-system">
-<div class="container">
-<p class="eyebrow">Identity system</p>
-<h2 class="section-heading">A continuous form for a modular graphics laboratory.</h2>
-<div class="brand-feature">
-<div class="brand-logo-panel"><img alt="Junkpile amorphous shader-form symbol" src="assets/brand/junkpile-amorphous-icon.png"/></div>
-<div class="brand-copy-panel">
-<p class="lede">Junkpile is presented as a continuous graphics field: many rendering systems, media inputs, and control paths held inside one inspectable laboratory.</p>
-<p>The amorphous mark is derived from shader surfaces, feedback contours, color interpolation, and real-time deformation. Its spectral field carries the expressive energy while the surrounding interface remains structured, restrained, and technical.</p>
-<div class="badge-row"><span class="badge status">Current digital identity</span><span class="badge v2">Amorphous field</span><span class="badge">Digital master</span></div>
-<div class="hero-actions"><a class="button primary" href="docs.html#design-system">Read the design system</a><a class="button ghost" href="docs/DESIGN_PRINCIPLES_MANIFEST.md">Open the full manifest</a></div>
-</div>
-</div>
-<div aria-label="Junkpile identity colors" class="brand-swatches">
-<div class="brand-swatch" style="--swatch:#07080B"><strong>Graphite</strong><code>#11110F</code></div>
-<div class="brand-swatch" style="--swatch:#8A28FF"><strong>Violet</strong><code>#D7FF2F</code></div>
-<div class="brand-swatch" style="--swatch:#206BFF"><strong>Electric Blue</strong><code>#8EB8FF</code></div>
-<div class="brand-swatch" style="--swatch:#FF7A00"><strong>Spectral Orange</strong><code>#FF6B47</code></div>
-<div class="brand-swatch" style="--swatch:#F5F6F8"><strong>Light</strong><code>#F3F0E5</code></div>
-</div>
-<div class="callout info"><strong>Production status</strong>The identity is approved for current digital documentation use. The full asset folder includes primary, symbol-only, monochrome, reversed, favicon, and archived source variants. A manually reconstructed vector master and print proofing remain future production tasks.</div>
-</div>
-</section></main><footer class="site-footer"><div class="container footer-grid"><div><strong>Junkpile</strong><p>Small, inspectable applications for learning and building creative graphics systems.</p></div><div class="footer-links"><a href="docs.html#quick-start">Quick start</a><a href="docs.html#example-catalog">Example catalog</a><a href="docs/ARCHITECTURE.md">Architecture</a><a href="docs/ADVANCEMENTS_2026.md">Advancements</a><a href="docs.html#design-system">Design system</a></div></div><div class="container footer-note">Baseline frozen after completion of all three 00–25 collections · July 2026</div></footer></body></html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
+    <meta content="Junkpile documents 75 standalone Tauri and native wgpu examples for creative graphics, media, input, routing, automation, and export." name="description" />
+    <meta content="#07080B" name="theme-color" />
+    <title>Junkpile · 75 creative graphics systems examples</title>
+    <link href="assets/icons/favicon-32x32.png" rel="icon" sizes="32x32" />
+    <link href="assets/site/site.css" rel="stylesheet" />
+    <script defer="" src="assets/site/site.js"></script>
+</head>
+
+<body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+        <div class="header-inner">
+            <a class="brand" href="index.html"><img alt="" aria-hidden="true" class="brand-symbol" src="assets/brand/junkpile-amorphous-icon.png" /><span>junkpile<small>creative graphics systems laboratory</small></span></a>
+            <button aria-controls="site-nav" aria-expanded="false" class="nav-toggle" data-nav-toggle="">Menu</button>
+            <nav aria-label="Primary navigation" class="site-nav" data-site-nav="" id="site-nav">
+                <a aria-current="page" href="index.html">Overview</a>
+                <a href="docs.html">Documentation</a>
+                <a href="docs.html#example-catalog">All 75 examples</a><a href="docs.html#design-system">Design system</a><a href="README.md">README</a></nav>
+        </div>
+    </header>
+    <main id="main">
+        <section class="hero">
+            <div class="container hero-grid">
+                <div>
+                    <p class="eyebrow">Coding templates for live visual art</p>
+                    <h1 class="display">Run it.<br/><span class="outline">Understand it.</span><br/>Build from it.</h1>
+                    <p class="lede">Junkpile is a completed laboratory of <strong>75 standalone applications</strong>. Three parallel 00–25 collections expose WebView creative coding, modern Tauri integration, and native Rust/wgpu rendering without hiding the architectural
+                        differences between them.</p>
+                    <div class="hero-actions"><a class="button primary" href="docs.html#quick-start">Run an example</a><a class="button blue" href="docs.html#example-catalog">Browse all 75</a><a class="button ghost" href="docs.html#architecture">Understand the architecture</a></div>
+                    <div aria-label="Repository statistics" class="stat-strip">
+                        <div class="stat"><strong>75</strong><span>Standalone examples</span></div>
+                        <div class="stat"><strong>26</strong><span>Tauri v1 WebView</span></div>
+                        <div class="stat"><strong>26</strong><span>Tauri v2 WebView</span></div>
+                        <div class="stat"><strong>26</strong><span>Native wgpu</span></div>
+                    </div>
+                </div>
+                <div class="hero-art">
+                    <div class="logo-card"><img alt="Junkpile amorphous shader-form logo" src="assets/brand/junkpile-amorphous-icon.png" /></div><span class="hero-stamp">3 × 26 complete</span></div>
+            </div>
+        </section>
+        <section class="section-dark section">
+            <div class="container">
+                <p class="eyebrow">Three architectural tracks</p>
+                <h2 class="section-heading">Similar goals. Different render paths.</h2>
+                <p class="section-intro">Tauri version and renderer choice are separate decisions. The v2 WebView collection remains browser-rendered; native wgpu is its own explicit family.</p>
+                <div class="path-grid" style="margin-top:36px">
+                    <article class="card" style="color:var(--ink)">
+                        <div class="card-number">V1</div>
+                        <h3>Tauri v1 WebView</h3>
+                        <p>HTML, JavaScript, p5.js, raw WebGL, GLSL, browser media, and Rust bridges inside the first-generation Tauri configuration model.</p><a class="card-link" href="docs.html#v1-track">Explore v1 →</a></article>
+                    <article class="card" style="color:var(--ink)">
+                        <div class="card-number" style="background:var(--signal-3)">V2</div>
+                        <h3>Tauri v2 WebView</h3>
+                        <p>The same accessible browser graphics path with Tauri 2 capabilities, current window APIs, native file workflows, and broader production examples.</p><a class="card-link" href="docs.html#v2-track">Explore v2 →</a></article>
+                    <article class="card" style="color:var(--ink)">
+                        <div class="card-number" style="background:var(--signal-2)">GPU</div>
+                        <h3>Native Rust/wgpu</h3>
+                        <p>WGSL, native surfaces, compute shaders, resource lifetimes, camera/video bridges, 3D, interop, and resolution-independent export.</p><a class="card-link" href="docs.html#wgpu-track">Explore wgpu →</a></article>
+                </div>
+            </div>
+        </section>
+        <section class="section">
+            <div class="container">
+                <div class="truth-card">
+                    <p class="eyebrow">Architectural truth</p>
+                    <h2 class="section-heading">WebView and native GPU are both first-class—but they are not the same.</h2>
+                    <div class="truth-grid">
+                        <div class="truth-pane">
+                            <h3>WebView collections</h3>
+                            <p><strong>HTML / JavaScript / p5.js / WebGL</strong><br/>↓<br/>Tauri v1 or v2 WebView<br/>↓<br/>WKWebView · WebView2 · WebKitGTK</p>
+                        </div>
+                        <div class="truth-pane">
+                            <h3>Native collection</h3>
+                            <p><strong>Rust / wgpu / WGSL</strong><br/>↓<br/>Native GPU surface<br/>↓<br/>Metal · Vulkan · Direct3D 12</p>
+                        </div>
+                    </div>
+                    <p>The HTML interface can still control a native renderer through Tauri IPC, but the pixels are produced by a different pipeline.</p>
+                </div>
+            </div>
+        </section>
+        <section class="section-signal section">
+            <div class="container">
+                <p class="eyebrow">Development progression</p>
+                <h2 class="section-heading">From one pixel path to a modular media ecosystem.</h2>
+                <div class="diagram">
+                    <p class="diagram-title">Junkpile learning path</p>
+                    <div class="flow">
+                        <div class="flow-node signal"><strong>Foundations</strong><small>surface · shader · controls</small></div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-node"><strong>Media</strong><small>image · camera · video · audio</small></div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-node blue"><strong>Processing</strong><small>feedback · compute · multipass</small></div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-node orange"><strong>Systems</strong><small>routing · automation · outputs</small></div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-node dark"><strong>Products</strong><small>Scheng components · focused instruments</small></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section class="section">
+            <div class="container">
+                <p class="eyebrow">Representative examples</p>
+                <h2 class="section-heading">The library now reaches far beyond shader templates.</h2>
+                <div class="example-grid">
+                    <article class="example-card" data-example-card="" data-family="p5" data-topology="single-window" data-version="v1">
+                        <div class="example-card-head"><span class="badge">V1 00</span><span class="card-tag">p5</span></div>
+                        <div class="example-card-body">
+                            <h3>p5.js Shader · Single Window</h3><code>p5-tauri-single-template</code>
+                            <p>p5.js WebGL shader baseline with controls and renderer in one WebView.</p>
+                            <div class="example-meta"><span>p5.js WebGL</span><span>single-window</span><span>DOM controls</span></div>
+                            <div class="example-actions"><a class="mini-button" href="v1/p5-tauri-single-template/README.md">Local README</a><a class="mini-button" href="v1/p5-tauri-single-template/">Project folder</a></div>
+                        </div>
+                    </article>
+                    <article class="example-card" data-example-card="" data-family="webgl" data-topology="single-window" data-version="v2">
+                        <div class="example-card-head"><span class="badge">V2 02</span><span class="card-tag">webgl</span></div>
+                        <div class="example-card-body">
+                            <h3>Raw WebGL · Single Window</h3><code>webgl-tauri-v2-single-template</code>
+                            <p>Explicit WebGL 1 context, shader compilation, program linking, fullscreen quad, uniforms, and render loop.</p>
+                            <div class="example-meta"><span>Raw WebGL 1 / GLSL</span><span>single-window</span><span>DOM controls</span></div>
+                            <div class="example-actions"><a class="mini-button" href="v2/webgl-tauri-v2-single-template/README.md">Local README</a><a class="mini-button" href="v2/webgl-tauri-v2-single-template/">Project folder</a></div>
+                        </div>
+                    </article>
+                    <article class="example-card" data-example-card="" data-family="foundations" data-topology="native-window" data-version="wgpu">
+                        <div class="example-card-head"><span class="badge">WGPU 00</span><span class="card-tag">foundations</span></div>
+                        <div class="example-card-body">
+                            <h3>Surface Probe</h3><code>00-wgpu-surface-probe</code>
+                            <p>Creates a native wgpu surface, selects an adapter, configures presentation, and exposes backend diagnostics.</p>
+                            <div class="example-meta"><span>Native Rust wgpu</span><span>native-window</span><span>GPU adapter</span></div>
+                            <div class="example-actions"><a class="mini-button" href="native-wgpu/00-wgpu-surface-probe/README.md">Local README</a><a class="mini-button" href="native-wgpu/00-wgpu-surface-probe/">Project folder</a></div>
+                        </div>
+                    </article>
+                    <article class="example-card" data-example-card="" data-family="3d" data-topology="native-window" data-version="wgpu">
+                        <div class="example-card-head"><span class="badge">WGPU 11</span><span class="card-tag">3d</span></div>
+                        <div class="example-card-body">
+                            <h3>Volumetric Raymarcher</h3><code>11-wgpu-volumetric-raymarcher</code>
+                            <p>Ray-marches four procedural 3D scenes with fog, shadows, ambient occlusion, and high-resolution targets.</p>
+                            <div class="example-meta"><span>Native Rust wgpu</span><span>native-window</span><span>Procedural scene controls</span></div>
+                            <div class="example-actions"><a class="mini-button" href="native-wgpu/11-wgpu-volumetric-raymarcher/README.md">Local README</a><a class="mini-button" href="native-wgpu/11-wgpu-volumetric-raymarcher/">Project folder</a></div>
+                        </div>
+                    </article>
+                    <article class="example-card" data-example-card="" data-family="compositor" data-topology="hybrid-window" data-version="wgpu">
+                        <div class="example-card-head"><span class="badge">WGPU 20</span><span class="card-tag">compositor</span></div>
+                        <div class="example-card-body">
+                            <h3>Multi-Input Compositor</h3><code>20-wgpu-multi-input-compositor</code>
+                            <p>Combines multiple media and generated sources, transport, audio analysis, layers, and GPU compositing.</p>
+                            <div class="example-meta"><span>Native Rust wgpu</span><span>hybrid-window</span><span>Video/camera/audio/generators</span></div>
+                            <div class="example-actions"><a class="mini-button" href="native-wgpu/20-wgpu-multi-input-compositor/README.md">Local README</a><a class="mini-button" href="native-wgpu/20-wgpu-multi-input-compositor/">Project folder</a></div>
+                        </div>
+                    </article>
+                    <article class="example-card" data-example-card="" data-family="export" data-topology="native-window" data-version="wgpu">
+                        <div class="example-card-head"><span class="badge">WGPU 25</span><span class="card-tag">export</span></div>
+                        <div class="example-card-body">
+                            <h3>Ultra-Resolution Export</h3><code>25-wgpu-ultra-resolution-export</code>
+                            <p>Renders independent HD/4K/6K/8K tiles, reads them back safely, assembles pixels, and exports PNG.</p>
+                            <div class="example-meta"><span>Native Rust wgpu</span><span>native-window</span><span>Export configuration</span></div>
+                            <div class="example-actions"><a class="mini-button" href="native-wgpu/25-wgpu-ultra-resolution-export/README.md">Local README</a><a class="mini-button" href="native-wgpu/25-wgpu-ultra-resolution-export/">Project folder</a></div>
+                        </div>
+                    </article>
+                </div>
+                <div class="hero-actions"><a class="button primary" href="docs.html#example-catalog">Open the complete catalog</a><a class="button ghost" href="docs/ADVANCEMENTS_2026.md">Read the advancements report</a></div>
+            </div>
+        </section>
+        <section class="section-dark section">
+            <div class="container">
+                <p class="eyebrow">How to work with Junkpile</p>
+                <h2 class="section-heading">See it. Run it. Understand it. Modify it. Build it.</h2>
+                <div class="principle-grid">
+                    <article class="card">
+                        <h3>Preserve the baseline</h3>
+                        <p>Each example is a complete standalone application. Keep a clean copy before combining systems.</p>
+                    </article>
+                    <article class="card">
+                        <h3>Change one layer</h3>
+                        <p>Alter the input, transport, shader, resource model, or output independently before merging concerns.</p>
+                    </article>
+                    <article class="card">
+                        <h3>Keep boundaries visible</h3>
+                        <p>Document which window owns media, which thread owns GPU resources, and how state survives reconnects.</p>
+                    </article>
+                    <article class="card">
+                        <h3>Package real applications</h3>
+                        <p>Every example includes development and production-build paths rather than ending as a browser sketch.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+        <section class="section brand-section" id="design-system">
+            <div class="container">
+                <p class="eyebrow">Identity system</p>
+                <h2 class="section-heading">A continuous form for a modular graphics laboratory.</h2>
+                <div class="brand-feature">
+                    <div class="brand-logo-panel"><img alt="Junkpile amorphous shader-form symbol" src="assets/brand/junkpile-amorphous-icon.png" /></div>
+                    <div class="brand-copy-panel">
+                        <p class="lede">Junkpile is presented as a continuous graphics field: many rendering systems, media inputs, and control paths held inside one inspectable laboratory.</p>
+                        <p>The amorphous mark is derived from shader surfaces, feedback contours, color interpolation, and real-time deformation. Its spectral field carries the expressive energy while the surrounding interface remains structured, restrained,
+                            and technical.</p>
+                        <div class="badge-row"><span class="badge status">Current digital identity</span><span class="badge v2">Amorphous field</span><span class="badge">Digital master</span></div>
+                        <div class="hero-actions"><a class="button primary" href="docs.html#design-system">Read the design system</a><a class="button ghost" href="docs/DESIGN_PRINCIPLES_MANIFEST.md">Open the full manifest</a></div>
+                    </div>
+                </div>
+                <div aria-label="Junkpile identity colors" class="brand-swatches">
+                    <div class="brand-swatch" style="--swatch:#07080B"><strong>Graphite</strong><code>#11110F</code></div>
+                    <div class="brand-swatch" style="--swatch:#8A28FF"><strong>Violet</strong><code>#D7FF2F</code></div>
+                    <div class="brand-swatch" style="--swatch:#206BFF"><strong>Electric Blue</strong><code>#8EB8FF</code></div>
+                    <div class="brand-swatch" style="--swatch:#FF7A00"><strong>Spectral Orange</strong><code>#FF6B47</code></div>
+                    <div class="brand-swatch" style="--swatch:#F5F6F8"><strong>Light</strong><code>#F3F0E5</code></div>
+                </div>
+                <div class="callout info"><strong>Production status</strong>The identity is approved for current digital documentation use. The full asset folder includes primary, symbol-only, monochrome, reversed, favicon, and archived source variants. A manually reconstructed
+                    vector master and print proofing remain future production tasks.</div>
+            </div>
+        </section>
+    </main>
+    <footer class="site-footer">
+        <div class="container footer-grid">
+            <div><strong>Junkpile</strong>
+                <p>Small, inspectable applications for learning and building creative graphics systems.</p>
+            </div>
+            <div class="footer-links"><a href="docs.html#quick-start">Quick start</a><a href="docs.html#example-catalog">Example catalog</a><a href="docs/ARCHITECTURE.md">Architecture</a><a href="docs/ADVANCEMENTS_2026.md">Advancements</a><a href="docs.html#design-system">Design system</a></div>
+        </div>
+        <div class="container footer-note">Baseline frozen after completion of all three 00–25 collections · July 2026</div>
+    </footer>
+</body>
+
+</html>
