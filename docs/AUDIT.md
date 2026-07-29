@@ -1,57 +1,50 @@
-# Repository audit
+# Documentation reconciliation audit — July 26, 2026
 
-## Scope reviewed
+## Scope
 
-The repository contains 22 independent Tauri projects across `v1/` and `v2/`. The audit compared project names, frontend files, Rust entry points, Cargo dependencies, Tauri configuration schemas, window definitions, input paths, and documentation coverage.
+The supplied documentation snapshot described 22 WebView examples and stated that native wgpu was not present. The completed project now contains 78 examples across three 00–25 collections. This documentation pass reconciles that mismatch.
 
-## Primary findings
+## Primary corrections
 
-### 1. The former root README did not match the repository
+1. Updated count from 22 to 78.
+2. Added Tauri v1 Examples 12–25.
+3. Added Tauri v2 Examples 10–25 and reflected modernization of 00–09.
+4. Added the complete native-wgpu 00–25 collection.
+5. Replaced the false “all renderers are WebView-based” claim with a three-track architecture model.
+6. Updated validation language from static-only to sequential macOS runtime testing while preserving cross-platform uncertainty.
+7. Added modernization lessons covering scroll, control coalescing, shader safety, device permission, native drag/drop, secure texture loading, image-sequence pacing, and bounded output.
+8. Added ecosystem direction from verified examples toward Scheng components and focused standalone instruments.
 
-It described four p5/Tauri v1 templates and four native wgpu/Tauri v2 templates. The actual repository contains p5, raw WebGL, external GLSL, webcam, feedback, MIDI, and OSC examples. No `wgpu` dependency, WGSL renderer, or native surface module exists in the current tree.
+## Files updated
 
-### 2. The actual inventory is 22 examples
+- `README.md`
+- `index.html`
+- `docs.html`
+- `docs/examples.json`
+- all existing Markdown guides
+- new advancements and ecosystem direction documents
 
-- 12 Tauri v1
-- 10 Tauri v2
-- 10 paired v1/v2 concepts
-- MIDI and OSC only in v1
+## Validation performed on this documentation package
 
-### 3. Rendering remains WebView-based in both generations
+- machine-readable catalog contains exactly 78 unique entries
+- each collection contains exactly 26 numbers from 00 through 25
+- HTML parsed successfully
+- internal HTML anchor targets checked
+- JSON parsed successfully
+- JavaScript syntax checked
+- ZIP extracted and tested for integrity
 
-The v2 projects change Tauri generation, configuration, and dependency layout while retaining JavaScript/WebGL rendering.
+## Remaining repository-level validation
 
-### 4. Comment coverage was strong but inconsistent
+This package documents the finalized development history, but it does not contain the complete source repository. Therefore it cannot verify that every catalog path exists in the user's latest local checkout. Folder names were preserved from the completed project sequence and should be compared during the final merge into the repository.
 
-Many rendering files already contained detailed architectural comments. Several minimal Rust entry points and some HTML entry documents lacked equivalent file-level context. Those gaps were standardized without changing rendering behavior.
 
-### 5. One version label was incorrect
+## Identity and brand audit
 
-The Tauri v1 raw WebGL single-window HTML identified itself as v2 in its file comment, title, and footer. It has been corrected to v1.
-
-### 6. Development commands should use the local npm CLI
-
-Every project declares the matching `@tauri-apps/cli` major. The documentation now uses `npm run dev` and `npm run build` to avoid global v1/v2 CLI collisions.
-
-## Static validation performed
-
-- all JavaScript source files parsed with `node --check`
-- all JSON project/configuration files parsed
-- all expected project folders and primary source files were inventoried
-- Tauri v1/v2 dependency majors were compared with their configuration schema
-- all 22 examples now contain a local README
-- documentation links and screenshot placeholders were generated
-- version-string mismatches were scanned
-
-## Validation not performed in this environment
-
-Rust and Cargo were not available in the analysis environment, so `cargo check`, `npm run dev`, and `npm run build` could not be executed here. Camera, MIDI, OSC, WebSocket lifecycle, release bundling, and platform-specific behavior therefore still require runtime verification.
-
-## Recommended next validation pass
-
-1. Test one minimal single-window project in each Tauri generation.
-2. Test one WS project in each generation, including reconnect and shutdown.
-3. Test webcam and feedback on every target OS.
-4. Test MIDI and OSC on the hardware/network setup developers will actually use.
-5. Record results using the template in `DEVELOPMENT.md`.
-6. Only then assign maturity labels such as build verified or cross-platform verified.
+- The new layered Junkpile logo is integrated into `index.html`, `docs.html`, and `README.md`.
+- Digital colors are normalized to existing CSS tokens rather than introducing a competing palette.
+- Primary, symbol, monochrome, reversed, favicon, and README-safe raster derivatives are present.
+- The original generative source is archived.
+- The previous illustrated desk logo is preserved and explicitly deprecated.
+- `docs/DESIGN_PRINCIPLES_MANIFEST.md` records rationale, usage, accessibility, governance, and open production questions.
+- Vector master, exact wordmark outlines, print colors, and physical reproduction tests remain open and are not represented as complete.

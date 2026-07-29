@@ -1,115 +1,77 @@
-# Development setup
+# Development and platform setup
 
-## Repository model
+## Required tools
 
-There is no root workspace command. Each example is an independent Tauri project with its own `package.json`, Rust crate, lock files, configuration, and frontend assets.
+- Rust installed through `rustup`
+- Node.js and npm
+- operating-system prerequisites for Tauri
+- a supported GPU driver/backend for native-wgpu examples
 
-Run commands from the example directory:
+Use the local CLI declared by each project:
 
 ```bash
-cd v1/p5-tauri-single-template
+cd <collection>/<example>
 npm install
 npm run dev
 ```
 
-## Core prerequisites
-
-Install the prerequisites from the official Tauri documentation for your target generation and operating system.
-
-Common requirements:
-
-- Rust installed through `rustup`
-- Node.js and npm
-- macOS: Xcode command-line tools
-- Windows: Microsoft C++ build tools and WebView2
-- Linux: WebKitGTK and the distribution-specific Tauri development packages
-
-## CLI isolation
-
-Each project declares a local CLI major in `devDependencies`:
-
-- v1 projects: `@tauri-apps/cli` 1.x
-- v2 projects: `@tauri-apps/cli` 2.x
-
-Use `npm run dev` and `npm run build` so npm selects the project-local CLI. Avoid relying on whichever global `cargo tauri` or global npm CLI happens to be installed.
-
-## Development commands
+Build a production bundle:
 
 ```bash
-npm install      # install the local Tauri CLI
-npm run dev      # development build and launch
-npm run build    # release bundle
+npm run build
 ```
 
-## Camera examples
-
-Camera behavior crosses several layers:
-
-1. the operating system exposes a camera
-2. the WebView requests permission
-3. the user grants permission
-4. `getUserMedia()` returns a stream
-5. the hidden video element receives frames
-6. WebGL uploads those frames into a texture
-
-Test all six layers. A black canvas is not always a shader problem.
-
-### macOS
-
-The examples include an entitlement file where camera-specific projects require it. Packaged applications may also require usage-description metadata depending on the bundle/toolchain behavior. Confirm this during a signed build test.
-
-### Windows
-
-Verify the Windows privacy settings allow desktop applications to access the camera and that WebView2 is current.
-
-### Linux
-
-Camera behavior depends on the WebKitGTK stack, device permissions, and the local media backend. Treat Linux support as unverified until tested on a named distribution.
-
-## MIDI example
-
-The MIDI example uses native `midir` rather than the Web MIDI browser API.
-
-- macOS: verify the device in Audio MIDI Setup; use the IAC Driver for virtual routing.
-- Windows: verify the device in the system and close applications that may hold it exclusively.
-- Linux: install ALSA development support before compiling and verify device permissions.
-
-## OSC example
-
-The OSC example listens on UDP port `9000`.
-
-- Set the sender host to the computer running Junkpile.
-- Set the sender port to `9000`.
-- Start with the documented address map.
-- Check the firewall when messages do not arrive.
-
-## WebSocket examples
-
-All WS templates use TCP port `2727` on loopback. Run only one of these templates at a time unless you change the port in both Rust and JavaScript.
-
-## Offline development
-
-The p5 family, MIDI example, and OSC example currently load p5.js from cdnjs. To make a project self-contained:
-
-1. download a known p5.js version
-2. place it in `src/vendor/p5.min.js`
-3. change the HTML script path
-4. adjust the CSP to permit only local script loading
-5. record the vendored version and license
-
-## Platform test record
-
-For every project, record:
+On macOS, output normally appears beneath:
 
 ```text
-OS and version:
-CPU architecture:
-Rust version:
-Node/npm version:
-Tauri CLI version:
-Development launch: pass/fail
-Release build: pass/fail
-Core input path: pass/fail
-Known warnings:
-Screenshot filename:
+src-tauri/target/release/bundle
 ```
+
+Distribution outside local testing may require signing and notarization.
+
+## Independent workspaces
+
+Every example is standalone. Its `src-tauri/Cargo.toml` should include:
+
+```toml
+[workspace]
+resolver = "2"
+```
+
+This prevents Cargo from walking upward into an unrelated parent workspace.
+
+## Collection-specific notes
+
+### Tauri v1
+
+Use its v1 dependency and configuration schema. Do not invoke a globally installed v2 CLI by accident.
+
+### Tauri v2 WebView
+
+Every configured WebView label requires capability coverage. Use current command, window, dialog, filesystem, and drag/drop APIs.
+
+### Native wgpu
+
+Verify adapter/backend telemetry. Environment selection may include `WGPU_BACKEND` or project-provided scripts. Surface and resource lifecycles must handle resize, minimized windows, lost/outdated surfaces, and device limits.
+
+## Media prerequisites
+
+- camera/microphone permission must be granted at the OS level
+- MIDI hardware/virtual ports must appear in the OS MIDI system
+- OSC requires matching host, UDP port, address, argument type, and firewall rules
+- FFmpeg-based examples require the documented decoder/encoder dependency or bundled path
+- Syphon is macOS-specific; Spout is Windows-specific
+
+## Development checklist
+
+1. Launch the untouched example.
+2. Confirm telemetry and error panels initialize.
+3. Test reset, pause, resize, and fullscreen.
+4. Test input loss and reconnection where applicable.
+5. Confirm a failed shader/media load does not destroy the last working state.
+6. Build the production bundle.
+7. Record platform, architecture, OS, device/input, and result.
+
+## Repository hygiene
+
+Do not commit `node_modules/`, Rust `target/`, temporary exports, recordings, decoder caches, or OS metadata. Preserve example folder names because documentation and local repositories rely on them.

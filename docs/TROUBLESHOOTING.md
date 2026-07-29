@@ -1,69 +1,90 @@
 # Troubleshooting
 
-## Wrong Tauri CLI generation
+Diagnose the boundary that owns the failure: WebView, transport, media source, Rust integration, GPU resource, encoder/export, or OS packaging.
 
-Symptom: configuration-schema errors, unknown fields, or dependency resolution that mentions the wrong major.
+## Blank p5.js or WebGL output
 
-Use the local npm script from inside the project:
+- inspect the JavaScript console
+- confirm p5 is local and loaded
+- confirm `getContext('webgl')`
+- inspect vertex and fragment compile logs
+- inspect program link status
+- verify drawing-buffer size and viewport
+- verify quad/mesh buffers and attribute locations
+- verify textures and framebuffer completeness
+- check context loss
 
-```bash
-npm install
-npm run dev
+A modernized example should show a readable runtime error instead of a permanently blank canvas.
+
+## Output appears in one quadrant
+
+p5 custom vertex positions can arrive in 0–1 space. Convert to clip space:
+
+```glsl
+vec4 position = vec4(aPosition, 1.0);
+position.xy = position.xy * 2.0 - 1.0;
+gl_Position = position;
 ```
 
-Do not launch a v1 project with a global v2 CLI or a v2 project with a global v1 CLI.
+## Frontend never initializes in WebKit
 
-## WebSocket port already in use
+Do not define a global helper named `location`; it collides with `window.location`. Use a name such as `getUniformLocation`.
 
-Symptom: controls and canvas remain disconnected, while the Rust console reports a bind error.
+## Controls do not scroll until resize
 
-Only one WS example can use port `2727` at a time. Stop the other app or change:
+Add `min-height: 0` to nested grid/flex children and avoid a global `overflow: hidden` when content can exceed the viewport.
 
-- `PORT` in `src-tauri/src/main.rs`
-- `WS_URL` in both frontend clients
+## Sliders jump or snap backward
 
-## Shader compilation failure
+- coalesce messages with `requestAnimationFrame`
+- serialize high-rate sends
+- do not write old telemetry into the active slider
+- use fixed-width numeric readouts
 
-Read the exact GLSL compiler log. Common WebGL 1 constraints include:
+## WebSocket state is stale after reconnect
 
-- GLSL ES 1.0 syntax
-- compile-time constant loop bounds
-- matching varying declarations
-- expected precision declarations
-- no unsupported WebGL 2 functions or types
-- uniform names matching the JavaScript upload code
+The controls window should retain the canonical parameter snapshot and resend it after the canvas announces readiness. Renderer-owned camera streams and feedback history must be restarted/reinitialized separately.
 
-## Blank p5 canvas
+## Camera or microphone is unavailable
 
-- Confirm the p5.js CDN request succeeded.
-- Check the CSP permits cdnjs.
-- Open developer tools for JavaScript errors.
-- Confirm `createCanvas(..., WEBGL)` and shader compilation completed.
+- keep refresh enabled before permission
+- request permission
+- enumerate again after access
+- check OS privacy settings
+- close competing apps
+- show exact `getUserMedia` errors
+- separate source/upload FPS from render FPS
 
-## Blank raw WebGL canvas
+## Native file drag/drop does not work in Tauri 2
 
-- Check `canvas.getContext("webgl")` returned a context.
-- Check both shader stages compiled and the program linked.
-- Check the canvas width/height are nonzero.
-- Check `gl.viewport()` matches the drawing buffer.
-- Check the full-screen quad buffer and attribute location.
+Use the Tauri WebView drag/drop API for native paths. Browser `DataTransfer.files` alone is not a reliable OS-drop contract inside Tauri.
 
-## Camera permission or device failure
+## Image displays but WebGL texture upload throws `SecurityError`
 
-- Grant permission at the OS level.
-- Refresh the device list after the first permission grant; labels may be hidden before permission.
-- Stop other applications that may own the device.
-- Confirm the hidden video element reaches a ready state.
-- Confirm `texImage2D()` receives a valid video frame.
+Read the file in Rust, return bytes, create a Blob URL, decode, and upload that image. Direct asset-protocol images may be tainted for WebGL.
 
-## Feedback clears after resize
+## Image sequence freezes
 
-This is expected. Framebuffer textures are recreated at the new dimensions, so accumulated state is lost. Preserve state only by explicitly resampling the old buffer into the new one.
+Buffer frames before play, hold every frame, pause timing when decoding lags, preserve the playhead across rate changes, and bound the cache.
 
-## MIDI device missing
+## Native wgpu validation error
 
-Use the example's debug action to print the exact port names Rust sees. Match by the reported name rather than the marketing name on the hardware.
+Read the full validation chain. Common causes include bind-group layout mismatch, uniform alignment, invalid shader types, render-target format mismatch, depth state incompatible with topology, resource usage flags, and surface configuration.
 
-## OSC sender appears connected but nothing moves
+A specific lesson from the skeletal overlay work: depth bias is not valid with line-list topology.
 
-OSC over UDP has no connection handshake. Verify host, port, address, and argument type. Use the on-screen log to distinguish unmapped addresses from packets that never arrived.
+## Native surface errors
+
+Handle minimized size, resize/reconfigure, timeout/occluded, outdated, lost, suboptimal, and validation states. Recreate the surface when required rather than continuing with stale configuration.
+
+## Recording/export stalls or uses excessive memory
+
+Bound frame queues, discard stale capture frames, avoid huge JSON IPC values, use encoder pipes or native files, respect wgpu row alignment, and expose progress/error stages.
+
+## OSC or MIDI does not move parameters
+
+Inspect exact port/device names, incoming message bytes/arguments, channel/address mapping, scaling mode, listener bind address, firewall, and the on-screen event terminal.
+
+## WebSocket port conflict
+
+Two relay examples cannot both own port 2727. Change both the Rust relay port and frontend URL together.

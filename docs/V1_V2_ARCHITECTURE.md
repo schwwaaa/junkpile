@@ -1,95 +1,34 @@
-# Tauri v1 and v2 architecture in Junkpile
+# Tauri v1, Tauri v2, and native wgpu
 
-## What actually changed
+## The critical distinction
 
-The paired examples intentionally preserve the JavaScript graphics architecture. This makes the Tauri migration visible without changing the rendering technology at the same time.
+Tauri generation and graphics renderer are separate axes.
 
-### Configuration shape
+| Concern | Tauri v1 WebView | Tauri v2 WebView | Tauri v2 + native wgpu |
+|---|---|---|---|
+| Examples | 00–25 | 00–25 | 00–25 |
+| Pixel owner | WebView | WebView | Rust/wgpu surface |
+| Shader language | GLSL ES 1.0 | GLSL ES 1.0 | WGSL |
+| Control surface | HTML/JS | HTML/JS | HTML/JS optional |
+| Native command call | v1 invoke API | `window.__TAURI__.core.invoke()` | Tauri 2 IPC into Rust state |
+| Permissions | v1 allowlist/features | explicit Tauri 2 capabilities | capabilities for every control WebView |
+| GPU backend | browser/OS WebView stack | browser/OS WebView stack | Metal / Vulkan / Direct3D 12 |
+| Compute shaders | no | no through WebGL 1 | yes |
+| Resource ownership | JavaScript/WebGL | JavaScript/WebGL | Rust/wgpu |
+| Best use | legacy comparison, rapid creative coding | current WebView apps | native performance and GPU systems |
 
-Tauri v1:
+## Tauri v1 specifics
 
-```json
-{
-  "$schema": "https://schema.tauri.app/config/1",
-  "build": {
-    "devPath": "../src",
-    "distDir": "../src"
-  },
-  "package": {
-    "productName": "example",
-    "version": "0.1.0"
-  },
-  "tauri": {
-    "windows": [],
-    "security": {},
-    "bundle": {
-      "identifier": "com.example.app"
-    }
-  }
-}
-```
+Use the v1 configuration schema, dependency features, window definitions, and command/event APIs. Do not copy Tauri 2 capabilities or plugin syntax into a v1 project.
 
-Tauri v2:
+## Tauri v2 WebView specifics
 
-```json
-{
-  "$schema": "https://schema.tauri.app/config/2",
-  "productName": "example",
-  "version": "0.1.0",
-  "identifier": "com.example.app",
-  "build": {
-    "frontendDist": "../src"
-  },
-  "app": {
-    "windows": [],
-    "security": {}
-  },
-  "bundle": {}
-}
-```
+Use the v2 configuration schema, explicit capability files, current WebView-window APIs, `get_webview_window()` in Rust, and `window.__TAURI__.core.invoke()` in vanilla JavaScript. Native OS drag/drop must use the Tauri WebView event API rather than relying only on browser `DataTransfer.files`.
 
-### Cargo shape
+## Native wgpu specifics
 
-Tauri v1 projects use v1 `tauri` and `tauri-build` dependencies. Several include an explicit `custom-protocol` feature for bundled asset serving.
+A wgpu surface attaches to the native window. Rust must manage surface creation, adapter selection, device/queue creation, resize/reconfiguration, minimized states, current-texture errors, command submission, presentation, and telemetry. HTML can remain a powerful control interface without being in the pixel path.
 
-Tauri v2 projects use v2 dependencies. Product identity and frontend configuration move into the v2 schema, and the project no longer declares the v1 custom-protocol feature pattern.
+## Why all three remain useful
 
-### Runtime code
-
-For the current single-window examples, `main.rs` is intentionally minimal in both generations.
-
-For the current two-window examples, the Rust WebSocket relay is conceptually the same. `tauri::async_runtime::spawn()` is used from `setup()` so tasks are dispatched through the runtime owned by Tauri.
-
-## What did not change
-
-- The graphics remain JavaScript/WebGL inside a WebView.
-- p5 examples remain p5.js examples.
-- raw WebGL examples remain browser WebGL examples.
-- camera capture remains `navigator.mediaDevices.getUserMedia()`.
-- the two-window transport remains a loopback WebSocket server.
-
-## What Tauri v2 does not imply
-
-A Tauri v2 project is not automatically a native GPU project. Native `wgpu` requires a different renderer, window/surface integration, resize handling, synchronization, and an explicit strategy for any HTML overlay. None of those components are present in the current v2 folders.
-
-## API and security implications for future ports
-
-The current v2 projects avoid most frontend-to-Rust commands, so they do not exercise the full v2 capability system. When porting the MIDI or OSC examples, document:
-
-1. command registration
-2. event API imports or global API configuration
-3. capability/permission files
-4. plugin permissions when plugins are introduced
-5. platform-specific network or device access requirements
-
-## Migration checklist for a new pair
-
-- [ ] Pin the correct project-local `@tauri-apps/cli` major version.
-- [ ] Pin matching `tauri` and `tauri-build` major versions.
-- [ ] Convert `tauri.conf.json` to the target schema.
-- [ ] Verify product name, identifier, windows, CSP, and bundle icons.
-- [ ] Verify every window URL exists in the frontend asset folder.
-- [ ] Verify commands/events against the target generation.
-- [ ] Run both `npm run dev` and `npm run build`.
-- [ ] Test permissions and lifecycle behavior on each target OS.
-- [ ] Update the local README with the differences that are actually present.
+The WebView examples are easier for developers coming from creative coding and web graphics. The native examples expose the systems needed for high-performance media instruments, reusable Scheng components, and focused commercial applications. The paired tracks make the migration cost visible rather than theoretical.

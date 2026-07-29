@@ -1,45 +1,36 @@
-# Roadmap
+# Roadmap after the 78-example baseline
 
-## Phase 1 — establish trustworthy baselines
+## Completed
 
-- [x] inventory every current example
-- [x] correct the root architecture description
-- [x] add local documentation and diagrams to all examples
-- [x] align missing code comments with the documentation
-- [x] add a machine-readable example catalog
-- [x] add a repeatable static audit script
-- [ ] run development and release builds on macOS
-- [ ] run development and release builds on Windows
-- [ ] run development and release builds on Linux
-- [ ] record camera, MIDI, OSC, and WebSocket lifecycle results
-- [ ] add screenshots after runtime verification
+- Tauri v1 00–25
+- Tauri v2 WebView 00–25
+- Native Rust/wgpu 00–25
+- modernization of early v1 and v2 projects
+- consistent standalone development/build documentation
+- architecture, troubleshooting, diagnostics, and machine-readable catalog
 
-## Phase 2 — close baseline gaps
+## Next repository work
 
-1. Port the MIDI baseline to Tauri v2, including explicit v2 command/event permissions.
-2. Port the OSC baseline to Tauri v2.
-3. Add a WebGPU-in-WebView baseline as its own family.
-4. Add a native wgpu baseline only after its surface/window architecture is proven and documented separately from WebView rendering.
-5. Add automated CI checks for JavaScript, JSON, Rust formatting, and `cargo check` on a representative platform matrix.
+1. Merge this documentation package into the latest complete repository.
+2. Verify every catalog path and local README link.
+3. Capture screenshots and videos for representative examples.
+4. Record a formal macOS/Windows/Linux validation matrix.
+5. Tag and archive the completed baseline.
 
-## Phase 3 — unique examples built from accepted baselines
+## Next architecture work
 
-### Camera feedback instrument
+Extract proven patterns into Scheng rather than merging Junkpile wholesale into an application:
 
-Derived from the feedback two-window baseline. Add scene presets, MIDI/OSC control, recording, and projector-safe output while preserving the documented ping-pong core.
+- canonical parameters and actions
+- optional media input/output contracts
+- native capture and decoding
+- texture/resource pools
+- render/compute graph scheduling
+- feedback/history stores
+- MIDI/OSC mapping
+- presets, snapshots, sequences, and projects
+- window, Syphon, Spout, recording, and future network outputs
 
-### Shader performance console
+## Product direction
 
-Derived from the GLSL two-window baseline. Add a shader editor, saved uniform layouts, compile history, and OSC control without hiding the runtime shader contract.
-
-### MIDI scene sequencer
-
-Derived from the MIDI baseline. Add controller learn, scene interpolation, and deterministic preset recall while keeping native device ownership in Rust.
-
-### Networked visual node
-
-Derived from the OSC and two-window baselines. Add explicit network configuration, sender allowlisting, and message schemas suitable for multiple visual machines.
-
-## Rule for Phase 3
-
-Do not call a unique project a new baseline. Its README should link to the baseline it derives from and list the application-specific changes.
+Use Scheng components to build small, focused standalone applications—processors, keyers, feedback units, converters, recorders, routers, mixers, playback utilities, and artist instruments. A later master suite can route and synchronize them without becoming the only place they can run.
