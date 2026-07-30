@@ -10,13 +10,55 @@
     <link href="assets/icons/favicon-32x32.png" rel="icon" sizes="32x32" />
     <link href="assets/site/site.css" rel="stylesheet" />
     <script defer="" src="assets/site/site.js"></script>
+    <style>
+        .schwwaaa-footer {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            padding: 28px 0 36px;
+            text-align: center;
+            font-family: "Audiowide", sans-serif;
+        }
+        
+        .schwwaaa-footer-logo {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+        
+        .schwwaaa-footer-image {
+            display: block;
+            width: min(168px, 44vw);
+            height: auto;
+            object-fit: contain;
+            opacity: 0.9;
+            filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.22)) drop-shadow(0 0 22px rgba(13, 110, 253, 0.18));
+            transition: opacity 0.3s ease, transform 0.3s ease, filter 0.3s ease;
+        }
+        
+        .schwwaaa-footer-logo:hover .schwwaaa-footer-image {
+            opacity: 1;
+            transform: translateY(-1px);
+            filter: drop-shadow(0 0 14px rgba(255, 255, 255, 0.35)) drop-shadow(0 0 28px rgba(13, 110, 253, 0.32));
+        }
+        
+        .schwwaaa-footer-label {
+            display: block;
+            margin-top: 8px;
+            color: rgba(255, 255, 255, 0.54);
+            font-size: 0.58rem;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+        }
+    </style>
 </head>
 
 <body>
     <a class="skip-link" href="#main">Skip to content</a>
     <header class="site-header">
         <div class="header-inner">
-            <a class="brand" href="index.html"><img alt="" aria-hidden="true" class="brand-symbol" src="assets/brand/junkpile-amorphous-icon.png" /><span>junkpile<small>creative graphics systems laboratory</small></span></a>
+            <a class="brand" href="index.html"><img alt="" aria-hidden="true" class="brand-symbol" src="assets/brand/junkpile-amorphous-icon.png" /><span>junkpile<small>creative graphics systems</small></span></a>
             <button aria-controls="site-nav" aria-expanded="false" class="nav-toggle" data-nav-toggle="">Menu</button>
             <nav aria-label="Primary navigation" class="site-nav" data-site-nav="" id="site-nav">
                 <a aria-current="page" href="index.html">Overview</a>
@@ -35,14 +77,15 @@
                     <div class="hero-actions"><a class="button primary" href="docs.html#quick-start">Run an example</a><a class="button blue" href="docs.html#example-catalog">Browse all 75</a><a class="button ghost" href="docs.html#architecture">Understand the architecture</a></div>
                     <div aria-label="Repository statistics" class="stat-strip">
                         <div class="stat"><strong>75</strong><span>Standalone examples</span></div>
-                        <div class="stat"><strong>26</strong><span>Tauri v1 WebView</span></div>
-                        <div class="stat"><strong>26</strong><span>Tauri v2 WebView</span></div>
-                        <div class="stat"><strong>26</strong><span>Native wgpu</span></div>
+                        <div class="stat"><strong>25</strong><span>Tauri v1 WebView</span></div>
+                        <div class="stat"><strong>25</strong><span>Tauri v2 WebView</span></div>
+                        <div class="stat"><strong>25</strong><span>Native wgpu</span></div>
                     </div>
                 </div>
                 <div class="hero-art">
-                    <div class="logo-card"><img alt="Junkpile amorphous shader-form logo" src="assets/brand/junkpile-amorphous-icon.png" /></div><span class="hero-stamp">3 × 26 complete</span></div>
-            </div>
+                    <div class="logo-card"><img alt="Junkpile amorphous shader-form logo" src="assets/brand/junkpile-amorphous-icon.png" /></div>
+                    <!-- <span class="hero-stamp">3 × 25 complete</span></div> -->
+                </div>
         </section>
         <section class="section-dark section">
             <div class="container">
@@ -191,7 +234,7 @@
                 </div>
             </div>
         </section>
-        <section class="section brand-section" id="design-system">
+        <!-- <section class="section brand-section" id="design-system">
             <div class="container">
                 <p class="eyebrow">Identity system</p>
                 <h2 class="section-heading">A continuous form for a modular graphics laboratory.</h2>
@@ -215,7 +258,7 @@
                 <div class="callout info"><strong>Production status</strong>The identity is approved for current digital documentation use. The full asset folder includes primary, symbol-only, monochrome, reversed, favicon, and archived source variants. A manually reconstructed
                     vector master and print proofing remain future production tasks.</div>
             </div>
-        </section>
+        </section> -->
     </main>
     <footer class="site-footer">
         <div class="container footer-grid">
@@ -224,7 +267,12 @@
             </div>
             <div class="footer-links"><a href="docs.html#quick-start">Quick start</a><a href="docs.html#example-catalog">Example catalog</a><a href="docs/ARCHITECTURE.md">Architecture</a><a href="docs/ADVANCEMENTS_2026.md">Advancements</a><a href="docs.html#design-system">Design system</a></div>
         </div>
-        <div class="container footer-note">Baseline frozen after completion of all three 00–25 collections · July 2026</div>
+        <!-- <div class="container footer-note">Baseline frozen after completion of all three 00–25 collections · July 2026</div> -->
+    </footer>
+    <footer class="schwwaaa-footer" aria-label="schwwaaa footer logo">
+        <a class="schwwaaa-footer-logo" href="https://linktr.ee/schwwaaa" target="_blank" rel="noopener noreferrer">
+            <img class="schwwaaa-footer-image" src="./assets/schwwaaa-logo.png" alt="schwwaaa">
+        </a>
     </footer>
 </body>
 
