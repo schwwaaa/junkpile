@@ -19,34 +19,36 @@
             text-align: center;
             font-family: "Audiowide", sans-serif;
         }
-        
+
         .schwwaaa-footer-logo {
             display: inline-flex;
             align-items: center;
             justify-content: center;
             text-decoration: none;
         }
-        
+
         .schwwaaa-footer-image {
             display: block;
             width: min(168px, 44vw);
             height: auto;
             object-fit: contain;
             opacity: 0.9;
-            filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.22)) drop-shadow(0 0 22px rgba(13, 110, 253, 0.18));
+            filter: drop-shadow(0 0 12px rgba(255,255,255,0.22))
+                    drop-shadow(0 0 22px rgba(13,110,253,0.18));
             transition: opacity 0.3s ease, transform 0.3s ease, filter 0.3s ease;
         }
-        
+
         .schwwaaa-footer-logo:hover .schwwaaa-footer-image {
             opacity: 1;
             transform: translateY(-1px);
-            filter: drop-shadow(0 0 14px rgba(255, 255, 255, 0.35)) drop-shadow(0 0 28px rgba(13, 110, 253, 0.32));
+            filter: drop-shadow(0 0 14px rgba(255,255,255,0.35))
+                    drop-shadow(0 0 28px rgba(13,110,253,0.32));
         }
-        
+
         .schwwaaa-footer-label {
             display: block;
             margin-top: 8px;
-            color: rgba(255, 255, 255, 0.54);
+            color: rgba(255,255,255,0.54);
             font-size: 0.58rem;
             letter-spacing: 0.16em;
             text-transform: uppercase;
@@ -63,7 +65,9 @@
             <nav aria-label="Primary navigation" class="site-nav" data-site-nav="" id="site-nav">
                 <a href="index.html">Overview</a>
                 <a aria-current="page" href="docs.html">Documentation</a>
-                <a href="docs.html#example-catalog">All 75 examples</a><a href="docs.html#design-system">Design system</a><a href="README.md">README</a></nav>
+                <a href="docs.html#example-catalog">Examples</a>
+                <!-- <a href="docs.html#design-system">Design system</a> -->
+                <a href="https://github.com/schwwaaa/junkpile">Github</a></nav>
         </div>
     </header>
     <main class="docs-shell" id="main">
@@ -1119,7 +1123,7 @@ npm run build</code></pre><button class="copy-button" data-copy="#quick-command"
                 </div>
                 <div class="callout warn"><strong>Transparent status language:</strong> say “runtime tested on macOS” when that is the evidence. Do not silently upgrade it to “cross-platform verified.”</div>
             </section>
-            <section class="doc-section" data-doc-section="" id="design-system">
+            <!-- <section class="doc-section" data-doc-section="" id="design-system">
                 <span class="doc-kicker">Product identity · Current digital baseline</span>
                 <h2>Identity and design system <a class="anchor-link" href="#design-system">#</a></h2>
                 <p>Junkpile now has a documented identity system aligned with the completed website and the actual behavior of the project. The central concept is a <strong>continuous field of reusable graphics systems</strong>: many distinct architectures
@@ -1261,8 +1265,8 @@ npm run build</code></pre><button class="copy-button" data-copy="#quick-command"
                     <div class="callout danger"><strong>Avoid</strong>Do not distort the silhouette, crop the interior openings, place the mark on a noisy background, recolor it with an unrelated palette, or add interface decoration that competes with the spectral form.</div>
                 </div>
                 <div class="button-row"><a class="button primary" href="docs/DESIGN_PRINCIPLES_MANIFEST.md">Read the complete manifest</a><a class="button ghost" href="assets/brand/README.md">Open the asset registry</a><a class="button blue" href="docs/BRAND_UPDATE_2026-07-27.md">Read the update note</a></div>
-            </section>
-            <section class="doc-section" data-doc-section="" id="ecosystem"><span class="doc-kicker">Layer 6 · What this enables</span>
+            </section> -->
+            <!-- <section class="doc-section" data-doc-section="" id="ecosystem"><span class="doc-kicker">Layer 6 · What this enables</span>
                 <h2>Junkpile → Scheng → focused instruments <a class="anchor-link" href="#ecosystem">#</a></h2>
                 <div class="diagram">
                     <p class="diagram-title">Ecosystem roles</p>
@@ -1279,7 +1283,7 @@ npm run build</code></pre><button class="copy-button" data-copy="#quick-command"
                 <p>The long-term goal is not one enormous application. A fast, optional shared I/O layer should let small applications opt into cameras, files, generated textures, Syphon, Spout, NDI, FFmpeg/network streams, recording, window output, and
                     future transports without forcing every dependency into every build.</p>
                 <p>See <a href="docs/ECOSYSTEM_DIRECTION.md">the ecosystem direction memo</a>.</p>
-            </section>
+            </section> -->
             <section class="doc-section" data-doc-section="" id="glossary"><span class="doc-kicker">Reference</span>
                 <h2>Glossary <a class="anchor-link" href="#glossary">#</a></h2>
                 <div class="glossary-grid">
@@ -1307,20 +1311,26 @@ npm run build</code></pre><button class="copy-button" data-copy="#quick-command"
     </main>
     <footer class="site-footer">
         <div class="container footer-grid">
+    <a class="schwwaaa-footer-logo" href="https://linktr.ee/schwwaaa" target="_blank" rel="noopener noreferrer">
+        <img class="schwwaaa-footer-image" src="./assets/schwwaaa-logo.png" alt="schwwaaa">
+    </a>
+            <!-- <div>
+                <strong>Junkpile</strong>
+                <p>Small, inspectable applications for learning and building creative graphics systems.</p>
+            </div>
             <div><strong>Junkpile</strong>
                 <p>Small, inspectable applications for learning and building creative graphics systems.</p>
             </div>
-            <!-- <div><strong>Junkpile</strong>
-                <p>Small, inspectable applications for learning and building creative graphics systems.</p>
+            <div class="footer-links"><a href="docs.html#quick-start">Quick start</a><a href="docs.html#example-catalog">Example catalog</a>
+                <a href="docs/ARCHITECTURE.md">Architecture</a>
+                <a href="docs/ADVANCEMENTS_2026.md">Advancements</a>
+                <a href="docs.html#design-system">Design system</a>
             </div> -->
-            <div class="footer-links"><a href="docs.html#quick-start">Quick start</a><a href="docs.html#example-catalog">Example catalog</a><a href="docs/ARCHITECTURE.md">Architecture</a><a href="docs/ADVANCEMENTS_2026.md">Advancements</a><a href="docs.html#design-system">Design system</a></div>
         </div>
         <!-- <div class="container footer-note">Baseline frozen after completion of all three 00–25 collections · July 2026</div> -->
-    </footer>
-    <footer class="schwwaaa-footer" aria-label="schwwaaa footer logo">
 
-        </a>
-    </footer>
+
+</footer>
 </body>
 
 </html>

@@ -1,132 +1,302 @@
-<p align="center"><img width="58%" src="assets/brand/junkpile-logo-primary-on-paper.png" alt="Junkpile layered modules logo" /></p>
-<p align="center"><em>Standalone creative graphics systems examples: see it, run it, understand it, modify it, build it.</em></p>
+<p align="center">
+  <img width="220" src="assets/brand/junkpile-amorphous-icon.png" alt="Junkpile amorphous graphics mark">
+</p>
 
-# Junkpile
+<h1 align="center">Junkpile</h1>
 
-Junkpile is a completed developer laboratory of **78 standalone Tauri applications**. It is organized as three parallel collections of 26 examples:
+<p align="center"><strong>Standalone coding examples for creative graphics, live media, and native GPU application development.</strong></p>
 
-- **Tauri v1 WebView · 00–25**
-- **Tauri v2 WebView · 00–25**
-- **Native Rust/wgpu · 00–25**
+Junkpile is a reference library of **78 independently runnable desktop applications** organized into three complete `00–25` tracks:
 
-Each project isolates one rendering, media, control, routing, automation, or output architecture. The goal is not to hide complexity behind one framework; it is to make each boundary visible enough to inspect, test, and reuse.
+- **26 Tauri v1 WebView examples**
+- **26 Tauri v2 WebView examples**
+- **26 native Rust/wgpu examples**
 
-## The central architectural distinction
-
-```text
-Tauri v1 / v2 WebView collections        Native wgpu collection
-HTML + JavaScript                         Rust
-p5.js / WebGL / GLSL ES                   wgpu / WGSL
-browser media elements                    native media bridges
-        ↓                                         ↓
-Tauri WebView                             native GPU surface
-        ↓                                         ↓
-WKWebView / WebView2 / WebKitGTK          Metal / Vulkan / Direct3D 12
-```
-
-Tauri 2 is used in both the v2 WebView collection and the native-wgpu collection, but **Tauri version does not determine the render path**.
+Each example is intentionally isolated. You can install, run, inspect, modify, and package one project without building the entire repository.
 
 ## Start here
 
-1. Open [the landing page](index.html) or [single-page developer guide](docs.html).
-2. Read [development setup](docs/DEVELOPMENT.md).
-3. Choose a project from [the complete 78-example matrix](docs/EXAMPLE_MATRIX.md).
-4. Run inside that project:
+Read the full developer documentation in [`docs.html`](docs.html). It includes installation, platform prerequisites, architecture, verification, troubleshooting, and the complete example catalog.
+
+To run one example immediately:
 
 ```bash
+git clone https://github.com/schwwaaa/junkpile.git
+cd junkpile
+
+# Choose one project from v1/, v2/, or native-wgpu/.
+cd v2/12-tauri-v2-video-texture-player
+
 npm install
 npm run dev
 ```
 
-5. Build the standalone application:
+Build its production application with:
 
 ```bash
 npm run build
 ```
 
-## Collection guide
+Do not run `npm install` or `npm run build` from the repository root unless a future root workspace explicitly supports it. Each example owns its dependencies and build configuration.
 
-| Collection | Count | Render owner | Shader path | Best for |
-| --- | --- | --- | --- | --- |
-| Tauri v1 | 26 | WebView | GLSL ES / p5.js / WebGL | Original Tauri generation, rapid creative coding, comparison baselines |
-| Tauri v2 | 26 | WebView | GLSL ES / p5.js / WebGL | Current Tauri capabilities, native file workflows, production media examples |
-| Native wgpu | 26 | Rust-owned GPU surface | WGSL | Compute, native resources, backend control, 3D, high resolution, media bridges |
+## Requirements
 
-## What the completed library covers
+All examples require:
 
-- p5.js, raw WebGL, external GLSL, live shader editing, WGSL
-- single-window, two-window/WebSocket, hybrid HTML-control/native-renderer, and multi-output topologies
-- image, webcam, native camera, video, microphone, audio file, image sequences, and generated textures
-- framebuffer feedback, fluid compute, particle compute, render graphs, mesh feedback, and temporal memory
-- MIDI, OSC, Max/MSP, pointer/touch/pen, keyboard, Tauri IPC, and native drag/drop
-- texture mixing, keying, live switching, multi-input compositing, projection mapping, and display routing
-- glTF, skeletal animation, morph targets, raymarching, and 3D particles
-- recording, PNG/JPEG output, 4K–8K targets, tiled readback, automation, presets, and JSON state
+- Git
+- Node.js with npm
+- Rust with Cargo
+- the operating-system prerequisites required by Tauri
 
-## Modernization baseline
+Check the toolchain before opening an example:
 
-The early v1 and v2 examples were modernized after the collections expanded. Current standards include:
+```bash
+git --version
+node --version
+npm --version
+rustc --version
+cargo --version
+```
 
-- scroll-safe layouts at first launch
-- fixed-width numeric readouts
-- animation-frame-coalesced high-rate control messages
-- reconnect-safe full-state restoration
-- shader compile/link terminals and last-valid-program retention
-- visible renderer, GPU, FPS, resolution, device, and connection telemetry
-- clear camera/microphone permission and refresh behavior
-- robust framebuffer allocation, resize, clear, and context/surface recovery
-- local npm scripts and standalone Cargo workspace boundaries
-- complete development and production-build documentation
+### macOS
 
-See [Advancements and lessons](docs/ADVANCEMENTS_2026.md) and [Architecture](docs/ARCHITECTURE.md).
+Install the Xcode command-line tools:
+
+```bash
+xcode-select --install
+```
+
+The native-wgpu projects use Metal through wgpu. Camera, microphone, MIDI, file access, and screen-related examples may request macOS permissions when first launched.
+
+### Windows
+
+Install:
+
+- Microsoft C++ Build Tools with the Desktop development with C++ workload
+- WebView2 Runtime
+- current GPU drivers
+
+Native-wgpu uses Direct3D 12 when available. Spout examples are Windows-specific and require compatible Spout components.
+
+### Linux
+
+Install the Tauri development packages appropriate to your distribution, including WebKitGTK and standard desktop build dependencies. Native-wgpu projects also require a working Vulkan or GL driver stack.
+
+Common Ubuntu/Debian dependencies include:
+
+```bash
+sudo apt update
+sudo apt install \
+  build-essential \
+  curl \
+  wget \
+  file \
+  libssl-dev \
+  libgtk-3-dev \
+  libayatana-appindicator3-dev \
+  librsvg2-dev \
+  libwebkit2gtk-4.1-dev \
+  libvulkan1 \
+  vulkan-tools
+```
+
+Package names vary by distribution and Tauri version. Consult the current Tauri prerequisites when a system package has been renamed.
 
 ## Repository structure
 
 ```text
 junkpile/
-├── v1/                 26 Tauri v1 WebView examples
-├── v2/                 26 Tauri v2 WebView examples
-├── native-wgpu/        26 Tauri 2 + Rust/wgpu examples
-├── docs/               architecture, setup, matrix, audit, lessons
-├── index.html          landing page
-└── docs.html           comprehensive single-page documentation
+├── index.html          Website overview
+├── docs.html           Canonical technical documentation
+├── README.md           Repository entry point
+├── assets/             Website identity, CSS, JavaScript, and icons
+├── v1/                 Tauri v1 WebView examples 00–25
+├── v2/                 Tauri v2 WebView examples 00–25
+└── native-wgpu/        Native Rust/wgpu examples 00–25
 ```
 
-## Documentation index
+Every example should contain its own local documentation and build configuration, typically including:
 
-- [Complete example matrix](docs/EXAMPLE_MATRIX.md)
-- [Architecture guide](docs/ARCHITECTURE.md)
-- [Tauri v1, v2, and native wgpu comparison](docs/V1_V2_ARCHITECTURE.md)
-- [Advancements and modernization lessons](docs/ADVANCEMENTS_2026.md)
-- [Development and platform setup](docs/DEVELOPMENT.md)
-- [Troubleshooting](docs/TROUBLESHOOTING.md)
-- [Repository audit](docs/AUDIT.md)
-- [Adding an example](docs/ADDING_AN_EXAMPLE.md)
-- [Documentation standard](docs/DOCUMENTATION_STANDARD.md)
-- [Screenshot checklist](docs/SCREENSHOTS.md)
-- [Roadmap](docs/ROADMAP.md)
-- [Ecosystem direction](docs/ECOSYSTEM_DIRECTION.md)
-- [Junkpile design principle manifest](docs/DESIGN_PRINCIPLES_MANIFEST.md)
-- [Brand and logo update](docs/BRAND_UPDATE_2026-07-27.md)
-- [Brand asset registry](assets/brand/README.md)
-- [Machine-readable catalog](docs/examples.json)
+```text
+<example>/
+├── README.md
+├── package.json
+├── src/
+└── src-tauri/
+```
 
-## Identity and design system
+## Choose a track
 
-The current Junkpile identity presents the project as a **disciplined stack of reusable experiments**. The layered symbol preserves the original accumulation metaphor while matching the documentation site’s hard-edged editorial system.
+| Track | Rendering path | Primary languages | Best starting point for |
+|---|---|---|---|
+| Tauri v1 WebView | WebGL inside the operating-system WebView | HTML, CSS, JavaScript, GLSL, Rust bridges | Existing Tauri 1 applications, p5.js, raw WebGL, browser media, MIDI, and OSC |
+| Tauri v2 WebView | WebGL inside the operating-system WebView with Tauri 2 APIs | HTML, CSS, JavaScript, GLSL, Rust bridges | Current Tauri permissions, capabilities, file workflows, and multi-window applications |
+| Native Rust/wgpu | Rust-owned GPU surface using Metal, Vulkan, or Direct3D 12 | Rust, WGSL, optional HTML controls | Compute, explicit GPU resources, native media pipelines, 3D, high-resolution rendering, and export |
 
-- Primary logo: `assets/brand/junkpile-logo-primary.png`
-- README-safe logo: `assets/brand/junkpile-logo-primary-on-paper.png`
-- Symbol and icon source: `assets/brand/junkpile-symbol.png`
-- Complete rationale and rules: [Design Principle Manifest](docs/DESIGN_PRINCIPLES_MANIFEST.md)
-- Asset registry: [Brand assets](assets/brand/README.md)
+**Tauri v2 does not automatically mean native GPU rendering.** The `v2/` collection remains WebView/WebGL based. The `native-wgpu/` collection is the explicit native renderer track.
 
-The previous illustrated desk logo is retained as a deprecated historical asset. The current identity is approved for digital documentation use; vector reconstruction and print-production proofing remain open tasks.
+## Run an example
 
-## Validation language
+### 1. Enter the project directory
 
-All 78 projects were developed and tested sequentially on the primary macOS Apple Silicon environment. This is not the same as universal cross-platform certification. Platform-specific status should remain explicit—especially Windows Spout, Linux media/device paths, packaging, and hardware-dependent inputs.
+```bash
+cd v1/<example-folder>
+# or
+cd v2/<example-folder>
+# or
+cd native-wgpu/<example-folder>
+```
 
-## Project ethos
+### 2. Install that example's JavaScript dependencies
 
-A useful Junkpile example should be focused, inspectable, transparent about ownership, safe to modify, independently runnable, and capable of becoming a real standalone application.
+```bash
+npm install
+```
+
+### 3. Launch development mode
+
+```bash
+npm run dev
+```
+
+The local script selects the Tauri CLI and configuration expected by that project. Prefer it over invoking a globally installed Tauri CLI directly.
+
+### 4. Confirm the baseline
+
+Before editing, verify the behaviors documented by the example:
+
+- the application window opens without a terminal panic
+- the renderer produces visible output
+- controls update the output
+- pause, reset, resize, and fullscreen behave as documented
+- requested camera, microphone, MIDI, or file permissions are granted
+- telemetry and error messages remain visible
+- two-window examples connect their control and renderer windows
+
+## Build a standalone application
+
+From the selected example directory:
+
+```bash
+npm run build
+```
+
+Typical Tauri bundle output is located beneath:
+
+```text
+src-tauri/target/release/bundle/
+```
+
+Common platform outputs include:
+
+- macOS: `.app` and `.dmg`
+- Windows: `.msi`, setup executable, or configured installer format
+- Linux: AppImage, Debian package, RPM, or another configured bundle
+
+The exact bundle formats depend on that example's Tauri configuration and the operating system performing the build.
+
+Unsigned local builds may trigger operating-system security warnings. Public distribution requires the relevant platform signing, notarization, and installer workflow.
+
+## Runtime inputs and dependencies
+
+Some projects require more than the base toolchain:
+
+| Feature | Requirement |
+|---|---|
+| Camera | OS camera permission and an available capture device |
+| Microphone / FFT | OS microphone permission and an available audio input |
+| MIDI | Connected MIDI hardware or a configured virtual MIDI port |
+| OSC | An available UDP port and correctly configured sender/receiver addresses |
+| Native video | FFmpeg libraries or executable, depending on the example |
+| Syphon | macOS and compatible Syphon components |
+| Spout | Windows and compatible Spout components |
+| Native wgpu | Supported GPU, current drivers, and Metal/Vulkan/Direct3D 12 backend |
+| glTF / media files | Valid local assets in a format supported by the example |
+
+Two-window and network examples may use local TCP, WebSocket, or UDP ports. If startup reports that an address is already in use, close the older process or change the port consistently in every participant.
+
+## Working with an example
+
+Preserve a clean copy before combining systems. Modify one boundary at a time:
+
+- input or capture source
+- transport and playback state
+- shader or compute pipeline
+- parameter/control model
+- GPU resource ownership
+- recording or export path
+- window topology
+- output or routing integration
+
+This makes regressions easier to locate and keeps each project useful as a reference implementation.
+
+## Common problems
+
+### `npm run dev` cannot find Tauri
+
+Run `npm install` inside the selected example. The project scripts are intended to use the local CLI and dependencies.
+
+### Rust compilation fails before the application opens
+
+Read the first compiler error rather than the final cascade. Confirm that the installed Rust toolchain satisfies the project's dependency versions.
+
+```bash
+rustup update stable
+rustc --version
+cargo --version
+```
+
+### A blank WebGL window appears
+
+Check the browser/WebView developer console for shader compilation, program-linking, texture, security, or canvas-size errors.
+
+### Native wgpu cannot create a surface or adapter
+
+Update the GPU driver, confirm that the required backend is available, and inspect the adapter/backend telemetry printed by the example.
+
+### Camera or microphone devices are missing
+
+Grant operating-system permission, refresh the device list after permission, and close other applications that may hold the device exclusively.
+
+### A two-window renderer does not connect
+
+Confirm that both windows launched, the configured port is available, and no previous development process remains bound to that port.
+
+### Production build fails after development mode works
+
+Run the failing command from the same example directory, inspect the first packaging error, and confirm that platform-specific icons, permissions, signing settings, and bundle tools are present.
+
+More detailed diagnosis is available in [`docs.html#troubleshooting`](docs.html#troubleshooting).
+
+## Documentation map
+
+- [Quick start](docs.html#quick-start)
+- [Installation and required tools](docs.html#installation)
+- [Run an example](docs.html#run-projects)
+- [Production builds](docs.html#production-builds)
+- [Version and technology comparison](docs.html#comparison)
+- [Architecture](docs.html#architecture)
+- [Complete example catalog](docs.html#example-catalog)
+- [Troubleshooting](docs.html#troubleshooting)
+- [Validation status](docs.html#validation)
+
+## Validation status
+
+The examples were developed and runtime-tested primarily on macOS Apple Silicon. The architecture targets macOS, Windows, and Linux, but that does not mean every example, device, codec, plugin, and packaging path has been certified on every platform.
+
+Platform-specific claims should follow the evidence documented for each project.
+
+## Contributing
+
+Keep contributions focused and inspectable:
+
+1. identify the example and platform
+2. describe the expected behavior
+3. include exact reproduction steps
+4. include the first relevant error or diagnostic output
+5. avoid committing `node_modules/`, Rust `target/`, recordings, exports, or operating-system metadata
+6. update the example README when behavior or prerequisites change
+
+## License
+
+See [`LICENSE`](LICENSE).
