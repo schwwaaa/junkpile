@@ -4,9 +4,9 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
-<meta content="Comprehensive Junkpile documentation for 78 Tauri v1, Tauri v2, and native wgpu examples." name="description"/>
+<meta content="Technical Junkpile documentation for Tauri v1, Tauri v2, and native Rust/wgpu creative graphics projects." name="description"/>
 <meta content="#11110f" name="theme-color"/>
-<title>Junkpile documentation · 78 examples</title>
+<title>Junkpile technical documentation</title>
 <link href="assets/icons/favicon-32x32.png" rel="icon" sizes="32x32"/>
 <link href="assets/site/site.css" rel="stylesheet"/>
 <script defer="" src="assets/site/site.js"></script>
@@ -127,6 +127,7 @@
 <nav aria-label="Primary navigation" class="site-nav" data-site-nav="" id="site-nav">
 <a href="index.html">Overview</a>
 <a data-primary-nav="documentation" href="docs.html">Documentation</a>
+<a href="#installation-build">Install</a>
 <a data-primary-nav="examples" href="docs.html#example-catalog">Examples</a>
 <!-- <a href="docs.html#design-system">Design system</a> -->
 <a href="https://github.com/schwwaaa/junkpile">Github</a></nav>
@@ -136,15 +137,15 @@
 <aside aria-label="Documentation table of contents" class="docs-sidebar">
 <div class="docs-sidebar-head"><button aria-expanded="false" class="docs-toc-toggle" data-docs-toc-toggle=""><strong>Contents <span class="docs-toc-state" data-docs-toc-state="">Open</span></strong><small>From first run to architecture</small></button></div>
 <nav>
-<a href="#orientation">Orientation</a><a href="#quick-start">Quick start</a><a href="#installation-build">Installation &amp; build</a><a href="#choose-track">Choose a track</a><a href="#architecture">Architecture</a><a class="sub" href="#topologies">Window topologies</a><a href="#rendering-families">Rendering families</a>
-<a href="#modernization">Modernization lessons</a><a href="#v1-track">Tauri v1 00–25</a><a href="#v2-track">Tauri v2 00–25</a><a href="#wgpu-track">Native wgpu 00–25</a><a href="#example-catalog">All 78 examples</a><a href="#development">Development</a>
+<a href="#orientation">Orientation</a><a href="#quick-start">Quick start</a><a href="#installation-build">Installation &amp; build</a><a href="#choose-track">Choose a track</a><a href="#technical-comparison">Technical comparison</a><a href="#software-stack">Software stack</a><a href="#architecture">Architecture</a><a class="sub" href="#topologies">Window topologies</a><a href="#rendering-families">Rendering families</a>
+<a href="#modernization">Modernization lessons</a><a href="#v1-track">Tauri v1 00–25</a><a href="#v2-track">Tauri v2 00–25</a><a href="#wgpu-track">Native wgpu 00–25</a><a href="#example-catalog">Example catalog</a><a href="#development">Development</a>
 <a href="#troubleshooting">Troubleshooting</a>
 <a href="#validation">Validation</a><a href="#design-system">Identity and design system</a><a href="#ecosystem">Ecosystem direction</a><a href="#glossary">Glossary</a></nav>
 </aside>
 <div class="docs-main">
 <section class="docs-hero">
 <p class="eyebrow">Developer documentation · July 2026 baseline</p>
-<h1>Three tracks.<br/>Seventy-eight examples.<br/>One visible learning path.</h1>
+<h1>Three technical paths.<br/>One visible learning system.<br/>Many creative directions.</h1>
 <p class="lede">The first sections get a new developer running quickly. Later sections explain render ownership, media flow, GPU resources, state recovery, modernization lessons, and how the completed baselines inform Scheng and future standalone instruments.</p>
 <div class="docs-search-wrap"><label class="search-field"><span>⌕</span><input data-doc-search="" placeholder="Search architecture, cameras, feedback, wgpu…" type="search"/></label>
 <div class="docs-search-status" data-doc-search-status="">Search setup, architecture, inputs, examples, and troubleshooting.</div>
@@ -153,8 +154,8 @@
 <nav aria-label="Documentation quick links" class="docs-quick-nav">
 <a href="#quick-start">Quick start</a>
 <a href="#installation-build">Installation &amp; Build</a>
-<a href="#choose-track">Compare V1 / V2 / wgpu</a>
-<a href="#architecture">Architecture</a>
+<a href="#technical-comparison">Tech comparison</a>
+<a href="#software-stack">Software stack</a>
 <a href="#example-catalog">Examples</a>
 <a href="#troubleshooting">Troubleshooting</a>
 </nav>
@@ -166,17 +167,17 @@
                 </p>
 <div class="grid-3">
 <div class="card">
-<div class="card-number">26</div>
+<div class="card-number">V1</div>
 <h3>Tauri v1 WebView</h3>
 <p>Accessible browser rendering and native bridges using Tauri 1.</p>
 </div>
 <div class="card">
-<div class="card-number" style="background:var(--signal-3)">26</div>
+<div class="card-number" style="background:var(--signal-3)">V2</div>
 <h3>Tauri v2 WebView</h3>
 <p>Modern capabilities, window APIs, file workflows, and WebGL applications.</p>
 </div>
 <div class="card">
-<div class="card-number" style="background:var(--signal-2)">26</div>
+<div class="card-number" style="background:var(--signal-2)">GPU</div>
 <h3>Native wgpu</h3>
 <p>Rust-owned GPU surfaces, WGSL, compute, 3D, media bridges, and export.</p>
 </div>
@@ -185,17 +186,17 @@
                     standards.
                 </div>
 <div class="status-meter">
-<div class="active">78 documented</div>
-<div class="active">78 user runtime-tested</div>
-<div class="active">3 collections complete</div>
-<div>Cross-platform matrix ongoing</div>
+<div class="active">Standalone projects documented</div>
+<div class="active">Primary workflows runtime-tested</div>
+<div class="active">WebView and native GPU paths covered</div>
+<div>Cross-platform validation ongoing</div>
 </div>
 </section>
 <section class="doc-section" data-doc-section="" id="quick-start"><span class="doc-kicker">Layer 1 · Fast path</span>
 <h2>Run an example <a class="anchor-link" href="#quick-start">#</a></h2>
 <ol class="number-list">
 <li><strong>Install Rust, Node.js/npm, and Tauri prerequisites.</strong> Native-wgpu projects also need a functioning Metal, Vulkan, or Direct3D 12 backend.</li>
-<li><strong>Choose one project directory.</strong> Each example is independent; there is no requirement to build all 78.</li>
+<li><strong>Choose one project directory.</strong> Each project is independent; choose only the one you want to run or study.</li>
 <li><strong>Use its local scripts.</strong> Run <code>npm install</code>, then <code>npm run dev</code>. This selects the correct Tauri CLI major.</li>
 <li><strong>Confirm the documented baseline.</strong> Check the visual, telemetry, input, reset, fullscreen, and error states before editing.</li>
 <li><strong>Build the standalone app.</strong> Run <code>npm run build</code>. On macOS, bundles are normally written beneath <code>src-tauri/target/release/bundle</code>.</li>
@@ -279,7 +280,7 @@ npm run dev</code></pre><button class="copy-button" data-copy="#install-run">Cop
 <li>Reset, pause, fullscreen, and window-resize behavior work where documented.</li>
 <li>Camera, microphone, MIDI, OSC, FFmpeg, Syphon, or Spout features are tested only when the example uses them.</li>
 </ul>
-<div class="button-row"><a class="button primary" href="#example-catalog">Choose an example</a><a class="button ghost" href="#troubleshooting">Installation troubleshooting</a><a class="button blue" href="install.html">Open the focused install page</a></div>
+<div class="button-row"><a class="button primary" href="#example-catalog">Choose an example</a><a class="button ghost" href="#troubleshooting">Installation troubleshooting</a><a class="button blue" href="#choose-track">Compare the tracks</a></div>
 </section>
 <section class="doc-section" data-doc-section="" id="choose-track"><span class="doc-kicker">Layer 1 · Choose deliberately</span>
 <h2>Which collection should you use? <a class="anchor-link" href="#choose-track">#</a></h2>
@@ -320,6 +321,54 @@ npm run dev</code></pre><button class="copy-button" data-copy="#install-run">Cop
 </tr>
 </tbody>
 </table>
+</div>
+</section>
+<section class="doc-section" data-doc-section="" id="technical-comparison"><span class="doc-kicker">Layer 2 · Technical comparison</span>
+<h2>Technology comparison at the implementation level <a class="anchor-link" href="#technical-comparison">#</a></h2>
+<p>The three Junkpile paths solve different layers of the same problem. They are not ranked from beginner to advanced. Each one defines who owns the renderer, where GPU resources live, how media crosses boundaries, and what kind of standalone application is easiest to build.</p>
+<div class="table-wrap">
+<table class="data-table compare-table">
+<thead>
+<tr><th>Technical concern</th><th>Tauri v1 WebView</th><th>Tauri v2 WebView</th><th>Native Rust/wgpu</th></tr>
+</thead>
+<tbody>
+<tr><td>Render ownership</td><td>Browser/WebView owns the drawing surface and render loop.</td><td>Browser/WebView owns the drawing surface and render loop, with newer Tauri window/capability APIs around it.</td><td>Rust owns the surface, device, queue, textures, buffers, passes, and present loop.</td></tr>
+<tr><td>Primary graphics stack</td><td>HTML/CSS/JS + p5.js/WebGL.</td><td>HTML/CSS/JS + p5.js/WebGL or raw WebGL with current Tauri 2 APIs.</td><td>Rust + wgpu + WGSL, optional compute passes, explicit render graph structure.</td></tr>
+<tr><td>Shader language</td><td>GLSL / GLSL ES inside WebGL.</td><td>GLSL / GLSL ES inside WebGL.</td><td>WGSL for render and compute pipelines.</td></tr>
+<tr><td>UI layer</td><td>DOM UI inside the same application shell.</td><td>DOM UI with stronger native integration, dialogs, drag/drop, and capabilities.</td><td>Usually custom native UI or focused control panels; some projects keep the interface minimal and instrument-like.</td></tr>
+<tr><td>Native boundary</td><td>Rust mostly supports the shell, window control, side services, or relays.</td><td>Rust exposes capabilities, file access, native dialogs, and service boundaries more cleanly.</td><td>Rust is the application core rather than a support layer.</td></tr>
+<tr><td>Media and file I/O</td><td>Browser media elements are easy to use, but browser security and tainted-texture rules matter.</td><td>Same browser strengths, plus better current native file workflows and drop handling.</td><td>Native decoders, native camera/video bridges, explicit uploads, and direct file ownership are possible.</td></tr>
+<tr><td>IPC / control topology</td><td>Simple one-window or two-window patterns, often with local relays for split control/render setups.</td><td>Same patterns, but updated APIs and clearer capability boundaries for multi-window applications.</td><td>Rust-side state and native event/control systems; no browser boundary is required unless intentionally added.</td></tr>
+<tr><td>Best fit</td><td>Fast sketch-to-app work, approachable GPU experiments, and browser-native media logic.</td><td>Production-ready WebView tools that still benefit from web ergonomics.</td><td>High-performance GPU instruments, compute systems, 3D, heavy media routing, and larger export pipelines.</td></tr>
+<tr><td>Main constraints</td><td>WebView behavior, browser path/security limits, and less direct GPU ownership.</td><td>Still a WebView renderer, so browser constraints remain even though shell behavior improves.</td><td>More code, more explicit resource management, and a higher implementation burden.</td></tr>
+</tbody>
+</table>
+</div>
+<div class="callout"><strong>Practical rule:</strong> use WebView tracks when the browser is the right renderer, not because they are “less serious.” Use native wgpu when Rust must own GPU state, compute, media resources, or export at a deeper systems level.</div>
+</section>
+<section class="doc-section" data-doc-section="" id="software-stack"><span class="doc-kicker">Layer 2 · Software stack</span>
+<h2>The stack: from shared technology to standalone artist tools <a class="anchor-link" href="#software-stack">#</a></h2>
+<p>Junkpile demonstrates a software stack rather than one monolithic product. The idea is that artists and developers can build narrow, cross-platform standalone applications from reusable graphics and media patterns instead of starting from zero every time.</p>
+<div class="diagram">
+<p class="diagram-title">Cross-platform creative application stack</p>
+<div class="flow vertical">
+<div class="flow-node signal"><strong>Artist need or instrument idea</strong><small>keyer · feedback unit · recorder · mapper · router · player · automation tool</small></div>
+<div class="flow-arrow">↓</div>
+<div class="flow-node"><strong>Focused standalone application</strong><small>a single-purpose app with a clear UI and clear media behavior</small></div>
+<div class="flow-arrow">↓</div>
+<div class="flow-node orange"><strong>Junkpile architecture patterns</strong><small>window topologies · controls · render loops · media loading · recording · error states</small></div>
+<div class="flow-arrow">↓</div>
+<div class="flow-node blue"><strong>Implementation track</strong><small>Tauri v1 WebView · Tauri v2 WebView · native Rust/wgpu</small></div>
+<div class="flow-arrow">↓</div>
+<div class="flow-node"><strong>Shared media and system services</strong><small>camera · files · audio · MIDI · OSC · FFmpeg · Syphon/Spout · GPU backends</small></div>
+<div class="flow-arrow">↓</div>
+<div class="flow-node dark"><strong>Cross-platform packaged application</strong><small>macOS · Windows · Linux standalone delivery</small></div>
+</div>
+</div>
+<div class="grid-3">
+<div class="card"><h3>Reusable foundation</h3><p>Rendering, controls, media I/O, routing, fullscreen, timing, export, and recovery patterns are treated as reusable building blocks.</p></div>
+<div class="card"><h3>Focused tools</h3><p>The commercial and artistic value comes from small, clear instruments—not from forcing every feature into one giant application.</p></div>
+<div class="card"><h3>Future direction</h3><p>This stack points toward the broader Scheng model: common engine capability underneath deliberately independent standalone apps.</p></div>
 </div>
 </section>
 <section class="doc-section" data-doc-section="" id="architecture"><span class="doc-kicker">Layer 2 · Mental model</span>
@@ -454,13 +503,12 @@ npm run dev</code></pre><button class="copy-button" data-copy="#install-run">Cop
 <div class="callout"><strong>Architecture:</strong> Rust owns the wgpu instance, surface, adapter, device, queue, textures, buffers, render/compute pipelines, and presentation. HTML controls remain optional and communicate through explicit state contracts.</div>
 </section>
 <section class="doc-section" data-doc-section="" id="example-catalog"><span class="doc-kicker">Complete inventory</span>
-<h2>All 78 examples <a class="anchor-link" href="#example-catalog">#</a></h2>
+<h2>Example catalog <a class="anchor-link" href="#example-catalog">#</a></h2>
 <p>Filter by collection or search by folder name, media source, technique, or lesson.</p>
 <div data-example-filter="">
 <div class="filter-panel">
 <div class="filter-group"><span class="filter-label">Collection</span><button aria-pressed="true" class="filter-button is-active" data-filter-key="version" data-filter-value="all">All</button><button aria-pressed="false" class="filter-button" data-filter-key="version" data-filter-value="v1">V1</button><button aria-pressed="false" class="filter-button" data-filter-key="version" data-filter-value="v2">V2</button><button aria-pressed="false" class="filter-button" data-filter-key="version" data-filter-value="wgpu">Native wgpu</button></div>
 <label class="search-field"><span>⌕</span><input data-example-search="" placeholder="Search examples, inputs, folders…" type="search"/></label>
-<div class="filter-count" data-filter-count="">78 of 78 examples</div>
 </div>
 <div class="example-grid">
 <article class="example-card" data-example-card="" data-family="p5" data-topology="single-window" data-version="v1">
@@ -1231,8 +1279,7 @@ npm run dev</code></pre><button class="copy-button" data-copy="#install-run">Cop
 </section>
 <section class="doc-section" data-doc-section="" id="validation"><span class="doc-kicker">Layer 5 · Evidence</span>
 <h2>Validation status <a class="anchor-link" href="#validation">#</a></h2>
-<p>The 78 examples were developed and tested sequentially on the primary macOS Apple Silicon environment. This is stronger than the old documentation snapshot, which only performed a static review of 22 projects. It is still not equivalent
-                    to a complete macOS/Windows/Linux certification matrix.</p>
+<p>Primary workflows were developed and tested sequentially on macOS Apple Silicon. That evidence does not imply a complete macOS, Windows, and Linux certification matrix.</p>
 <div class="table-wrap">
 <table class="data-table">
 <thead>
@@ -1244,7 +1291,7 @@ npm run dev</code></pre><button class="copy-button" data-copy="#install-run">Cop
 <tbody>
 <tr>
 <td>Inventory and documentation</td>
-<td>All 78 examples cataloged; all three 00–25 collections complete.</td>
+<td>Example catalog cataloged; all three 00–25 collections complete.</td>
 </tr>
 <tr>
 <td>Runtime</td>
@@ -1471,7 +1518,7 @@ npm run dev</code></pre><button class="copy-button" data-copy="#install-run">Cop
                 <a href="docs.html#design-system">Design system</a>
             </div> -->
 </div>
-<!-- <div class="container footer-note">Baseline frozen after completion of all three 00–25 collections · July 2026</div> -->
+<!-- <div class="container footer-note">Technical baseline · July 2026</div> -->
 </footer>
 <script>
         (() => {
