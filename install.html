@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Install, run, and build a Junkpile Tauri v1, Tauri v2, or native wgpu example." />
+  <meta name="theme-color" content="#11110f" />
+  <title>Install Junkpile</title>
+  <link href="assets/icons/favicon-32x32.png" rel="icon" sizes="32x32" />
+  <link href="assets/site/site.css" rel="stylesheet" />
+  <script defer src="assets/site/site.js"></script>
+  <style>
+    .install-page { padding: 64px 0 96px; }
+    .install-hero { max-width: 900px; margin: 0 auto 34px; }
+    .install-hero h1 { margin-bottom: 16px; }
+    .install-shell { width: min(1120px, calc(100% - 32px)); margin: 0 auto; }
+    .install-jump {
+      position: sticky; top: 74px; z-index: 4; display: flex; gap: 8px;
+      margin: 0 0 28px; padding: 10px; overflow-x: auto;
+      border: 1px solid rgba(255,255,255,.12); border-radius: 14px;
+      background: rgba(7,8,11,.92); backdrop-filter: blur(12px);
+    }
+    .install-jump a {
+      flex: 0 0 auto; min-height: 38px; display: inline-flex; align-items: center;
+      padding: 8px 12px; border: 1px solid rgba(255,255,255,.14);
+      border-radius: 999px; color: inherit; text-decoration: none; font-size: .78rem;
+      font-weight: 700; white-space: nowrap;
+    }
+    .install-jump a:hover, .install-jump a:focus-visible { background: rgba(255,255,255,.1); }
+    .install-section { scroll-margin-top: 150px; margin: 0 0 28px; padding: 28px; border: 1px solid rgba(255,255,255,.12); border-radius: 18px; background: rgba(255,255,255,.035); }
+    .install-section h2 { margin-top: 0; }
+    .install-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; }
+    .install-card { padding: 20px; border: 1px solid rgba(255,255,255,.12); border-radius: 14px; background: rgba(7,8,11,.38); }
+    .install-card h3 { margin-top: 0; }
+    .step-row { display: grid; grid-template-columns: 44px minmax(0,1fr); gap: 14px; align-items: start; margin: 18px 0; }
+    .step-number { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; background: var(--signal-1); color: #08090c; font-weight: 900; }
+    .command-block { position: relative; margin: 14px 0 0; padding: 18px; overflow-x: auto; border: 1px solid rgba(255,255,255,.12); border-radius: 12px; background: #08090c; }
+    .command-block pre { margin: 0; white-space: pre; }
+    .path-table { width: 100%; border-collapse: collapse; }
+    .path-table th, .path-table td { padding: 12px; text-align: left; vertical-align: top; border-bottom: 1px solid rgba(255,255,255,.1); }
+    .install-note { padding: 16px 18px; border-left: 4px solid var(--signal-3); background: rgba(255,255,255,.05); }
+    .check-output { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+    .check-output div { padding: 14px; border: 1px solid rgba(255,255,255,.1); border-radius: 12px; }
+    .schwwaaa-footer { width: 100%; padding: 28px 0 36px; text-align: center; }
+    .schwwaaa-footer-logo { display: inline-flex; align-items: center; justify-content: center; }
+    .schwwaaa-footer-image { display:block; width:min(168px,44vw); height:auto; opacity:.9; }
+    @media (max-width: 820px) { .install-grid, .check-output { grid-template-columns: 1fr; } .install-section { padding: 22px 18px; } .install-page { padding-top: 38px; } }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="index.html"><img alt="" aria-hidden="true" class="brand-symbol" src="assets/brand/junkpile-amorphous-icon.png" /><span>junkpile<small>creative graphics systems laboratory</small></span></a>
+      <button aria-controls="site-nav" aria-expanded="false" class="nav-toggle" data-nav-toggle>Menu</button>
+      <nav aria-label="Primary navigation" class="site-nav" data-site-nav id="site-nav">
+        <a href="index.html">Overview</a>
+        <a href="docs.html">Documentation</a>
+        <a aria-current="page" href="install.html">Install</a>
+        <a href="docs.html#example-catalog">Examples</a>
+        <a href="https://github.com/schwwaaa/junkpile">Github</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="install-page" id="main">
+    <div class="install-shell">
+      <section class="install-hero">
+        <p class="eyebrow">Installation guide</p>
+        <h1>Install one example.<br />Run it locally.<br />Build the application.</h1>
+        <p class="lede">You do not install all of Junkpile at once. Each example is an independent Tauri application. Choose one folder, install its local dependencies, run it, and build it from that folder.</p>
+      </section>
+
+      <nav class="install-jump" aria-label="Installation sections">
+        <a href="#requirements">1. Requirements</a>
+        <a href="#download">2. Get Junkpile</a>
+        <a href="#choose">3. Choose an example</a>
+        <a href="#run">4. Run it</a>
+        <a href="#build">5. Build it</a>
+        <a href="#verify">6. Verify</a>
+        <a href="#problems">Problems</a>
+      </nav>
+
+      <section class="install-section" id="requirements">
+        <p class="eyebrow">Step 1</p>
+        <h2>Install the required tools</h2>
+        <div class="install-grid">
+          <article class="install-card"><h3>Node.js and npm</h3><p>Used for each example’s local frontend and Tauri scripts.</p><div class="command-block"><pre><code>node --version
+npm --version</code></pre></div></article>
+          <article class="install-card"><h3>Rust and Cargo</h3><p>Used to compile the Tauri shell, native integrations, and wgpu renderer.</p><div class="command-block"><pre><code>rustc --version
+cargo --version</code></pre></div></article>
+          <article class="install-card"><h3>Platform build tools</h3><p>Install the operating-system prerequisites listed below before running a project.</p></article>
+        </div>
+        <h3>macOS</h3>
+        <div class="command-block"><pre><code>xcode-select --install</code></pre></div>
+        <p>Use a current Rust toolchain and Node.js installation. macOS provides WKWebView; native wgpu uses Metal.</p>
+        <h3>Windows</h3>
+        <p>Install Microsoft C++ Build Tools with the Desktop development with C++ workload. WebView projects also require the WebView2 Runtime. Native wgpu uses Direct3D 12 when supported.</p>
+        <h3>Linux</h3>
+        <div class="command-block"><pre><code>sudo apt update
+sudo apt install build-essential curl wget file   libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev   patchelf libssl-dev libasound2-dev libvulkan1 vulkan-tools</code></pre></div>
+        <p class="install-note"><strong>Linux package names vary by distribution.</strong> The command above targets Ubuntu/Debian-style systems.</p>
+      </section>
+
+      <section class="install-section" id="download">
+        <p class="eyebrow">Step 2</p>
+        <h2>Get the repository</h2>
+        <div class="step-row"><div class="step-number">A</div><div><h3>Clone with Git</h3><div class="command-block"><pre><code>git clone https://github.com/schwwaaa/junkpile.git
+cd junkpile</code></pre></div></div></div>
+        <div class="step-row"><div class="step-number">B</div><div><h3>Or download the ZIP</h3><p>Download the repository ZIP from GitHub, extract it, and open a terminal in the extracted <code>junkpile</code> directory.</p></div></div>
+      </section>
+
+      <section class="install-section" id="choose">
+        <p class="eyebrow">Step 3</p>
+        <h2>Choose one example</h2>
+        <p>The repository is divided into three collections:</p>
+        <div class="install-grid">
+          <article class="install-card"><h3><code>v1/</code></h3><p>Tauri v1 applications using p5.js, WebGL, GLSL, browser media, and selected Rust integrations.</p></article>
+          <article class="install-card"><h3><code>v2/</code></h3><p>Tauri v2 WebView applications using current capabilities, APIs, dialogs, file workflows, and WebGL.</p></article>
+          <article class="install-card"><h3><code>native-wgpu/</code></h3><p>Rust-owned wgpu applications using WGSL, compute, native media bridges, 3D, and export systems.</p></article>
+        </div>
+        <p>Enter the folder for the example you want to run:</p>
+        <div class="command-block"><pre><code># Example: Tauri v1
+cd v1/p5-tauri-single-template
+
+# Example: Tauri v2
+cd v2/p5-tauri-v2-single-template
+
+# Example: native wgpu
+cd native-wgpu/00-wgpu-surface-probe</code></pre></div>
+      </section>
+
+      <section class="install-section" id="run">
+        <p class="eyebrow">Step 4</p>
+        <h2>Install the example and run it</h2>
+        <p>Run these commands from inside the selected example folder:</p>
+        <div class="command-block"><pre><code>npm install
+npm run dev</code></pre></div>
+        <div class="install-note"><strong>Use the local npm script.</strong> Do not rely on a globally installed Tauri CLI. Each project’s script selects the correct command and Tauri generation.</div>
+        <h3>What should happen</h3>
+        <div class="check-output">
+          <div><strong>First launch</strong><p>Rust dependencies compile. The first run can take several minutes.</p></div>
+          <div><strong>Application window</strong><p>The selected standalone example opens after compilation succeeds.</p></div>
+          <div><strong>Frontend edits</strong><p>HTML, CSS, and JavaScript changes generally reload through the development server.</p></div>
+          <div><strong>Rust edits</strong><p>Changes under <code>src-tauri/</code> trigger a native rebuild.</p></div>
+        </div>
+      </section>
+
+      <section class="install-section" id="build">
+        <p class="eyebrow">Step 5</p>
+        <h2>Build the standalone application</h2>
+        <div class="command-block"><pre><code>npm run build</code></pre></div>
+        <p>Build artifacts are normally written beneath:</p>
+        <div class="command-block"><pre><code>src-tauri/target/release/bundle/</code></pre></div>
+        <div class="table-wrap">
+          <table class="path-table">
+            <thead><tr><th>Platform</th><th>Typical output</th></tr></thead>
+            <tbody>
+              <tr><td>macOS</td><td><code>bundle/macos/*.app</code> and, when configured, <code>bundle/dmg/*.dmg</code></td></tr>
+              <tr><td>Windows</td><td><code>bundle/msi/*.msi</code> or <code>bundle/nsis/*.exe</code></td></tr>
+              <tr><td>Linux</td><td><code>bundle/appimage/*.AppImage</code>, <code>bundle/deb/*.deb</code>, or another configured package</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="install-note">The exact bundle formats depend on the example’s Tauri configuration and the operating system used for the build.</p>
+      </section>
+
+      <section class="install-section" id="verify">
+        <p class="eyebrow">Step 6</p>
+        <h2>Verify the example before modifying it</h2>
+        <div class="check-output">
+          <div>□ The application opens without a panic or blank window.</div>
+          <div>□ The expected shader, media, or native GPU output is visible.</div>
+          <div>□ Sliders and buttons update the renderer.</div>
+          <div>□ Reset, pause, fullscreen, and transport controls work when present.</div>
+          <div>□ Camera, microphone, MIDI, OSC, or files connect when required.</div>
+          <div>□ The production build completes and creates a bundle.</div>
+        </div>
+        <p>After confirming the baseline, read the selected project’s local <code>README.md</code> before changing its renderer, media path, or native integration.</p>
+      </section>
+
+      <section class="install-section" id="problems">
+        <p class="eyebrow">Common installation problems</p>
+        <h2>When the project does not start</h2>
+        <details><summary><strong><code>npm run dev</code> cannot find Tauri</strong></summary><div class="details-body"><p>Confirm that <code>npm install</code> completed inside the selected example folder. Then inspect its <code>package.json</code> scripts.</p></div></details>
+        <details><summary><strong>Rust or Cargo is not found</strong></summary><div class="details-body"><p>Install Rust with rustup, restart the terminal, and verify <code>rustc --version</code> and <code>cargo --version</code>.</p></div></details>
+        <details><summary><strong>Native build tools are missing</strong></summary><div class="details-body"><p>Install Xcode Command Line Tools on macOS, Microsoft C++ Build Tools on Windows, or the WebKitGTK/build dependencies on Linux.</p></div></details>
+        <details><summary><strong>The camera or microphone does not appear</strong></summary><div class="details-body"><p>Grant operating-system permission, restart the application, and use the example’s device refresh control. Close other applications holding the device.</p></div></details>
+        <details><summary><strong>A two-window example reports that its port is in use</strong></summary><div class="details-body"><p>Close an older copy of the example or another process using its relay port, then restart the project.</p></div></details>
+        <details><summary><strong>Native wgpu cannot create a surface or adapter</strong></summary><div class="details-body"><p>Confirm that the machine has a working Metal, Vulkan, or Direct3D 12 backend and current graphics drivers.</p></div></details>
+        <div class="hero-actions"><a class="button primary" href="docs.html#troubleshooting">Open troubleshooting</a><a class="button ghost" href="docs.html#example-catalog">Choose an example</a></div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="schwwaaa-footer" aria-label="schwwaaa footer logo">
+    <a class="schwwaaa-footer-logo" href="https://linktr.ee/schwwaaa" target="_blank" rel="noopener noreferrer"><img class="schwwaaa-footer-image" src="./assets/schwwaaa-logo.png" alt="schwwaaa" /></a>
+  </footer>
+</body>
+</html>
