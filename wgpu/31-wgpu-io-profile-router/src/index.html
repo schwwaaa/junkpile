@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Junkpile 31 · I/O Profile Router</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main>
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Junkpile native wgpu · example 31</p>
+        <h1>I/O Profile Router</h1>
+        <p class="lede">Arm complete render-and-record routes from a validated JSON profile file. The profile configuration hot-reloads, rejects invalid edits, and feeds the proven high-resolution FFmpeg recorder without accepting arbitrary UI dimensions.</p>
+      </div>
+      <div class="hero-status">
+        <span id="statusDot" class="dot"></span>
+        <strong id="statusText">starting</strong>
+        <span id="frameCounter">frame 0</span>
+      </div>
+    </header>
+
+    <section class="card profile-controls">
+      <div class="section-heading">
+        <div><p class="eyebrow">routing decision</p><h2>Select and arm an I/O profile</h2></div>
+        <span id="activeBadge" class="badge">loading</span>
+      </div>
+      <div class="control-grid">
+        <label class="wide"><span>Available profiles</span><select id="profileSelect"></select></label>
+        <button id="armButton" class="primary">Arm selected profile</button>
+        <button id="startButton" class="record">Start file route</button>
+        <button id="stopButton" class="danger">Stop and finalize</button>
+      </div>
+      <div class="button-grid secondary-row">
+        <button id="reloadButton">Reload profile JSON</button>
+        <button id="restoreButton">Restore built-ins</button>
+        <button id="configFolderButton">Open config folder</button>
+        <button id="recordingsButton">Open recordings</button>
+        <button id="fullscreenButton">Toggle renderer fullscreen</button>
+      </div>
+      <p id="profileDescription" class="description"></p>
+      <p id="selectionNotice" class="notice"></p>
+    </section>
+
+    <section class="route-grid">
+      <article class="card route-card">
+        <div class="section-heading">
+          <div><p class="eyebrow">effective route</p><h2>Armed profile graph</h2></div>
+          <span id="routeBadge" class="badge">preview only</span>
+        </div>
+        <div class="route">
+          <div class="node source"><small>AUTHORITATIVE FRAME</small><strong id="routeSource">—</strong></div>
+          <span class="arrow">→</span>
+          <div class="branch">
+            <div class="node preview"><small>GPU SINK</small><strong>Window preview</strong><span>always active</span></div>
+            <div id="fileNode" class="node file"><small>CPU WORKER SINK</small><strong id="routeCodec">disabled</strong><span id="routeFileDetail">no file route</span></div>
+          </div>
+        </div>
+        <p id="contractSummary" class="summary"></p>
+      </article>
+
+      <article class="card estimate-card">
+        <div class="section-heading">
+          <div><p class="eyebrow">resource contract</p><h2>Armed workload</h2></div>
+          <span id="resourceBadge" class="badge">—</span>
+        </div>
+        <dl>
+          <div><dt>RGBA frame</dt><dd id="estimateFrame">—</dd></div>
+          <div><dt>Raw traffic</dt><dd id="estimateThroughput">—</dd></div>
+          <div><dt>Estimated GPU allocation</dt><dd id="estimateGpu">—</dd></div>
+          <div><dt>Bounded CPU queue</dt><dd id="estimateCpu">—</dd></div>
+          <div><dt>Estimated peak</dt><dd id="estimatePeak">—</dd></div>
+        </dl>
+        <p id="resourceWarning" class="warning-text"></p>
+      </article>
+    </section>
+
+    <section class="config-grid">
+      <article class="card config-card">
+        <div class="section-heading">
+          <div><p class="eyebrow">configuration</p><h2>Last-known-good profile file</h2></div>
+          <span id="watcherBadge" class="badge">watching</span>
+        </div>
+        <dl>
+          <div><dt>Generation</dt><dd id="configGeneration">0</dd></div>
+          <div><dt>Schema</dt><dd id="schemaVersion">—</dd></div>
+          <div><dt>Profiles</dt><dd id="profileCount">0</dd></div>
+          <div><dt>Last event</dt><dd id="lastConfigEvent">—</dd></div>
+          <div><dt>Config path</dt><dd id="configPath" class="path-value">—</dd></div>
+        </dl>
+        <p id="configError" class="error-text"></p>
+      </article>
+
+      <article class="card recorder-card">
+        <div class="section-heading">
+          <div><p class="eyebrow">file sink</p><h2>Current recording session</h2></div>
+          <span id="recordingBadge" class="badge">idle</span>
+        </div>
+        <div id="recordingFormat" class="dimensions">—</div>
+        <dl>
+          <div><dt>Codec</dt><dd id="recordingProfile">—</dd></div>
+          <div><dt>Native source</dt><dd id="sourceResolution">—</dd></div>
+          <div><dt>Elapsed</dt><dd id="elapsed">0.00 s</dd></div>
+          <div><dt>Output size</dt><dd id="outputBytes">0 B</dd></div>
+          <div><dt>Output path</dt><dd id="outputPath" class="path-value">—</dd></div>
+        </dl>
+        <p id="recordingError" class="error-text"></p>
+      </article>
+    </section>
+
+    <section class="card metrics-card">
+      <div class="section-heading">
+        <div><p class="eyebrow">bounded pipeline</p><h2>Readback and worker telemetry</h2></div>
+        <span id="dropBadge" class="badge">0 drops</span>
+      </div>
+      <div class="metric-grid">
+        <div><span>Capture requests</span><strong id="captureRequests">0</strong></div>
+        <div><span>GPU readbacks</span><strong id="readbacks">0</strong></div>
+        <div><span>Encoded frames</span><strong id="encodedFrames">0</strong></div>
+        <div><span>GPU drops</span><strong id="gpuDrops">0</strong></div>
+        <div><span>Worker drops</span><strong id="workerDrops">0</strong></div>
+        <div><span>Worker pending</span><strong id="workerPending">0</strong></div>
+        <div><span>Readback slots</span><strong id="slotsBusy">0 / 2</strong></div>
+        <div><span>Raw bytes piped</span><strong id="rawBytes">0 B</strong></div>
+      </div>
+    </section>
+
+    <section class="card log-card">
+      <div class="section-heading">
+        <div><p class="eyebrow">finalization</p><h2>FFmpeg and ffprobe result</h2></div>
+        <span id="ffmpegBadge" class="badge">checking</span>
+      </div>
+      <pre id="verification">No completed recording yet.</pre>
+      <p id="ffmpegLog" class="log-line"></p>
+      <p id="ffmpegError" class="error-text"></p>
+    </section>
+
+    <section class="card telemetry">
+      <div class="section-heading">
+        <div><p class="eyebrow">renderer</p><h2>Native telemetry</h2></div>
+        <span id="rendererState" class="badge">starting</span>
+      </div>
+      <div class="telemetry-grid">
+        <div><span>Backend</span><strong id="backend">—</strong></div>
+        <div><span>Adapter</span><strong id="adapter">—</strong></div>
+        <div><span>GPU limit</span><strong id="gpuLimit">—</strong></div>
+        <div><span>Window</span><strong id="windowSize">—</strong></div>
+        <div><span>Measured FPS</span><strong id="measuredFps">—</strong></div>
+        <div><span>Frame time</span><strong id="frameTime">—</strong></div>
+      </div>
+    </section>
+
+    <section class="card note-card">
+      <p><strong>Editing the profile file is safe.</strong> A malformed JSON edit or unsupported profile is rejected and the last-known-good profile list remains active. Profile changes are blocked only while a recording is active or finalizing.</p>
+    </section>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Junkpile 30 · High Resolution Record</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main>
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Junkpile · native wgpu I/O · high-resolution follow-on</p>
+        <h1>High-Resolution Recording</h1>
+        <p class="lede">The shader is rendered natively at the selected recording resolution—not enlarged from a smaller frame—then read back through a deliberately small GPU ring and bounded FFmpeg queue.</p>
+      </div>
+      <div class="hero-status">
+        <span id="statusDot" class="dot"></span>
+        <strong id="statusText">starting</strong>
+        <span id="frameCounter">frame —</span>
+      </div>
+    </header>
+
+    <section class="expect card">
+      <div>
+        <p class="eyebrow">native renderer</p>
+        <h2>What this example proves</h2>
+      </div>
+      <p>The authoritative wgpu texture is recreated at 1080p, 1440p, 4K, 5K, or 8K before recording. The window is only a scaled preview; it does not determine the exported resolution.</p>
+    </section>
+
+    <section class="controls card">
+      <div class="control-group">
+        <label>
+          <span>Codec profile</span>
+          <select id="profileSelect">
+            <option value="h264">H.264 · MP4</option>
+            <option value="prores">ProRes 422 HQ · MOV</option>
+          </select>
+        </label>
+        <label>
+          <span>Native render / record size</span>
+          <select id="resolutionSelect">
+            <option value="1920x1080" selected>1920 × 1080 · Full HD</option>
+            <option value="2560x1440">2560 × 1440 · QHD</option>
+            <option value="3840x2160">3840 × 2160 · 4K UHD</option>
+            <option value="5120x2880">5120 × 2880 · 5K</option>
+            <option value="7680x4320">7680 × 4320 · 8K UHD</option>
+          </select>
+        </label>
+        <label>
+          <span>Recording FPS</span>
+          <select id="fpsSelect">
+            <option value="60">60 fps</option>
+            <option value="30" selected>30 fps</option>
+            <option value="24">24 fps</option>
+          </select>
+        </label>
+        <label>
+          <span>Writer delay</span>
+          <select id="delaySelect">
+            <option value="0" selected>0 ms · normal</option>
+            <option value="12">12 ms · mild pressure</option>
+            <option value="35">35 ms · force drops</option>
+          </select>
+        </label>
+      </div>
+      <label class="extreme-check">
+        <input id="extremeAck" type="checkbox">
+        <span>I understand that 5K/8K readback can use hundreds of megabytes and may drop frames on this computer.</span>
+      </label>
+      <div class="button-row">
+        <button id="startButton" class="primary">Start high-resolution recording</button>
+        <button id="stopButton" class="danger">Stop and finalize</button>
+        <button id="folderButton">Open recordings folder</button>
+        <button id="fullscreenButton">Renderer fullscreen</button>
+      </div>
+    </section>
+
+    <section class="contract-grid">
+      <article class="card path-card">
+        <p class="eyebrow">frame path</p>
+        <div class="route">
+          <div class="node cyan">Native-Resolution<br>Shader Texture</div>
+          <div class="arrow">→</div>
+          <div class="node red">Same-Resolution<br>Record Texture</div>
+          <div class="arrow">→</div>
+          <div class="node amber">2-Slot GPU<br>Readback Ring</div>
+          <div class="arrow">→</div>
+          <div class="node purple">2-Frame FFmpeg<br>Worker Queue</div>
+          <div class="arrow">→</div>
+          <div class="node green">MP4 or MOV<br>File</div>
+        </div>
+        <p id="contractSummary" class="summary">—</p>
+      </article>
+
+      <article class="card ffmpeg-card">
+        <div class="section-heading">
+          <div><p class="eyebrow">dependency</p><h2>FFmpeg</h2></div>
+          <span id="ffmpegBadge" class="badge">checking</span>
+        </div>
+        <dl>
+          <div><dt>Executable</dt><dd id="ffmpegExecutable">—</dd></div>
+          <div><dt>Version</dt><dd id="ffmpegVersion">—</dd></div>
+          <div><dt>GPU max texture</dt><dd id="gpuLimit">—</dd></div>
+        </dl>
+        <p id="ffmpegError" class="error-text"></p>
+      </article>
+    </section>
+
+    <section class="recording-grid">
+      <article class="card recorder-card">
+        <div class="section-heading">
+          <div><p class="eyebrow">resource forecast</p><h2>Selected workload</h2></div>
+          <span id="resourceBadge" class="badge">1080p</span>
+        </div>
+        <dl>
+          <div><dt>One RGBA frame</dt><dd id="estimateFrame">—</dd></div>
+          <div><dt>Raw frame traffic</dt><dd id="estimateThroughput">—</dd></div>
+          <div><dt>GPU textures + ring</dt><dd id="estimateGpu">—</dd></div>
+          <div><dt>Bounded CPU queue</dt><dd id="estimateCpu">—</dd></div>
+          <div><dt>Approximate peak working set</dt><dd id="estimatePeak">—</dd></div>
+        </dl>
+        <p id="resourceWarning" class="error-text"></p>
+      </article>
+
+      <article class="card recorder-card">
+        <div class="section-heading">
+          <div><p class="eyebrow">output sink</p><h2>Recorder status</h2></div>
+          <span id="recordingBadge" class="badge">idle</span>
+        </div>
+        <p id="recordingFormat" class="dimensions">—</p>
+        <dl>
+          <div><dt>Native source</dt><dd id="sourceResolution">—</dd></div>
+          <div><dt>Profile</dt><dd id="recordingProfile">—</dd></div>
+          <div><dt>Elapsed output</dt><dd id="elapsed">—</dd></div>
+          <div><dt>Output path</dt><dd id="outputPath" class="path-value">—</dd></div>
+          <div><dt>Final file size</dt><dd id="outputBytes">—</dd></div>
+        </dl>
+        <p id="recordingError" class="error-text"></p>
+      </article>
+    </section>
+
+    <section class="card metrics-card">
+      <div class="section-heading">
+        <div><p class="eyebrow">backpressure</p><h2>High-resolution pipeline metrics</h2></div>
+        <span id="dropBadge" class="badge">0 drops</span>
+      </div>
+      <div class="metric-grid">
+        <div><span>Capture requests</span><strong id="captureRequests">0</strong></div>
+        <div><span>GPU readbacks</span><strong id="readbacks">0</strong></div>
+        <div><span>Encoded frames</span><strong id="encodedFrames">0</strong></div>
+        <div><span>GPU drops</span><strong id="gpuDrops">0</strong></div>
+        <div><span>Worker drops</span><strong id="workerDrops">0</strong></div>
+        <div><span>Worker pending</span><strong id="workerPending">0</strong></div>
+        <div><span>Readback slots busy</span><strong id="slotsBusy">0 / 2</strong></div>
+        <div><span>Raw bytes piped</span><strong id="rawBytes">0 B</strong></div>
+        <div><span>Measured raw rate</span><strong id="rawRate">—</strong></div>
+        <div><span>Estimated peak memory</span><strong id="runtimePeak">—</strong></div>
+      </div>
+    </section>
+
+    <section class="card log-card">
+      <div class="section-heading">
+        <div><p class="eyebrow">finalization</p><h2>FFmpeg and ffprobe result</h2></div>
+      </div>
+      <pre id="verification">No completed recording yet.</pre>
+      <p id="ffmpegLog" class="log-line"></p>
+    </section>
+
+    <section class="telemetry card">
+      <div class="section-heading">
+        <div><p class="eyebrow">renderer</p><h2>Native telemetry</h2></div>
+        <span id="rendererState" class="badge">starting</span>
+      </div>
+      <div class="telemetry-grid">
+        <div><span>Backend</span><strong id="backend">—</strong></div>
+        <div><span>Adapter</span><strong id="adapter">—</strong></div>
+        <div><span>Surface</span><strong id="surface">—</strong></div>
+        <div><span>Window</span><strong id="windowSize">—</strong></div>
+        <div><span>Measured FPS</span><strong id="measuredFps">—</strong></div>
+        <div><span>Frame time</span><strong id="frameTime">—</strong></div>
+      </div>
+    </section>
+
+    <section class="card note-card">
+      <p><strong>Start at 1080p.</strong> Confirm a clean file, then move to 4K. Treat 5K and 8K as capability tests: the example reports dropped frames instead of pretending every computer can sustain the selected raw bandwidth in real time.</p>
+    </section>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "render": {
+    "width": 1920,
+    "height": 1080,
+    "targetFps": 30
+  },
+  "preview": {
+    "enabled": true,
+    "width": 1280,
+    "height": 720,
+    "scaling": "fit"
+  },
+  "recording": {
+    "enabled": true,
+    "width": 1920,
+    "height": 1080,
+    "fps": 60,
+    "queueCapacity": 3
+  },
+  "streaming": {
+    "enabled": true,
+    "width": 1280,
+    "height": 720,
+    "fps": 30,
+    "queueCapacity": 2
+  },
+  "ndi": {
+    "enabled": false,
+    "name": "Junkpile I/O Foundation",
+    "queueCapacity": 2
+  },
+  "sharedTexture": {
+    "enabled": false,
+    "backend": "syphon",
+    "name": "Junkpile I/O Foundation · Syphon"
+  },
+  "hotReload": {
+    "enabled": true,
+    "debounceMs": 250
+  }
+}

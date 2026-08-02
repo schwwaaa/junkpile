@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "defaultProfile": "preview-1080p",
+  "hotReload": {
+    "enabled": true,
+    "debounceMs": 250
+  },
+  "profiles": [
+    {
+      "id": "preview-1080p",
+      "label": "Preview only \u00b7 1080p",
+      "description": "Render and preview at Full HD without opening a recording worker.",
+      "frame": {
+        "width": 1920,
+        "height": 1080
+      },
+      "recording": {
+        "enabled": false,
+        "codec": "h264",
+        "workerDelayMs": 0,
+        "fps": 30
+      }
+    },
+    {
+      "id": "delivery-1080p",
+      "label": "Delivery \u00b7 1080p H.264",
+      "description": "General-purpose Full HD delivery profile with a 30 fps H.264 file route.",
+      "frame": {
+        "width": 1920,
+        "height": 1080
+      },
+      "recording": {
+        "enabled": true,
+        "codec": "h264",
+        "workerDelayMs": 0,
+        "fps": 30
+      }
+    },
+    {
+      "id": "delivery-4k",
+      "label": "Delivery \u00b7 4K H.264",
+      "description": "Native 4K render and H.264 recording for high-resolution delivery.",
+      "frame": {
+        "width": 3840,
+        "height": 2160
+      },
+      "recording": {
+        "enabled": true,
+        "codec": "h264",
+        "workerDelayMs": 0,
+        "fps": 30
+      }
+    },
+    {
+      "id": "archive-4k",
+      "label": "Archive \u00b7 4K ProRes",
+      "description": "Native 4K render with a ProRes 422 HQ archival file route.",
+      "frame": {
+        "width": 3840,
+        "height": 2160
+      },
+      "recording": {
+        "enabled": true,
+        "codec": "prores",
+        "workerDelayMs": 0,
+        "fps": 30
+      }
+    },
+    {
+      "id": "stress-5k",
+      "label": "Stress test \u00b7 5K H.264",
+      "description": "A 5K capability profile that keeps queue depth bounded and exposes drops.",
+      "frame": {
+        "width": 5120,
+        "height": 2880
+      },
+      "recording": {
+        "enabled": true,
+        "codec": "h264",
+        "workerDelayMs": 0,
+        "fps": 30
+      }
+    },
+    {
+      "id": "stress-8k",
+      "label": "Stress test \u00b7 8K H.264",
+      "description": "An 8K capability profile at 24 fps. Availability still depends on GPU texture limits and encoder throughput.",
+      "frame": {
+        "width": 7680,
+        "height": 4320
+      },
+      "recording": {
+        "enabled": true,
+        "codec": "h264",
+        "workerDelayMs": 0,
+        "fps": 24
+      }
+    }
+  ]
+}

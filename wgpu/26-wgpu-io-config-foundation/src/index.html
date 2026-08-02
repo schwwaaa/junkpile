@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Junkpile 26 · I/O Config Foundation</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <div>
+        <p class="eyebrow">native wgpu · example 26</p>
+        <h1>I/O Config Foundation</h1>
+        <p class="lede">Typed JSON configuration, platform overrides, strict validation, and last-known-good hot reload. This example configures future I/O sinks without implementing the recorder, streamer, NDI sender, Syphon sender, or Spout sender yet.</p>
+      </div>
+      <div class="hero-status">
+        <span id="statusDot" class="dot"></span>
+        <strong id="statusText">starting…</strong>
+        <span id="generation" class="generation">generation 0</span>
+      </div>
+    </section>
+
+    <section class="toolbar card">
+      <button id="reloadButton">Reload now</button>
+      <button id="validButton">Write valid change</button>
+      <button id="invalidButton" class="danger">Write invalid change</button>
+      <button id="restoreButton">Restore defaults</button>
+      <button id="openFolderButton">Open config folder</button>
+      <button id="fullscreenButton">Renderer fullscreen</button>
+    </section>
+
+    <section id="errorPanel" class="error-panel hidden">
+      <strong>Configuration rejected</strong>
+      <p id="errorText"></p>
+      <p>The active generation remains unchanged. Restore defaults or correct the JSON file.</p>
+    </section>
+
+    <section class="paths card">
+      <h2>Resolved files</h2>
+      <dl>
+        <div><dt>Platform</dt><dd id="platform">—</dd></div>
+        <div><dt>Base</dt><dd id="basePath">—</dd></div>
+        <div><dt>Override</dt><dd id="overridePath">—</dd></div>
+        <div><dt>Watcher</dt><dd id="watching">—</dd></div>
+        <div><dt>Last event</dt><dd id="lastEvent">—</dd></div>
+      </dl>
+    </section>
+
+    <section class="sink-grid">
+      <article class="sink card render-card">
+        <header><span>Authoritative</span><strong>Render</strong></header>
+        <p id="renderDimensions" class="dimensions">—</p>
+        <dl><div><dt>Target FPS</dt><dd id="renderFps">—</dd></div></dl>
+      </article>
+      <article class="sink card preview-card">
+        <header><span>Presentation</span><strong>Preview</strong></header>
+        <p id="previewDimensions" class="dimensions">—</p>
+        <dl>
+          <div><dt>Enabled</dt><dd id="previewEnabled">—</dd></div>
+          <div><dt>Scaling</dt><dd id="previewScaling">—</dd></div>
+        </dl>
+      </article>
+      <article class="sink card recording-card">
+        <header><span>CPU worker</span><strong>Recording</strong></header>
+        <p id="recordingDimensions" class="dimensions">—</p>
+        <dl>
+          <div><dt>Enabled</dt><dd id="recordingEnabled">—</dd></div>
+          <div><dt>FPS</dt><dd id="recordingFps">—</dd></div>
+          <div><dt>Queue</dt><dd id="recordingQueue">—</dd></div>
+        </dl>
+      </article>
+      <article class="sink card streaming-card">
+        <header><span>CPU worker</span><strong>Streaming</strong></header>
+        <p id="streamingDimensions" class="dimensions">—</p>
+        <dl>
+          <div><dt>Enabled</dt><dd id="streamingEnabled">—</dd></div>
+          <div><dt>FPS</dt><dd id="streamingFps">—</dd></div>
+          <div><dt>Queue</dt><dd id="streamingQueue">—</dd></div>
+        </dl>
+      </article>
+      <article class="sink card ndi-card">
+        <header><span>Network video</span><strong>NDI</strong></header>
+        <p id="ndiName" class="name">—</p>
+        <dl>
+          <div><dt>Enabled</dt><dd id="ndiEnabled">—</dd></div>
+          <div><dt>Queue</dt><dd id="ndiQueue">—</dd></div>
+        </dl>
+      </article>
+      <article class="sink card share-card">
+        <header><span>GPU sharing</span><strong>Shared texture</strong></header>
+        <p id="shareName" class="name">—</p>
+        <dl>
+          <div><dt>Enabled</dt><dd id="shareEnabled">—</dd></div>
+          <div><dt>Backend</dt><dd id="shareBackend">—</dd></div>
+        </dl>
+      </article>
+    </section>
+
+    <section class="telemetry card">
+      <h2>Renderer telemetry</h2>
+      <div class="telemetry-grid">
+        <div><span>Backend</span><strong id="backend">—</strong></div>
+        <div><span>Adapter</span><strong id="adapterName">—</strong></div>
+        <div><span>Surface</span><strong id="surfaceFormat">—</strong></div>
+        <div><span>Window</span><strong id="windowResolution">—</strong></div>
+        <div><span>Measured FPS</span><strong id="measuredFps">—</strong></div>
+        <div><span>Frame time</span><strong id="frameTime">—</strong></div>
+      </div>
+    </section>
+
+    <section class="card json-card">
+      <div class="section-heading">
+        <div><p class="eyebrow">effective state</p><h2>Merged and validated JSON</h2></div>
+        <span class="note">platform override applied after base config</span>
+      </div>
+      <pre id="effectiveJson">Loading…</pre>
+    </section>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

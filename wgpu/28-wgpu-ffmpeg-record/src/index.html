@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Junkpile 28 · FFmpeg Record</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main>
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Junkpile · native wgpu I/O · milestone 3</p>
+        <h1>FFmpeg File Recording</h1>
+        <p class="lede">An independent recording texture, asynchronous GPU readback ring, bounded CPU queue, and real FFmpeg process. The native preview stays responsive even when the writer is deliberately overloaded.</p>
+      </div>
+      <div class="hero-status">
+        <span id="statusDot" class="dot"></span>
+        <strong id="statusText">starting</strong>
+        <span id="frameCounter">frame —</span>
+      </div>
+    </header>
+
+    <section class="expect card">
+      <div>
+        <p class="eyebrow">native renderer</p>
+        <h2>What you should see</h2>
+      </div>
+      <p>The large cyan panel is the authoritative 1280 × 720 frame. The red panel is the independently sized recording texture that is read back and sent to FFmpeg.</p>
+    </section>
+
+    <section class="controls card">
+      <div class="control-group">
+        <label>
+          <span>Codec profile</span>
+          <select id="profileSelect">
+            <option value="h264">H.264 · MP4</option>
+            <option value="prores">ProRes 422 HQ · MOV</option>
+          </select>
+        </label>
+        <label>
+          <span>Recording size</span>
+          <select id="resolutionSelect">
+            <option value="1280x720">1280 × 720</option>
+            <option value="960x540" selected>960 × 540</option>
+            <option value="640x360">640 × 360</option>
+          </select>
+        </label>
+        <label>
+          <span>Recording FPS</span>
+          <select id="fpsSelect">
+            <option value="60">60 fps</option>
+            <option value="30" selected>30 fps</option>
+            <option value="24">24 fps</option>
+          </select>
+        </label>
+        <label>
+          <span>Writer delay</span>
+          <select id="delaySelect">
+            <option value="0" selected>0 ms · normal</option>
+            <option value="12">12 ms · mild load</option>
+            <option value="35">35 ms · force pressure</option>
+            <option value="80">80 ms · heavy drops</option>
+          </select>
+        </label>
+      </div>
+      <div class="button-row">
+        <button id="startButton" class="primary">Start recording</button>
+        <button id="stopButton" class="danger">Stop and finalize</button>
+        <button id="folderButton">Open recordings folder</button>
+        <button id="fullscreenButton">Renderer fullscreen</button>
+      </div>
+    </section>
+
+    <section class="contract-grid">
+      <article class="card path-card">
+        <p class="eyebrow">frame path</p>
+        <div class="route">
+          <div class="node cyan">Authoritative<br>GPU Texture</div>
+          <div class="arrow">→</div>
+          <div class="node red">Scaled Recording<br>GPU Texture</div>
+          <div class="arrow">→</div>
+          <div class="node amber">3-Slot GPU<br>Readback Ring</div>
+          <div class="arrow">→</div>
+          <div class="node purple">Bounded FFmpeg<br>Worker Queue</div>
+          <div class="arrow">→</div>
+          <div class="node green">MP4 or MOV<br>File</div>
+        </div>
+        <p id="contractSummary" class="summary">—</p>
+      </article>
+
+      <article class="card ffmpeg-card">
+        <div class="section-heading">
+          <div><p class="eyebrow">dependency</p><h2>FFmpeg</h2></div>
+          <span id="ffmpegBadge" class="badge">checking</span>
+        </div>
+        <dl>
+          <div><dt>Executable</dt><dd id="ffmpegExecutable">—</dd></div>
+          <div><dt>Version</dt><dd id="ffmpegVersion">—</dd></div>
+        </dl>
+        <p id="ffmpegError" class="error-text"></p>
+      </article>
+    </section>
+
+    <section class="recording-grid">
+      <article class="card recorder-card">
+        <div class="section-heading">
+          <div><p class="eyebrow">output sink</p><h2>Recorder status</h2></div>
+          <span id="recordingBadge" class="badge">idle</span>
+        </div>
+        <p id="recordingFormat" class="dimensions">—</p>
+        <dl>
+          <div><dt>Profile</dt><dd id="recordingProfile">—</dd></div>
+          <div><dt>Elapsed output</dt><dd id="elapsed">—</dd></div>
+          <div><dt>Output path</dt><dd id="outputPath" class="path-value">—</dd></div>
+          <div><dt>Final file size</dt><dd id="outputBytes">—</dd></div>
+        </dl>
+        <p id="recordingError" class="error-text"></p>
+      </article>
+
+      <article class="card metrics-card">
+        <div class="section-heading">
+          <div><p class="eyebrow">backpressure</p><h2>Pipeline metrics</h2></div>
+          <span id="dropBadge" class="badge">0 drops</span>
+        </div>
+        <div class="metric-grid">
+          <div><span>Capture requests</span><strong id="captureRequests">0</strong></div>
+          <div><span>GPU readbacks</span><strong id="readbacks">0</strong></div>
+          <div><span>Encoded frames</span><strong id="encodedFrames">0</strong></div>
+          <div><span>GPU drops</span><strong id="gpuDrops">0</strong></div>
+          <div><span>Worker drops</span><strong id="workerDrops">0</strong></div>
+          <div><span>Worker pending</span><strong id="workerPending">0</strong></div>
+          <div><span>Readback slots busy</span><strong id="slotsBusy">0 / 3</strong></div>
+          <div><span>Raw bytes piped</span><strong id="rawBytes">0 B</strong></div>
+        </div>
+      </article>
+    </section>
+
+    <section class="card log-card">
+      <div class="section-heading">
+        <div><p class="eyebrow">finalization</p><h2>FFmpeg and ffprobe result</h2></div>
+      </div>
+      <pre id="verification">No completed recording yet.</pre>
+      <p id="ffmpegLog" class="log-line"></p>
+    </section>
+
+    <section class="telemetry card">
+      <div class="section-heading">
+        <div><p class="eyebrow">renderer</p><h2>Native telemetry</h2></div>
+        <span id="rendererState" class="badge">starting</span>
+      </div>
+      <div class="telemetry-grid">
+        <div><span>Backend</span><strong id="backend">—</strong></div>
+        <div><span>Adapter</span><strong id="adapter">—</strong></div>
+        <div><span>Surface</span><strong id="surface">—</strong></div>
+        <div><span>Window</span><strong id="windowSize">—</strong></div>
+        <div><span>Measured FPS</span><strong id="measuredFps">—</strong></div>
+        <div><span>Frame time</span><strong id="frameTime">—</strong></div>
+      </div>
+    </section>
+
+    <section class="card note-card">
+      <p><strong>Test normal recording first.</strong> Record for several seconds with zero writer delay, stop, wait for <em>Complete</em>, then open the file. Repeat with a 35 ms delay to verify that dropped frames rise without freezing the native renderer.</p>
+    </section>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

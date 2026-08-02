@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Junkpile 27 · Frame & Output Contract</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <div>
+        <p class="eyebrow">native wgpu · example 27</p>
+        <h1>Frame &amp; Output Contract</h1>
+        <p class="lede">One authoritative offscreen texture is submitted through a shared sink contract. Two GPU mirrors, the window preview, and a bounded worker probe consume the same frame without owning the renderer.</p>
+      </div>
+      <div class="hero-status">
+        <span id="statusDot" class="dot"></span>
+        <strong id="statusText">starting…</strong>
+        <span id="frameCounter">frame 0</span>
+      </div>
+    </section>
+
+    <section class="expect card">
+      <div>
+        <p class="eyebrow">what to observe</p>
+        <h2>The native window is a routed composite</h2>
+      </div>
+      <p>The large cyan panel is the authoritative texture. The purple and green panels are independent GPU mirror sinks. Disable either mirror and that panel freezes while the source and other outputs continue.</p>
+    </section>
+
+    <section class="toolbar card">
+      <button id="recordingToggle">Disable recording mirror</button>
+      <button id="streamingToggle">Disable streaming mirror</button>
+      <button id="workerToggle">Disable worker probe</button>
+      <label class="delay-control">
+        <span>Worker load</span>
+        <select id="delaySelect">
+          <option value="0">0 ms · clear</option>
+          <option value="12">12 ms · light</option>
+          <option value="35">35 ms · pressure</option>
+          <option value="80">80 ms · heavy drops</option>
+        </select>
+      </label>
+      <button id="resetButton">Reset metrics</button>
+      <button id="fullscreenButton">Renderer fullscreen</button>
+    </section>
+
+    <section class="contract-grid">
+      <article class="card source-card">
+        <header><span>source contract</span><strong>Authoritative Frame</strong></header>
+        <p id="frameDimensions" class="dimensions">—</p>
+        <dl>
+          <div><dt>Pixel format</dt><dd id="pixelFormat">—</dd></div>
+          <div><dt>Origin</dt><dd id="origin">—</dd></div>
+          <div><dt>Color space</dt><dd id="colorSpace">—</dd></div>
+          <div><dt>Alpha</dt><dd id="alphaMode">—</dd></div>
+          <div><dt>Nominal FPS</dt><dd id="nominalFps">—</dd></div>
+        </dl>
+      </article>
+
+      <article class="card diagram-card">
+        <p class="eyebrow">routing model</p>
+        <div class="route">
+          <div class="node source">Authoritative<br>GPU Texture</div>
+          <div class="bus"></div>
+          <div class="destinations">
+            <div class="node purple">Recording-stage mirror</div>
+            <div class="node green">Streaming-stage mirror</div>
+            <div class="node cyan">Window preview</div>
+            <div class="node amber">CPU worker probe</div>
+          </div>
+        </div>
+        <p id="contractSummary" class="summary">—</p>
+      </article>
+    </section>
+
+    <section id="sinkGrid" class="sink-grid"></section>
+
+    <section class="telemetry card">
+      <div class="section-heading">
+        <div><p class="eyebrow">renderer</p><h2>Native telemetry</h2></div>
+        <span id="rendererState" class="badge">starting</span>
+      </div>
+      <div class="telemetry-grid">
+        <div><span>Backend</span><strong id="backend">—</strong></div>
+        <div><span>Adapter</span><strong id="adapter">—</strong></div>
+        <div><span>Surface</span><strong id="surface">—</strong></div>
+        <div><span>Window</span><strong id="windowSize">—</strong></div>
+        <div><span>Measured FPS</span><strong id="measuredFps">—</strong></div>
+        <div><span>Frame time</span><strong id="frameTime">—</strong></div>
+      </div>
+    </section>
+
+    <section class="card note-card">
+      <p><strong>Scope:</strong> the GPU mirrors perform real texture copies. The CPU worker receives frame metadata and timestamps through a bounded queue; GPU readback and FFmpeg byte delivery begin in Example 28.</p>
+    </section>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
