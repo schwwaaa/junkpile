@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Junkpile 33 · Preview Output Modes</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">JUNKPILE · NATIVE WGPU I/O</p>
+        <h1>33 · Preview Output Modes</h1>
+        <p class="lede">One authoritative offscreen texture. Four independent presentation modes. The preview can disappear completely while rendering continues.</p>
+      </div>
+      <div class="hero-badge" id="healthBadge">STARTING</div>
+    </header>
+
+    <section class="status-strip">
+      <div><span>GPU</span><strong id="gpuName">—</strong></div>
+      <div><span>Renderer</span><strong id="rendererFps">—</strong></div>
+      <div><span>Source</span><strong id="sourceSummary">—</strong></div>
+      <div><span>Window</span><strong id="windowSummary">—</strong></div>
+      <div><span>Preview</span><strong id="previewSummary">—</strong></div>
+    </section>
+
+    <section class="panel primary-controls">
+      <div class="panel-heading">
+        <div>
+          <p class="section-kicker">PRESENTATION SINK</p>
+          <h2>Preview visibility and scaling</h2>
+        </div>
+        <button id="togglePreviewButton" class="button strong">Hide preview</button>
+      </div>
+
+      <div class="mode-grid">
+        <button class="mode-card" data-mode="fit">
+          <span class="mode-key">7</span>
+          <strong>Fit</strong>
+          <small>Show the complete source with letterboxing.</small>
+        </button>
+        <button class="mode-card" data-mode="fill">
+          <span class="mode-key">8</span>
+          <strong>Fill</strong>
+          <small>Cover the complete window and crop edges.</small>
+        </button>
+        <button class="mode-card" data-mode="stretch">
+          <span class="mode-key">9</span>
+          <strong>Stretch</strong>
+          <small>Scale X and Y independently to the window.</small>
+        </button>
+        <button class="mode-card" data-mode="pixel">
+          <span class="mode-key">0</span>
+          <strong>Pixel</strong>
+          <small>Centered 1:1 pixels with nearest sampling.</small>
+        </button>
+      </div>
+
+      <div class="control-row">
+        <label>
+          Source preset
+          <select id="sourcePreset">
+            <option value="640x480">640 × 480 · 4:3</option>
+            <option value="1280x720" selected>1280 × 720 · 16:9</option>
+            <option value="1920x1080">1920 × 1080 · 16:9</option>
+            <option value="1024x1024">1024 × 1024 · square</option>
+            <option value="2048x858">2048 × 858 · wide cinema</option>
+          </select>
+        </label>
+        <label>
+          Custom width
+          <input id="customWidth" type="number" min="16" max="16384" value="1280">
+        </label>
+        <label>
+          Custom height
+          <input id="customHeight" type="number" min="16" max="16384" value="720">
+        </label>
+        <button id="applyResolutionButton" class="button">Apply source</button>
+      </div>
+
+      <div class="button-row">
+        <button id="fullscreenButton" class="button">Toggle renderer fullscreen</button>
+        <button id="resetMetricsButton" class="button quiet">Reset preview metrics</button>
+      </div>
+      <p id="actionMessage" class="message">Use 640 × 480 or the square preset, then resize the native window to make every scaling mode obvious.</p>
+    </section>
+
+    <section class="two-column">
+      <article class="panel">
+        <p class="section-kicker">LIVE GEOMETRY</p>
+        <h2 id="geometryTitle">Fit presentation</h2>
+        <p id="geometryDescription" class="description">—</p>
+        <dl class="metric-list">
+          <div><dt>Displayed image</dt><dd id="displayedImage">—</dd></div>
+          <div><dt>Offset / crop</dt><dd id="offsetSummary">—</dd></div>
+          <div><dt>Scale X / Y</dt><dd id="scaleSummary">—</dd></div>
+          <div><dt>Source visible</dt><dd id="visiblePercent">—</dd></div>
+          <div><dt>Presented frames</dt><dd id="presentedFrames">—</dd></div>
+          <div><dt>Hidden frames</dt><dd id="hiddenFrames">—</dd></div>
+          <div><dt>Surface unavailable</dt><dd id="unavailableFrames">—</dd></div>
+          <div><dt>Authoritative frames</dt><dd id="authoritativeFrames">—</dd></div>
+        </dl>
+      </article>
+
+      <article class="panel">
+        <p class="section-kicker">SHADECORE CONFIG MODEL</p>
+        <h2>Configurable hotkeys</h2>
+        <p class="description">The editable JSON is copied to the OS application-config directory on first launch. Reloading an invalid file leaves the last working runtime state intact.</p>
+        <div class="config-path" id="configPath">Resolving configuration path…</div>
+        <dl class="metric-list compact">
+          <div><dt>Fit</dt><dd id="fitKeys">—</dd></div>
+          <div><dt>Fill</dt><dd id="fillKeys">—</dd></div>
+          <div><dt>Stretch</dt><dd id="stretchKeys">—</dd></div>
+          <div><dt>Pixel</dt><dd id="pixelKeys">—</dd></div>
+          <div><dt>Preview toggle</dt><dd id="toggleKeys">—</dd></div>
+          <div><dt>Fullscreen</dt><dd id="fullscreenKeys">—</dd></div>
+        </dl>
+        <p class="hint">Keyboard shortcuts operate while this controls window has focus.</p>
+        <div class="button-row">
+          <button id="reloadConfigButton" class="button">Reload JSON</button>
+          <button id="restoreConfigButton" class="button quiet">Restore built-ins</button>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel architecture">
+      <p class="section-kicker">DATA PATH</p>
+      <h2>The preview is not the renderer</h2>
+      <div class="flow">
+        <div><strong>WGSL source</strong><span>Animated diagnostic image</span></div>
+        <i>→</i>
+        <div><strong>Authoritative texture</strong><span id="flowSource">Independent resolution</span></div>
+        <i>→</i>
+        <div><strong>Preview sink</strong><span>Fit / Fill / Stretch / Pixel / Off</span></div>
+        <i>→</i>
+        <div><strong>Native surface</strong><span>Resizable presentation window</span></div>
+      </div>
+      <p id="contractSummary" class="contract">—</p>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

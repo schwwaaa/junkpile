@@ -1,0 +1,34 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Junkpile wgpu Shader Stress Lab",
+  "version": "0.2.0",
+  "identifier": "com.schwwaaa.junkpile.34.wgpu.shader.parameter.hotreload",
+  "build": {
+    "beforeBuildCommand": "",
+    "beforeDevCommand": "",
+    "frontendDist": "../src"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "controls",
+        "title": "Junkpile 34 · Shader Stress Lab + Hot Reload",
+        "url": "index.html",
+        "width": 1120,
+        "height": 920,
+        "minWidth": 760,
+        "minHeight": 680,
+        "resizable": true,
+        "decorations": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "icon": ["icons/icon.png", "icons/icon.ico"]
+  }
+}

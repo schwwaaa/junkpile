@@ -1,0 +1,8 @@
+feat(wgpu-34): expand hot reload example into shader stress lab
+
+- add twelve procedural, fractal, raymarch, and volumetric WGSL shaders
+- add complexity-driven default, still, and peak profiles
+- make spin control angular velocity across every shader
+- preserve active shader, profile, and parameter state when files are saved
+- retain last-known-good pipelines after validation failures
+- migrate runtime assets to a fresh v2 workspace

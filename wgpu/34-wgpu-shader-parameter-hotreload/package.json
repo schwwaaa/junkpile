@@ -1,0 +1,12 @@
+{
+  "name": "junkpile-34-wgpu-shader-parameter-hotreload",
+  "version": "0.2.0",
+  "private": true,
+  "scripts": {
+    "dev": "cargo tauri dev",
+    "build": "cargo tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.8.5"
+  }
+}

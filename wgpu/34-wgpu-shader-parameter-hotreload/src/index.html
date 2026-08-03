@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Junkpile 34 · Shader Stress Lab + Hot Reload</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">JUNKPILE · NATIVE WGPU I/O</p>
+        <h1>34 · Shader Stress Lab + Hot Reload</h1>
+        <p class="lede">Twelve WGSL programs range from procedural fields to raymarching and volumetrics. Edit the active file in place: a successful save updates that shader without changing the selected shader, profile, or live parameter targets.</p>
+      </div>
+      <div class="hero-badge" id="healthBadge">STARTING</div>
+    </header>
+
+    <section class="status-strip">
+      <div><span>GPU</span><strong id="gpuName">—</strong></div>
+      <div><span>Renderer</span><strong id="rendererFps">—</strong></div>
+      <div><span>Pipeline</span><strong id="pipelineGeneration">—</strong></div>
+      <div><span>Shader</span><strong id="activeShaderShort">—</strong></div>
+      <div><span>Profile</span><strong id="activeProfile">—</strong></div>
+    </section>
+
+    <section class="panel shader-panel">
+      <div class="panel-heading">
+        <div>
+          <p class="section-kicker">TWELVE-SHADER WGPU STRESS LAB</p>
+          <h2 id="activeShader">Resolving active shader…</h2>
+          <p class="description">Shader variants are listed in <code>render.json</code>. Runtime selection remains authoritative across file saves. Switching shaders deliberately recalls that shader’s active profile.</p>
+        </div>
+        <div class="button-row compact-row">
+          <button id="previousShaderButton" class="button">← Previous shader</button>
+          <button id="nextShaderButton" class="button strong">Next shader →</button>
+        </div>
+      </div>
+      <div id="shaderVariantList" class="chip-row"></div>
+      <div class="profile-row">
+        <div>
+          <span class="label">ACTIVE PROFILE</span>
+          <strong id="profileTitle">—</strong>
+        </div>
+        <div id="profileList" class="chip-row"></div>
+        <div class="button-row compact-row">
+          <button id="previousProfileButton" class="button quiet">← Previous profile</button>
+          <button id="nextProfileButton" class="button">Next profile →</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-heading">
+        <div>
+          <p class="section-kicker">DECLARATIVE PARAMETER STORE</p>
+          <h2>Current values, targets, ranges, and smoothing</h2>
+          <p class="description">Sliders update targets. <strong>Spin speed is angular velocity in radians per second</strong>: zero stops rotation, positive values rotate forward, and negative values reverse it. Complexity increases iterations, samples, and GPU pressure.</p>
+        </div>
+      </div>
+      <div id="parameterControls" class="parameter-grid"></div>
+    </section>
+
+    <section class="two-column">
+      <article class="panel">
+        <p class="section-kicker">LIVE RELOAD TESTS</p>
+        <h2>Prove the last-known-good boundary</h2>
+        <p class="description">The watcher monitors the complete runtime asset directory, including atomic-save replacements commonly used by editors. Saving WGSL reloads the selected shader in place—it does not jump back to the startup shader.</p>
+        <div class="button-stack">
+          <button id="validEditButton" class="button strong">Toggle valid shader edit</button>
+          <button id="invalidEditButton" class="button danger">Write invalid active shader</button>
+          <button id="restoreShaderButton" class="button">Restore active shader</button>
+          <button id="manualReloadButton" class="button quiet">Manual reload</button>
+          <button id="restoreAllButton" class="button quiet">Restore all built-ins</button>
+        </div>
+        <p class="hint">After the invalid edit, the native image should keep moving. The failed reload count should rise while the pipeline generation remains unchanged. Use each shader’s <strong>peak</strong> profile to push the GPU deliberately.</p>
+      </article>
+
+      <article class="panel">
+        <p class="section-kicker">RUNTIME ASSETS</p>
+        <h2>Edit the live files</h2>
+        <div class="path-block"><span>Asset root</span><code id="assetRoot">—</code></div>
+        <div class="path-block"><span>Shader selection</span><code id="renderPath">—</code></div>
+        <div class="path-block"><span>Parameters and profiles</span><code id="paramsPath">—</code></div>
+        <div class="button-row">
+          <button id="openAssetsButton" class="button">Open assets folder</button>
+          <button id="fullscreenButton" class="button quiet">Toggle fullscreen</button>
+        </div>
+        <dl class="metric-list compact">
+          <div><dt>Shader next</dt><dd id="shaderNextKeys">—</dd></div>
+          <div><dt>Shader previous</dt><dd id="shaderPreviousKeys">—</dd></div>
+          <div><dt>Profile next</dt><dd id="profileNextKeys">—</dd></div>
+          <div><dt>Profile previous</dt><dd id="profilePreviousKeys">—</dd></div>
+        </dl>
+      </article>
+    </section>
+
+    <section class="panel diagnostics">
+      <div class="panel-heading">
+        <div>
+          <p class="section-kicker">RELOAD DIAGNOSTICS</p>
+          <h2>Pipeline replacement is transactional</h2>
+        </div>
+        <button id="resetMetricsButton" class="button quiet">Reset counters</button>
+      </div>
+      <div class="diagnostic-grid">
+        <div><span>Successful reloads</span><strong id="successfulReloads">0</strong></div>
+        <div><span>Failed reloads</span><strong id="failedReloads">0</strong></div>
+        <div><span>Last reload reason</span><strong id="lastReloadReason">—</strong></div>
+        <div><span>Last reload time</span><strong id="lastReloadTime">—</strong></div>
+        <div class="wide"><span>Last reload error</span><pre id="lastReloadError">None</pre></div>
+      </div>
+      <p id="actionMessage" class="message">Use the valid and invalid edit tests, then edit the live WGSL and JSON files directly.</p>
+    </section>
+
+    <section class="panel architecture">
+      <p class="section-kicker">DATA PATH</p>
+      <h2>Validated assets replace the live pipeline</h2>
+      <div class="flow">
+        <div><strong>render.json</strong><span>Catalog + startup shader</span></div>
+        <i>+</i>
+        <div><strong>params.json</strong><span>Ranges + profiles + smoothing</span></div>
+        <i>+</i>
+        <div><strong>WGSL source</strong><span>Naga + wgpu validation</span></div>
+        <i>→</i>
+        <div><strong>Last-known-good pipeline</strong><span>Replaced only after success</span></div>
+      </div>
+      <p id="contractSummary" class="contract">—</p>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
