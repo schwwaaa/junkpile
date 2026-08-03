@@ -1,0 +1,11 @@
+{
+  "enabled": true,
+  "name": "Junkpile 32",
+  "groups": null,
+  "clock_video": true,
+  "fps_n": 60,
+  "fps_d": 1,
+  "width": 1920,
+  "height": 1080,
+  "vflip": false
+}

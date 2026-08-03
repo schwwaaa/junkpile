@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Junkpile 32 · NDI Sender</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <div>
+        <p class="eyebrow">native wgpu · example 32</p>
+        <h1>NDI Sender</h1>
+        <p class="lede">Publish the authoritative wgpu frame as a discoverable NDI source. The native preview remains responsive while a bounded GPU-readback and BGRA worker pipeline feeds NDI Video Monitor, Studio Monitor, OBS, Resolume, or another NDI receiver.</p>
+      </div>
+      <div class="hero-status">
+        <span id="statusDot" class="dot"></span>
+        <strong id="statusText">starting…</strong>
+        <span id="frameCounter">frame 0</span>
+      </div>
+    </section>
+
+    <section class="expect card">
+      <div>
+        <p class="eyebrow">first test</p>
+        <h2>Start the source, then open the official monitor</h2>
+      </div>
+      <p>Click <strong>Start NDI</strong>. In NDI Video Monitor on macOS or NDI Studio Monitor on Windows, open the source menu and select the source containing <strong>Junkpile 32</strong>. The monitor may prefix the source with the computer name.</p>
+    </section>
+
+    <section class="card settings-card">
+      <div class="section-heading">
+        <div><p class="eyebrow">sender configuration</p><h2>ShadeCore-compatible NDI settings</h2></div>
+        <span id="featureBadge" class="badge">checking build</span>
+      </div>
+      <div class="config-grid">
+        <label>
+          <span>Source name</span>
+          <input id="sourceName" type="text" value="Junkpile 32" maxlength="96">
+        </label>
+        <label>
+          <span>Groups · optional</span>
+          <input id="groups" type="text" placeholder="Public,Studio">
+        </label>
+        <label>
+          <span>Resolution</span>
+          <select id="resolution">
+            <option value="1280x720">1280 × 720</option>
+            <option value="1920x1080" selected>1920 × 1080</option>
+            <option value="2560x1440">2560 × 1440</option>
+            <option value="3840x2160">3840 × 2160</option>
+          </select>
+        </label>
+        <label>
+          <span>Frame rate</span>
+          <select id="frameRate">
+            <option value="60/1" selected>60 fps</option>
+            <option value="30/1">30 fps</option>
+            <option value="24/1">24 fps</option>
+          </select>
+        </label>
+        <label class="check-control">
+          <input id="clockVideo" type="checkbox" checked>
+          <span>NDI clocks video</span>
+        </label>
+        <label class="check-control">
+          <input id="verticalFlip" type="checkbox">
+          <span>Vertical flip</span>
+        </label>
+      </div>
+      <p class="field-note">Vertical flip is off by default because wgpu readback is already top-left. ShadeCore’s OpenGL path defaults to flip because OpenGL readback is normally bottom-left.</p>
+      <div class="toolbar embedded-toolbar">
+        <button id="startButton" class="primary">Start NDI</button>
+        <button id="stopButton">Stop NDI</button>
+        <button id="resetButton">Reset metrics</button>
+        <button id="fullscreenButton">Renderer fullscreen</button>
+      </div>
+    </section>
+
+    <section class="contract-grid">
+      <article class="card source-card">
+        <header><span>source contract</span><strong>Authoritative wgpu Frame</strong></header>
+        <p id="frameDimensions" class="dimensions">—</p>
+        <dl>
+          <div><dt>Pixel format</dt><dd id="pixelFormat">—</dd></div>
+          <div><dt>Frame origin</dt><dd id="origin">—</dd></div>
+          <div><dt>Color space</dt><dd id="colorSpace">—</dd></div>
+          <div><dt>Nominal FPS</dt><dd id="nominalFps">—</dd></div>
+          <div><dt>NDI frame</dt><dd>BGRA · progressive</dd></div>
+        </dl>
+      </article>
+
+      <article class="card diagram-card">
+        <p class="eyebrow">routing model</p>
+        <div class="route ndi-route">
+          <div class="node source">Authoritative<br>wgpu Texture</div>
+          <div class="bus"></div>
+          <div class="destinations">
+            <div class="node cyan">Window preview</div>
+            <div class="node amber">3-slot GPU readback</div>
+            <div class="node purple">RGBA → BGRA worker</div>
+            <div class="node green">NDI source</div>
+          </div>
+        </div>
+        <p id="contractSummary" class="summary">—</p>
+      </article>
+    </section>
+
+    <section class="telemetry card">
+      <div class="section-heading">
+        <div><p class="eyebrow">NDI sink</p><h2>Real-time diagnostics</h2></div>
+        <span id="ndiState" class="badge">idle</span>
+      </div>
+      <div class="telemetry-grid ndi-metrics">
+        <div><span>Source</span><strong id="activeName">—</strong></div>
+        <div><span>Format</span><strong id="activeFormat">—</strong></div>
+        <div><span>Raw frame bandwidth</span><strong id="rawBandwidth">—</strong></div>
+        <div><span>Capture requests</span><strong id="captureRequests">0</strong></div>
+        <div><span>GPU readbacks</span><strong id="readbacks">0</strong></div>
+        <div><span>NDI frames sent</span><strong id="framesSent">0</strong></div>
+        <div><span>GPU drops</span><strong id="gpuDrops">0</strong></div>
+        <div><span>CPU pool drops</span><strong id="cpuDrops">0</strong></div>
+        <div><span>Worker drops</span><strong id="workerDrops">0</strong></div>
+        <div><span>Worker pending</span><strong id="pendingWorker">0 / 2</strong></div>
+        <div><span>CPU buffers free</span><strong id="cpuBuffers">3 / 3</strong></div>
+        <div><span>Readback slots busy</span><strong id="readbackBusy">0 / 3</strong></div>
+      </div>
+      <div id="ndiLog" class="log-box">NDI sender has not started.</div>
+    </section>
+
+    <section class="telemetry card">
+      <div class="section-heading">
+        <div><p class="eyebrow">renderer</p><h2>Native telemetry</h2></div>
+        <span id="rendererState" class="badge">starting</span>
+      </div>
+      <div class="telemetry-grid">
+        <div><span>Backend</span><strong id="backend">—</strong></div>
+        <div><span>Adapter</span><strong id="adapter">—</strong></div>
+        <div><span>Surface</span><strong id="surface">—</strong></div>
+        <div><span>Window</span><strong id="windowSize">—</strong></div>
+        <div><span>Measured FPS</span><strong id="measuredFps">—</strong></div>
+        <div><span>Frame time</span><strong id="frameTime">—</strong></div>
+      </div>
+    </section>
+
+    <section class="card note-card">
+      <p><strong>Build requirement:</strong> this example deliberately uses the same <code>grafton-ndi 0.9</code> integration as ShadeCore. NDI Video Monitor validates the receiver/runtime path; compiling the Rust sender may also require the NDI SDK and Xcode Command Line Tools on macOS.</p>
+    </section>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

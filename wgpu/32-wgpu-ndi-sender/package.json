@@ -1,0 +1,13 @@
+{
+  "name": "junkpile-32-wgpu-ndi-sender",
+  "version": "0.1.1",
+  "private": true,
+  "scripts": {
+    "dev": "cargo tauri dev --features ndi",
+    "dev:no-ndi": "cargo tauri dev",
+    "build": "cargo tauri build --features ndi"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.8.5"
+  }
+}
