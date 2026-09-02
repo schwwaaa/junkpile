@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Junkpile · Audio Reactive FFT</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">NATIVE WGPU · CREATIVE MEDIA PARITY</p>
+        <h1>Audio Reactive FFT</h1>
+        <p class="lede">Native microphone capture → Rust FFT + beat analysis → GPU spectrum/waveform textures → resolution-independent WGSL visuals.</p>
+      </div>
+      <div class="hero-actions">
+        <button id="fullscreenBtn" class="secondary">Renderer fullscreen</button>
+        <button id="resetMetricsBtn" class="ghost">Reset diagnostics</button>
+      </div>
+    </header>
+
+    <section class="grid top-grid">
+      <article class="panel input-panel">
+        <div class="panel-head">
+          <div><span class="kicker">01</span><h2>Microphone input</h2></div>
+          <span id="micStateBadge" class="badge idle">IDLE</span>
+        </div>
+
+        <label class="field">
+          <span>Input device</span>
+          <div class="inline">
+            <select id="deviceSelect"></select>
+            <button id="refreshDevicesBtn" class="compact">Refresh</button>
+          </div>
+        </label>
+        <div class="button-row">
+          <button id="startMicBtn" class="primary">Start microphone</button>
+          <button id="stopMicBtn" class="danger">Stop</button>
+        </div>
+        <label class="toggle-row">
+          <input id="demoToggle" type="checkbox" checked />
+          <span><strong>Demo signal when idle</strong><small>Keep the native renderer alive before microphone permission or between devices.</small></span>
+        </label>
+        <p id="micError" class="error-line"></p>
+      </article>
+
+      <article class="panel meter-panel">
+        <div class="panel-head">
+          <div><span class="kicker">02</span><h2>Live analysis</h2></div>
+          <span id="analysisRate" class="mono">0.0 Hz</span>
+        </div>
+        <canvas id="spectrumCanvas" width="600" height="150"></canvas>
+        <canvas id="waveCanvas" width="600" height="88"></canvas>
+        <div class="band-grid">
+          <div><span>RMS</span><b id="rmsValue">0.000</b></div>
+          <div><span>Peak</span><b id="peakValue">0.000</b></div>
+          <div><span>Bass</span><b id="bassValue">0.000</b></div>
+          <div><span>Mid</span><b id="midValue">0.000</b></div>
+          <div><span>Treble</span><b id="trebleValue">0.000</b></div>
+          <div><span>Beat</span><b id="beatValue">0</b></div>
+        </div>
+      </article>
+    </section>
+
+    <section class="grid controls-grid">
+      <article class="panel">
+        <div class="panel-head"><div><span class="kicker">03</span><h2>Audio analysis</h2></div></div>
+        <div class="control-stack">
+          <label class="slider-row"><span>Input gain <b id="gainOut">1.00×</b></span><input id="gainSlider" type="range" min="0" max="8" value="1" step="0.01" /></label>
+          <label class="slider-row"><span>Spectrum smoothing <b id="smoothOut">0.72</b></span><input id="smoothSlider" type="range" min="0" max="0.98" value="0.72" step="0.01" /></label>
+          <label class="slider-row"><span>Beat threshold <b id="thresholdOut">1.45×</b></span><input id="thresholdSlider" type="range" min="1.01" max="3.5" value="1.45" step="0.01" /></label>
+          <label class="slider-row"><span>Beat hold <b id="holdOut">180 ms</b></span><input id="holdSlider" type="range" min="50" max="700" value="180" step="10" /></label>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head"><div><span class="kicker">04</span><h2>WGSL visual</h2></div></div>
+        <label class="field"><span>Visual mode</span>
+          <select id="visualModeSelect">
+            <option value="0">Spectrum Tunnel</option>
+            <option value="1">Radial Bloom</option>
+            <option value="2">Wave Scope</option>
+            <option value="3">Bass Lattice</option>
+            <option value="4">Spectral Nebula</option>
+            <option value="5">Frequency Mandala</option>
+          </select>
+        </label>
+        <div class="control-stack">
+          <label class="slider-row"><span>Reactivity <b id="reactivityOut">1.00×</b></span><input id="reactivitySlider" type="range" min="0" max="4" value="1" step="0.01" /></label>
+          <label class="slider-row"><span>Spin speed <b id="spinOut">0.35 rad/s</b></span><input id="spinSlider" type="range" min="-4" max="4" value="0.35" step="0.01" /></label>
+          <label class="slider-row"><span>Hue shift <b id="hueOut">0.00</b></span><input id="hueSlider" type="range" min="0" max="1" value="0" step="0.001" /></label>
+        </div>
+        <p class="hint"><strong>Spin is angular velocity.</strong> Set it to 0 to stop rotation; negative values reverse direction.</p>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head"><div><span class="kicker">05</span><h2>Native render target</h2></div></div>
+        <label class="field"><span>Internal resolution</span><select id="resolutionSelect"></select></label>
+        <label class="field"><span>Preview scaling</span>
+          <select id="previewModeSelect">
+            <option value="fit">Fit</option>
+            <option value="fill">Fill</option>
+            <option value="stretch">Stretch</option>
+            <option value="pixel">Pixel 1:1</option>
+          </select>
+        </label>
+        <div id="resolutionNote" class="resolution-note"></div>
+        <p class="hint">The selected resolution is the authoritative GPU render target. The native preview window only presents it.</p>
+      </article>
+    </section>
+
+    <section class="panel diagnostics-panel">
+      <div class="panel-head"><div><span class="kicker">06</span><h2>Diagnostics</h2></div><span id="rendererBadge" class="badge">GPU</span></div>
+      <div class="diag-grid">
+        <div><span>Adapter</span><b id="adapterValue">—</b></div>
+        <div><span>Backend</span><b id="backendValue">—</b></div>
+        <div><span>Renderer FPS</span><b id="fpsValue">0.0</b></div>
+        <div><span>Frame time</span><b id="frameTimeValue">0.00 ms</b></div>
+        <div><span>Render target</span><b id="renderSizeValue">—</b></div>
+        <div><span>Window</span><b id="windowSizeValue">—</b></div>
+        <div><span>Mic format</span><b id="micFormatValue">—</b></div>
+        <div><span>Samples buffered</span><b id="bufferValue">0</b></div>
+        <div><span>Callback errors</span><b id="callbackErrorValue">0</b></div>
+        <div><span>Max texture</span><b id="maxTextureValue">—</b></div>
+      </div>
+    </section>
+
+    <footer>
+      <span>JUNKPILE · NATIVE RUST / WGPU / WGSL / CPAL / RUSTFFT</span>
+      <span id="statusLine">Initializing…</span>
+    </footer>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

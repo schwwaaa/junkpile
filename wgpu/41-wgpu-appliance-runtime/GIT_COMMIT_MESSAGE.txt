@@ -1,0 +1,11 @@
+feat: add configurable wgpu appliance runtime
+
+- add configuration-driven startup profiles and output autostart
+- support hidden controls and preview windows for unattended operation
+- add CLI overrides for profile, visibility, status path, and timed runs
+- write continuous machine-readable renderer and sink health snapshots
+- preserve NDI, recording, Syphon, and Spout failure isolation
+- hide windows instead of terminating offscreen rendering
+- finalize recordings during controlled shutdown
+- add headless shared-output and capture workflows
+- exclude unresolved network-output code

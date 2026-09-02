@@ -375,4 +375,4 @@ It does not use Tauri v1 allowlists or window APIs.
 4. Compare 8-bit feedback textures with floating-point targets where extensions are available.
 5. Add a source-resolution selector and compare camera upload cost at 720p and 1080p.
 6. Move capture to Rust and compare the browser upload path with a native camera-to-GPU route.
-7. Send the processed result into the future shared Junkpile/Scheng output contract without changing this focused example.
+7. Send the processed result into the future shared Junkpile/shared component layer output contract without changing this focused example.

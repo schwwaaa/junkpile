@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Junkpile 35 · Assets, State + Logging</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="hero panel">
+      <div>
+        <p class="eyebrow">NATIVE WGPU · SHADECORE PARITY</p>
+        <h1>35 · Assets, State + Logging</h1>
+        <p class="lede">Resolve editable assets through an explicit authority chain, persist live selections atomically, and record structured subsystem events without coupling runtime infrastructure to the renderer.</p>
+      </div>
+      <div class="hero-status">
+        <span id="healthBadge" class="hero-badge good">RUNNING</span>
+        <strong id="gpuName">Starting GPU…</strong>
+        <span id="rendererFps">—</span>
+      </div>
+    </header>
+
+    <section class="summary-grid">
+      <article class="summary-card panel">
+        <span>Asset authority</span>
+        <strong id="assetSourceSummary">—</strong>
+        <small id="activeAssetSummary">—</small>
+      </article>
+      <article class="summary-card panel">
+        <span>Persistent state</span>
+        <strong id="stateSummary">—</strong>
+        <small id="stateSelectionSummary">—</small>
+      </article>
+      <article class="summary-card panel">
+        <span>Structured log</span>
+        <strong id="logSummary">—</strong>
+        <small id="logPathSummary">—</small>
+      </article>
+      <article class="summary-card panel">
+        <span>Live selection</span>
+        <strong id="activeShaderShort">—</strong>
+        <small id="activeProfile">—</small>
+      </article>
+    </section>
+
+    <section class="panel">
+      <div class="panel-heading">
+        <div>
+          <p class="section-kicker">ASSET DISCOVERY</p>
+          <h2>Explicit startup authority</h2>
+        </div>
+        <button id="openAssetsButton" class="button quiet">Open active assets</button>
+      </div>
+      <div class="path-grid">
+        <div><span>Active root</span><code id="activeAssetRoot">—</code></div>
+        <div><span>Selected by</span><strong id="assetSource">—</strong></div>
+        <div><span>Next-launch root</span><code id="nextAssetRoot">—</code></div>
+        <div><span>Platform</span><strong id="platformLabel">—</strong></div>
+        <div><span>Base runtime config</span><code id="baseRuntimeConfig">—</code></div>
+        <div><span>Platform override</span><code id="platformRuntimeConfig">—</code></div>
+      </div>
+      <div class="authority-box">
+        <strong>Resolution order</strong>
+        <ol id="authorityChain"></ol>
+      </div>
+      <div class="custom-root-row">
+        <label>
+          <span>Custom absolute asset root</span>
+          <input id="customAssetRootInput" type="text" placeholder="/Volumes/ProjectDrive/junkpile-assets">
+        </label>
+        <button id="cloneAssetRootButton" class="button primary">Clone active assets + use next launch</button>
+        <button id="useDefaultAssetRootButton" class="button quiet">Use platform default next launch</button>
+      </div>
+      <p class="note">Asset-root changes are persisted for the next launch. The current watcher and renderer keep ownership of the active root until restart.</p>
+    </section>
+
+    <section class="two-column">
+      <article class="panel">
+        <div class="panel-heading compact">
+          <div>
+            <p class="section-kicker">RUNTIME STATE</p>
+            <h2>Atomic autosave</h2>
+          </div>
+          <span id="autosaveBadge" class="status-pill">—</span>
+        </div>
+        <dl class="detail-list">
+          <div><dt>State file</dt><dd><code id="stateFile">—</code></dd></div>
+          <div><dt>Autosave interval</dt><dd id="autosaveInterval">—</dd></div>
+          <div><dt>Save count</dt><dd id="saveCount">0</dd></div>
+          <div><dt>Last save</dt><dd id="lastSave">Never</dd></div>
+          <div><dt>Startup restore</dt><dd id="startupRestore">No saved state</dd></div>
+          <div><dt>Persistence error</dt><dd id="persistenceError">None</dd></div>
+        </dl>
+        <div class="button-row">
+          <button id="saveStateButton" class="button primary">Save state now</button>
+          <button id="openStateFolderButton" class="button quiet">Open state folder</button>
+          <button id="clearStateButton" class="button danger">Clear state file</button>
+        </div>
+      </article>
+
+      <article class="panel">
+        <div class="panel-heading compact">
+          <div>
+            <p class="section-kicker">STRUCTURED LOGGING</p>
+            <h2>JSON Lines diagnostics</h2>
+          </div>
+          <span id="logLevelBadge" class="status-pill">—</span>
+        </div>
+        <dl class="detail-list">
+          <div><dt>Log file</dt><dd><code id="logFile">—</code></dd></div>
+          <div><dt>Selected by</dt><dd id="logSource">—</dd></div>
+          <div><dt>Memory ring</dt><dd id="logCapacity">—</dd></div>
+          <div><dt>File error</dt><dd id="logFileError">None</dd></div>
+        </dl>
+        <div class="button-row">
+          <button class="button quiet log-test" data-level="info">Emit info</button>
+          <button class="button quiet log-test" data-level="warn">Emit warning</button>
+          <button class="button danger log-test" data-level="error">Emit error</button>
+          <button id="openLogButton" class="button quiet">Open log</button>
+          <button id="clearLogButton" class="button quiet">Clear view</button>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel">
+      <div class="panel-heading">
+        <div>
+          <p class="section-kicker">RECENT EVENTS</p>
+          <h2>Subsystem activity</h2>
+        </div>
+        <span id="logCount" class="status-pill">0 events</span>
+      </div>
+      <div id="logEntries" class="log-entries"><p class="empty">No events yet.</p></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-heading">
+        <div>
+          <p class="section-kicker">PERSISTED SELECTION</p>
+          <h2>Shader, profile + targets</h2>
+        </div>
+        <button id="fullscreenButton" class="button quiet">Renderer fullscreen</button>
+      </div>
+      <div class="selection-grid">
+        <div>
+          <span>Shader</span>
+          <strong id="activeShader">—</strong>
+          <div id="shaderVariantList" class="chip-list"></div>
+          <div class="button-row">
+            <button id="previousShaderButton" class="button quiet">Previous shader</button>
+            <button id="nextShaderButton" class="button primary">Next shader</button>
+          </div>
+        </div>
+        <div>
+          <span>Profile</span>
+          <strong id="profileTitle">—</strong>
+          <div id="profileList" class="chip-list"></div>
+          <div class="button-row">
+            <button id="previousProfileButton" class="button quiet">Previous profile</button>
+            <button id="nextProfileButton" class="button primary">Next profile</button>
+          </div>
+        </div>
+      </div>
+      <div id="parameterControls" class="parameter-grid"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-heading">
+        <div>
+          <p class="section-kicker">LIVE ASSET VALIDATION</p>
+          <h2>Last-known-good remains active</h2>
+        </div>
+        <button id="resetMetricsButton" class="button quiet">Reset reload counters</button>
+      </div>
+      <div class="button-row wrap">
+        <button id="validEditButton" class="button primary">Toggle valid shader edit</button>
+        <button id="invalidEditButton" class="button danger">Write invalid active shader</button>
+        <button id="restoreShaderButton" class="button quiet">Restore active shader</button>
+        <button id="manualReloadButton" class="button quiet">Manual reload</button>
+        <button id="restoreAllButton" class="button quiet">Restore all built-ins</button>
+      </div>
+      <div class="diagnostic-grid">
+        <div><span>Successful reloads</span><strong id="successfulReloads">0</strong></div>
+        <div><span>Failed reloads</span><strong id="failedReloads">0</strong></div>
+        <div><span>Last reason</span><strong id="lastReloadReason">—</strong></div>
+        <div class="wide"><span>Last error</span><pre id="lastReloadError">None</pre></div>
+      </div>
+      <p id="actionMessage" class="message">Runtime infrastructure is active.</p>
+    </section>
+
+    <section class="panel architecture">
+      <p class="section-kicker">AUTHORITY MODEL</p>
+      <h2>Discovery, validation, state and logs stay separate</h2>
+      <div class="flow">
+        <div><strong>CLI / ENV / state</strong><span>Resolve active roots</span></div>
+        <i>→</i>
+        <div><strong>Typed platform config</strong><span>Validate startup policy</span></div>
+        <i>→</i>
+        <div><strong>wgpu runtime</strong><span>Render current selection</span></div>
+        <i>→</i>
+        <div><strong>Atomic state + JSONL</strong><span>Persist decisions and evidence</span></div>
+      </div>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

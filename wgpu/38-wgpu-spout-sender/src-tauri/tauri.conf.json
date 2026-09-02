@@ -1,0 +1,37 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Junkpile wgpu Spout Sender",
+  "version": "0.1.0",
+  "identifier": "com.schwwaaa.junkpile.38.wgpu.spout.sender",
+  "build": {
+    "beforeBuildCommand": "",
+    "beforeDevCommand": "",
+    "frontendDist": "../src"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "controls",
+        "title": "Junkpile 38 \u00b7 Spout Sender \u00b7 Controls",
+        "url": "index.html",
+        "width": 1100,
+        "height": 900,
+        "minWidth": 720,
+        "minHeight": 650,
+        "resizable": true,
+        "decorations": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "icon": [
+      "icons/icon.png",
+      "icons/icon.ico"
+    ]
+  }
+}

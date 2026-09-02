@@ -1,0 +1,8 @@
+feat(wgpu): add Syphon Metal sender example
+
+- publish the authoritative wgpu frame through SyphonMetalServer
+- add asynchronous readback and reusable BGRA staging buffers
+- add bounded worker queues and explicit drop telemetry
+- add connected-client gating and runtime source configuration
+- vendor the universal Syphon framework and Objective-C bridge
+- preserve independent native preview and clean sender lifecycle

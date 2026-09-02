@@ -9,7 +9,7 @@ canonical_location: docs/DESIGN_PRINCIPLES_MANIFEST.md
 related_assets: assets/brand/
 parent_ecosystem:
   - Schwwaaa
-  - Scheng
+  - shared component layer
 supported_contexts:
   - documentation website
   - developer documentation
@@ -71,7 +71,7 @@ Each example isolates a rendering, media, input, routing, control, automation, o
 - graphics and media developers;
 - artists building standalone visual instruments;
 - developers learning the boundary between WebView and native GPU systems;
-- future Scheng component authors.
+- future shared-component authors.
 
 ### Usage contexts
 
@@ -579,7 +579,7 @@ The identity must not become:
 - a cluttered collage with no hierarchy;
 - a glow-dependent cyber aesthetic;
 - an excuse to obscure limitations or architecture;
-- an identical skin forced onto every future Scheng-based product.
+- an identical skin forced onto every future shared-component-based product.
 
 Junkpile may inform sibling tools, but each standalone product should be permitted its own identity within a shared ecosystem logic.
 
@@ -629,7 +629,7 @@ Junkpile may inform sibling tools, but each standalone product should be permitt
 | JP-BRAND-003 | Establish print CMYK and spot-color targets | Open | Printer, substrate, proofing method, physical samples |
 | JP-BRAND-004 | Establish trademark and legal usage requirements | Open | Legal review if public commercial use expands |
 | JP-BRAND-005 | Define logo motion behavior | Deferred | A real product/application need and reduced-motion plan |
-| JP-BRAND-006 | Define sibling-product endorsement system | Open | Scheng and future standalone product architecture decisions |
+| JP-BRAND-006 | Define sibling-product endorsement system | Open | future standalone product architecture decisions |
 | JP-BRAND-007 | Confirm physical minimum sizes | Open | Actual print, engraving, embroidery, and label tests |
 
 ---

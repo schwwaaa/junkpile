@@ -1,0 +1,12 @@
+{
+  "name": "wgpu-audio-reactive-fft",
+  "version": "0.1.2",
+  "private": true,
+  "scripts": {
+    "dev": "cargo tauri dev",
+    "build": "cargo tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.8.5"
+  }
+}

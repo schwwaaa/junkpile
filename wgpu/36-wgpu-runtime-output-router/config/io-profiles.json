@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 2,
+  "defaultProfile": "preview-1080p",
+  "hotReload": {
+    "enabled": true,
+    "debounceMs": 250
+  },
+  "profiles": [
+    {
+      "id": "preview-1080p",
+      "hotkey": "1",
+      "label": "Preview only · 1080p",
+      "description": "Native 1080p render with only the local preview sink enabled.",
+      "frame": { "width": 1920, "height": 1080 },
+      "preview": { "enabled": true },
+      "recording": { "enabled": false, "codec": "h264", "workerDelayMs": 0, "fps": 30 },
+      "ndi": { "enabled": false, "name": "Junkpile 36", "groups": null, "clockVideo": true, "fpsN": 60, "fpsD": 1, "vflip": false }
+    },
+    {
+      "id": "ndi-1080p60",
+      "hotkey": "2",
+      "label": "NDI · 1080p60",
+      "description": "Native 1080p render routed to preview and the bounded NDI sender at 60 fps.",
+      "frame": { "width": 1920, "height": 1080 },
+      "preview": { "enabled": true },
+      "recording": { "enabled": false, "codec": "h264", "workerDelayMs": 0, "fps": 30 },
+      "ndi": { "enabled": true, "name": "Junkpile 36", "groups": null, "clockVideo": true, "fpsN": 60, "fpsD": 1, "vflip": false }
+    },
+    {
+      "id": "record-1080p30",
+      "hotkey": "3",
+      "label": "Record · 1080p30 H.264",
+      "description": "Native 1080p render routed to preview and the FFmpeg H.264 file sink.",
+      "frame": { "width": 1920, "height": 1080 },
+      "preview": { "enabled": true },
+      "recording": { "enabled": true, "codec": "h264", "workerDelayMs": 0, "fps": 30 },
+      "ndi": { "enabled": false, "name": "Junkpile 36", "groups": null, "clockVideo": true, "fpsN": 30, "fpsD": 1, "vflip": false }
+    },
+    {
+      "id": "broadcast-1080p30",
+      "hotkey": "4",
+      "label": "Broadcast · NDI + H.264",
+      "description": "One authoritative 1080p texture routed simultaneously to preview, NDI, and H.264 recording.",
+      "frame": { "width": 1920, "height": 1080 },
+      "preview": { "enabled": true },
+      "recording": { "enabled": true, "codec": "h264", "workerDelayMs": 0, "fps": 30 },
+      "ndi": { "enabled": true, "name": "Junkpile 36", "groups": null, "clockVideo": true, "fpsN": 30, "fpsD": 1, "vflip": false }
+    },
+    {
+      "id": "archive-4k30",
+      "hotkey": "5",
+      "label": "Archive · 4K ProRes + NDI",
+      "description": "Native 4K render routed to ProRes 422 HQ and 4K30 NDI for peak-machine testing.",
+      "frame": { "width": 3840, "height": 2160 },
+      "preview": { "enabled": true },
+      "recording": { "enabled": true, "codec": "prores", "workerDelayMs": 0, "fps": 30 },
+      "ndi": { "enabled": true, "name": "Junkpile 36 4K", "groups": null, "clockVideo": true, "fpsN": 30, "fpsD": 1, "vflip": false }
+    },
+    {
+      "id": "headless-ndi-1080p60",
+      "hotkey": "6",
+      "label": "Headless route · NDI 1080p60",
+      "description": "The local preview window is hidden while the authoritative renderer continues feeding NDI.",
+      "frame": { "width": 1920, "height": 1080 },
+      "preview": { "enabled": false },
+      "recording": { "enabled": false, "codec": "h264", "workerDelayMs": 0, "fps": 30 },
+      "ndi": { "enabled": true, "name": "Junkpile 36 Headless", "groups": null, "clockVideo": true, "fpsN": 60, "fpsD": 1, "vflip": false }
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "junkpile-41-wgpu-appliance-runtime",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "cargo tauri dev --features ndi,platform-share",
+    "dev:appliance": "cargo tauri dev --features ndi,platform-share -- -- --headless --autostart --profile headless-shared-1080p60",
+    "dev:capture": "cargo tauri dev --features ndi,platform-share -- -- --headless --autostart --profile headless-capture-1080p30",
+    "dev:no-ndi": "cargo tauri dev --features platform-share",
+    "dev:renderer-only": "cargo tauri dev",
+    "build": "cargo tauri build --features ndi,platform-share"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.8.5"
+  }
+}

@@ -1,0 +1,10 @@
+feat: add wgpu asset discovery state persistence and structured logging
+
+- resolve runtime assets through CLI, environment, saved state, and platform defaults
+- merge strict base and operating-system runtime configuration
+- persist shader, profile, parameter targets, and next-launch asset root atomically
+- restore valid runtime selections without overriding higher-priority startup authority
+- record subsystem events to a bounded memory ring and JSON Lines log file
+- support Junkpile and ShadeCore-compatible asset and log environment variables
+- clone active assets into user-selected custom roots for future launches
+- preserve last-known-good shaders during live asset validation failures

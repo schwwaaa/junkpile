@@ -15,7 +15,7 @@ Every example README should answer:
 
 ## Required architecture diagram
 
-Show the actual path from input to output. Do not label a Tauri v2 WebGL example as native wgpu. Do not imply that a WebView owns native GPU resources when Rust does.
+Show the actual path from input to output. Do not label a Tauri v2 WebGL example as native wgpu. Do not imply that a WebView owns native GPU resources when Rust does. **Do not convert “the current reference example lives in this track” into “this capability only works in this track.”** Tauri generation, render ownership, and native/media transport must be documented as separate concerns.
 
 ## Commenting
 

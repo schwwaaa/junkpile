@@ -1,36 +1,63 @@
-# Roadmap after the 78-example baseline
+# Junkpile roadmap
 
-## Completed
+## Current documentation milestone
 
-- Tauri v1 00–25
-- Tauri v2 WebView 00–25
-- Native Rust/wgpu 00–25
-- modernization of early v1 and v2 projects
-- consistent standalone development/build documentation
-- architecture, troubleshooting, diagnostics, and machine-readable catalog
+The immediate priority is documentation fidelity: the website, machine-readable catalog, architecture docs, and local READMEs should describe the repository that actually exists.
 
-## Next repository work
+That means:
 
-1. Merge this documentation package into the latest complete repository.
-2. Verify every catalog path and local README link.
-3. Capture screenshots and videos for representative examples.
-4. Record a formal macOS/Windows/Linux validation matrix.
-5. Tag and archive the completed baseline.
+- no fixed public example totals
+- real `v1/`, `v2/`, and `wgpu/` paths
+- the native wgpu progression beyond the original foundations
+- explicit I/O/recording architecture
+- clear experimental/unresolved status boundaries
+- diagrams that explain how standalone applications are assembled from the stack
 
-## Next architecture work
+## Native wgpu direction
 
-Extract proven patterns into Scheng rather than merging Junkpile wholesale into an application:
+Continue two complementary lines of work.
 
-- canonical parameters and actions
-- optional media input/output contracts
-- native capture and decoding
-- texture/resource pools
-- render/compute graph scheduling
-- feedback/history stores
-- MIDI/OSC mapping
-- presets, snapshots, sequences, and projects
-- window, Syphon, Spout, recording, and future network outputs
+### 1. Creative/application counterparts
 
-## Product direction
+Native equivalents should continue to revisit useful WebView applications where native GPU ownership, high resolution, or lower-level media access materially changes the capability.
 
-Use Scheng components to build small, focused standalone applications—processors, keyers, feedback units, converters, recorders, routers, mixers, playback utilities, and artist instruments. A later master suite can route and synchronize them without becoming the only place they can run.
+Current examples of this direction include:
+
+- native audio-reactive FFT
+- native A/V recorder
+- native WGSL shader playground
+
+### 2. Advanced GPU and I/O infrastructure
+
+Continue only where the capability is genuinely distinct:
+
+- input/output contracts
+- recording and export
+- platform texture sharing
+- NDI
+- appliance/headless runtime
+- higher-performance backend-specific interop
+
+Do not add new MIDI or OSC examples merely to repeat an existing control path.
+
+## Validation work
+
+The repository still benefits from a formal platform validation matrix:
+
+- macOS / Apple Silicon
+- Windows / D3D12
+- Linux / Vulkan
+- camera and microphone device behavior
+- NDI/Syphon/Spout dependencies
+- high-resolution recording limits by hardware
+- packaging/signing behavior
+
+## Known boundary
+
+Network publishing remains a separate review area. The earlier Example 29 branch is referenced as quarantined, and Example 40 remains unresolved/under review. Stable router examples should not silently inherit that path until it is revisited and validated.
+
+## Application direction
+
+Junkpile should continue to make it practical to build small standalone creative tools from proven layers: processors, keyers, feedback systems, converters, recorders, routers, mixers, playback tools, shader instruments, and custom artist applications.
+
+The repository remains implementation-agnostic at the product level. Shared patterns should be reusable without forcing all future applications into one branded runtime or one monolithic interface.

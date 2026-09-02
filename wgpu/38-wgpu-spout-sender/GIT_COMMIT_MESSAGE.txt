@@ -1,0 +1,8 @@
+feat: add native wgpu Spout sender example
+
+- port ShadeCore's Windows Spout2 sender lifecycle
+- add a statically linked SpoutDX Direct3D 11 bridge
+- route the authoritative wgpu texture through bounded BGRA staging
+- add sender naming, adapter selection, vertical flip, and frame-rate controls
+- expose GPU, CPU-pool, worker-queue, and sender telemetry
+- include vendored Spout2 sources and Windows build documentation

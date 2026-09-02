@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "log_level": "info",
+  "autosave_interval_ms": 750,
+  "max_log_entries": 240,
+  "platform_label": "cross-platform default"
+}

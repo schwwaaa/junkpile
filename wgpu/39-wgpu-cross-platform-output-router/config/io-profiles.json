@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 3,
+  "defaultProfile": "preview-1080p",
+  "hotReload": {
+    "enabled": true,
+    "debounceMs": 250
+  },
+  "profiles": [
+    {
+      "id": "preview-1080p",
+      "hotkey": "1",
+      "label": "Preview only · 1080p",
+      "description": "Native 1080p render with only the local preview sink enabled.",
+      "frame": { "width": 1920, "height": 1080 },
+      "preview": { "enabled": true },
+      "recording": { "enabled": false, "codec": "h264", "workerDelayMs": 0, "fps": 30 },
+      "ndi": { "enabled": false, "name": "Junkpile 39 NDI", "groups": null, "clockVideo": true, "fpsN": 60, "fpsD": 1, "vflip": false },
+      "platformShare": { "enabled": false, "name": "Junkpile 39", "onlyWhenClients": true, "adapterIndex": -1, "fpsN": 60, "fpsD": 1, "vflip": false }
+    },
+    {
+      "id": "platform-1080p60",
+      "hotkey": "2",
+      "label": "Platform share · 1080p60",
+      "description": "Routes the authoritative texture to Syphon on macOS or Spout on Windows while preserving the native preview.",
+      "frame": { "width": 1920, "height": 1080 },
+      "preview": { "enabled": true },
+      "recording": { "enabled": false, "codec": "h264", "workerDelayMs": 0, "fps": 30 },
+      "ndi": { "enabled": false, "name": "Junkpile 39 NDI", "groups": null, "clockVideo": true, "fpsN": 60, "fpsD": 1, "vflip": false },
+      "platformShare": { "enabled": true, "name": "Junkpile 39", "onlyWhenClients": true, "adapterIndex": -1, "fpsN": 60, "fpsD": 1, "vflip": false }
+    },
+    {
+      "id": "ndi-1080p60",
+      "hotkey": "3",
+      "label": "NDI · 1080p60",
+      "description": "Routes the authoritative texture to NDI at 1080p60 with the local preview active.",
+      "frame": { "width": 1920, "height": 1080 },
+      "preview": { "enabled": true },
+      "recording": { "enabled": false, "codec": "h264", "workerDelayMs": 0, "fps": 30 },
+      "ndi": { "enabled": true, "name": "Junkpile 39 NDI", "groups": null, "clockVideo": true, "fpsN": 60, "fpsD": 1, "vflip": false },
+      "platformShare": { "enabled": false, "name": "Junkpile 39", "onlyWhenClients": true, "adapterIndex": -1, "fpsN": 60, "fpsD": 1, "vflip": false }
+    },
+    {
+      "id": "record-1080p30",
+      "hotkey": "4",
+      "label": "Record · 1080p30 H.264",
+      "description": "Routes the authoritative texture to the bounded H.264 recording sink.",
+      "frame": { "width": 1920, "height": 1080 },
+      "preview": { "enabled": true },
+      "recording": { "enabled": true, "codec": "h264", "workerDelayMs": 0, "fps": 30 },
+      "ndi": { "enabled": false, "name": "Junkpile 39 NDI", "groups": null, "clockVideo": true, "fpsN": 30, "fpsD": 1, "vflip": false },
+      "platformShare": { "enabled": false, "name": "Junkpile 39", "onlyWhenClients": true, "adapterIndex": -1, "fpsN": 30, "fpsD": 1, "vflip": false }
+    },
+    {
+      "id": "broadcast-1080p30",
+      "hotkey": "5",
+      "label": "Broadcast · NDI + platform share + H.264",
+      "description": "One 1080p authoritative texture feeds preview, NDI, Syphon/Spout, and H.264 recording simultaneously.",
+      "frame": { "width": 1920, "height": 1080 },
+      "preview": { "enabled": true },
+      "recording": { "enabled": true, "codec": "h264", "workerDelayMs": 0, "fps": 30 },
+      "ndi": { "enabled": true, "name": "Junkpile 39 NDI", "groups": null, "clockVideo": true, "fpsN": 30, "fpsD": 1, "vflip": false },
+      "platformShare": { "enabled": true, "name": "Junkpile 39", "onlyWhenClients": true, "adapterIndex": -1, "fpsN": 30, "fpsD": 1, "vflip": false }
+    },
+    {
+      "id": "archive-4k30",
+      "hotkey": "6",
+      "label": "Peak route · 4K ProRes + NDI + platform share",
+      "description": "A demanding 4K30 route for peak machines. The current Syphon/Spout staging path may become choppy above 1080p.",
+      "frame": { "width": 3840, "height": 2160 },
+      "preview": { "enabled": true },
+      "recording": { "enabled": true, "codec": "prores", "workerDelayMs": 0, "fps": 30 },
+      "ndi": { "enabled": true, "name": "Junkpile 39 NDI 4K", "groups": null, "clockVideo": true, "fpsN": 30, "fpsD": 1, "vflip": false },
+      "platformShare": { "enabled": true, "name": "Junkpile 39 4K", "onlyWhenClients": true, "adapterIndex": -1, "fpsN": 30, "fpsD": 1, "vflip": false }
+    },
+    {
+      "id": "headless-shared-1080p60",
+      "hotkey": "7",
+      "label": "Hidden preview · NDI + platform share",
+      "description": "Hides the native preview while offscreen rendering continues into NDI and Syphon/Spout at 1080p60.",
+      "frame": { "width": 1920, "height": 1080 },
+      "preview": { "enabled": false },
+      "recording": { "enabled": false, "codec": "h264", "workerDelayMs": 0, "fps": 30 },
+      "ndi": { "enabled": true, "name": "Junkpile 39 Headless NDI", "groups": null, "clockVideo": true, "fpsN": 60, "fpsD": 1, "vflip": false },
+      "platformShare": { "enabled": true, "name": "Junkpile 39 Headless", "onlyWhenClients": true, "adapterIndex": -1, "fpsN": 60, "fpsD": 1, "vflip": false }
+    }
+  ]
+}

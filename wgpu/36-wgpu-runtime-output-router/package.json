@@ -1,0 +1,13 @@
+{
+  "name": "junkpile-36-wgpu-runtime-output-router",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "cargo tauri dev --features ndi",
+    "dev:no-ndi": "cargo tauri dev",
+    "build": "cargo tauri build --features ndi"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.8.5"
+  }
+}

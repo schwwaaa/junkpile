@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Junkpile 37 · Syphon Sender</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <div>
+        <p class="eyebrow">native wgpu · example 37 · macOS</p>
+        <h1>Syphon Metal Sender</h1>
+        <p class="lede">Publish the authoritative wgpu frame as a discoverable Syphon source. A bounded asynchronous readback path converts the frame to BGRA, uploads it into a reusable Metal texture, and publishes through <code>SyphonMetalServer</code> without blocking the native preview.</p>
+      </div>
+      <div class="hero-status">
+        <span id="statusDot" class="dot"></span>
+        <strong id="statusText">starting…</strong>
+        <span id="frameCounter">frame 0</span>
+      </div>
+    </section>
+
+    <section class="expect card">
+      <div>
+        <p class="eyebrow">first test</p>
+        <h2>Start the source, then open a Syphon receiver</h2>
+      </div>
+      <p>Click <strong>Start Syphon</strong>. In a Syphon-compatible application, select the source named <strong>Junkpile 37</strong>. The source is discoverable immediately; with client gating enabled, frame transfer begins only after a receiver connects.</p>
+    </section>
+
+    <section class="card settings-card">
+      <div class="section-heading">
+        <div><p class="eyebrow">sender configuration</p><h2>Metal-backed Syphon output</h2></div>
+        <span id="featureBadge" class="badge">checking build</span>
+      </div>
+      <div class="config-grid">
+        <label>
+          <span>Source name</span>
+          <input id="sourceName" type="text" value="Junkpile 37" maxlength="96">
+        </label>
+        <label>
+          <span>Resolution</span>
+          <select id="resolution">
+            <option value="1280x720">1280 × 720</option>
+            <option value="1920x1080" selected>1920 × 1080</option>
+            <option value="2560x1440">2560 × 1440</option>
+            <option value="3840x2160">3840 × 2160</option>
+          </select>
+        </label>
+        <label>
+          <span>Frame rate</span>
+          <select id="frameRate">
+            <option value="60/1" selected>60 fps</option>
+            <option value="30/1">30 fps</option>
+            <option value="24/1">24 fps</option>
+          </select>
+        </label>
+        <label class="check-control">
+          <input id="onlyWhenClients" type="checkbox" checked>
+          <span>Transfer frames only with connected clients</span>
+        </label>
+        <label class="check-control">
+          <input id="verticalFlip" type="checkbox">
+          <span>Vertical flip</span>
+        </label>
+      </div>
+      <p class="field-note">wgpu readback is top-left, so vertical flip is off by default. The Metal texture is reusable; client gating avoids unnecessary readback and upload work when no receiver is connected.</p>
+      <div class="toolbar embedded-toolbar">
+        <button id="startButton" class="primary">Start Syphon</button>
+        <button id="stopButton">Stop Syphon</button>
+        <button id="resetButton">Reset metrics</button>
+        <button id="fullscreenButton">Renderer fullscreen</button>
+      </div>
+    </section>
+
+    <section class="contract-grid">
+      <article class="card source-card">
+        <header><span>source contract</span><strong>Authoritative wgpu Frame</strong></header>
+        <p id="frameDimensions" class="dimensions">—</p>
+        <dl>
+          <div><dt>Pixel format</dt><dd id="pixelFormat">—</dd></div>
+          <div><dt>Frame origin</dt><dd id="origin">—</dd></div>
+          <div><dt>Color space</dt><dd id="colorSpace">—</dd></div>
+          <div><dt>Nominal FPS</dt><dd id="nominalFps">—</dd></div>
+          <div><dt>Syphon texture</dt><dd>BGRA8Unorm · Metal</dd></div>
+        </dl>
+      </article>
+
+      <article class="card diagram-card">
+        <p class="eyebrow">routing model</p>
+        <div class="route syphon-route">
+          <div class="node source">Authoritative<br>wgpu Texture</div>
+          <div class="bus"></div>
+          <div class="destinations">
+            <div class="node cyan">Window preview</div>
+            <div class="node amber">3-slot GPU readback</div>
+            <div class="node purple">BGRA CPU pool</div>
+            <div class="node green">Metal texture → Syphon</div>
+          </div>
+        </div>
+        <p id="contractSummary" class="summary">—</p>
+      </article>
+    </section>
+
+    <section class="card telemetry">
+      <div class="section-heading">
+        <div><p class="eyebrow">live sender state</p><h2>Syphon telemetry</h2></div>
+        <div class="badge-row">
+          <span id="syphonState" class="badge">idle</span>
+          <span id="clientBadge" class="badge">no client</span>
+          <span id="rendererState" class="badge">starting</span>
+        </div>
+      </div>
+      <div class="telemetry-grid syphon-metrics">
+        <div><span>Active source</span><strong id="activeName">—</strong></div>
+        <div><span>Output format</span><strong id="activeFormat">—</strong></div>
+        <div><span>Raw bandwidth</span><strong id="rawBandwidth">—</strong></div>
+        <div><span>Capture requests</span><strong id="captureRequests">0</strong></div>
+        <div><span>GPU readbacks</span><strong id="readbacks">0</strong></div>
+        <div><span>Frames published</span><strong id="framesSent">0</strong></div>
+        <div><span>Skipped · no client</span><strong id="skippedNoClients">0</strong></div>
+        <div><span>GPU drops</span><strong id="gpuDrops">0</strong></div>
+        <div><span>CPU-pool drops</span><strong id="cpuDrops">0</strong></div>
+        <div><span>Worker drops</span><strong id="workerDrops">0</strong></div>
+        <div><span>Worker queue</span><strong id="pendingWorker">0 / 2</strong></div>
+        <div><span>CPU buffers</span><strong id="cpuBuffers">3 / 3</strong></div>
+        <div><span>Readback slots</span><strong id="readbackBusy">0 / 3</strong></div>
+      </div>
+      <pre id="syphonLog" class="log-box">Syphon sender is idle.</pre>
+    </section>
+
+    <section class="card telemetry">
+      <div class="section-heading"><div><p class="eyebrow">native renderer</p><h2>wgpu status</h2></div></div>
+      <div class="telemetry-grid">
+        <div><span>Backend</span><strong id="backend">—</strong></div>
+        <div><span>Adapter</span><strong id="adapter">—</strong></div>
+        <div><span>Surface</span><strong id="surface">—</strong></div>
+        <div><span>Window</span><strong id="windowSize">—</strong></div>
+        <div><span>Measured FPS</span><strong id="measuredFps">—</strong></div>
+        <div><span>Frame time</span><strong id="frameTime">—</strong></div>
+      </div>
+    </section>
+
+    <section class="card note-card">
+      <p><strong>Implementation note:</strong> ShadeCore publishes an OpenGL texture directly. This wgpu example preserves the sender lifecycle and bounded-output behavior while using asynchronous wgpu readback followed by a reusable Metal texture upload. A future direct wgpu/Metal interop example can remove the CPU transfer without changing the public sink contract.</p>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

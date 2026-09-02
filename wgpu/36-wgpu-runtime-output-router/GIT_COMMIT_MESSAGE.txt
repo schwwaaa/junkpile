@@ -1,0 +1,9 @@
+feat(wgpu): add runtime NDI and recording output router
+
+- route one authoritative wgpu texture to preview, NDI, and FFmpeg sinks
+- add strict hot-reloadable output profiles with configurable hotkeys
+- support NDI-only, recording-only, simultaneous, and hidden-preview routes
+- preserve bounded queues, reusable buffers, and per-sink drop telemetry
+- keep NDI and recording lifecycle independent with partial-start rollback
+- preserve persistent user-selected recording output directories
+- exclude the quarantined network-streaming implementation

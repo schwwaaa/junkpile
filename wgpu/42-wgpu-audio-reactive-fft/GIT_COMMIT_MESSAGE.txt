@@ -1,0 +1,10 @@
+feat: add native wgpu audio-reactive FFT workflow
+
+- capture microphone input with CPAL outside the WebView
+- analyze waveform, FFT bands, and beats with RustFFT
+- upload spectrum and waveform data as wgpu textures
+- add six native WGSL audio-reactive visual modes
+- make spin control actual angular velocity with stop and reverse
+- expose independent native render targets from 720p through 8K
+- add input, analysis, renderer, and device diagnostics
+- preserve a generated demo signal when microphone input is unavailable

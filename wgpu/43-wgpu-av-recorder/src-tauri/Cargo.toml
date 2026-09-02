@@ -1,0 +1,21 @@
+[package]
+name = "wgpu_av_recorder"
+version = "0.1.0"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+cpal = "0.15.3"
+hound = "3.5"
+bytemuck = { version = "1.24", features = ["derive"] }
+pollster = "0.4"
+serde = { version = "1", features = ["derive"] }
+tauri = { version = "2", features = ["unstable"] }
+tauri-plugin-dialog = "2"
+wgpu = "=29.0.4"
+serde_json = "1"
+
+# Keep this standalone example isolated from Cargo workspaces in parent directories.
+[workspace]

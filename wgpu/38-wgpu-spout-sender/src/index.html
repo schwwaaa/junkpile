@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Junkpile 38 · Spout Sender</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <div>
+        <p class="eyebrow">native wgpu · example 38 · Windows</p>
+        <h1>Spout Sender</h1>
+        <p class="lede">Publish the authoritative wgpu frame as a Windows Spout2 source. A bounded readback path converts the frame to BGRA and a dedicated Direct3D 11 bridge publishes it without blocking the native preview.</p>
+      </div>
+      <div class="hero-status"><span id="statusDot" class="dot"></span><strong id="statusText">starting…</strong><span id="frameCounter">frame 0</span></div>
+    </section>
+
+    <section class="expect card">
+      <div><p class="eyebrow">first test</p><h2>Start the source, then open a Spout receiver</h2></div>
+      <p>On Windows, click <strong>Start Spout</strong>. Open the official Spout receiver, OBS with Spout2 Capture, Resolume, TouchDesigner, or another compatible application and select <strong>Junkpile 38</strong>.</p>
+    </section>
+
+    <section class="card settings-card">
+      <div class="section-heading"><div><p class="eyebrow">sender configuration</p><h2>ShadeCore-derived Spout settings</h2></div><span id="featureBadge" class="badge">checking build</span></div>
+      <div class="config-grid">
+        <label><span>Sender name</span><input id="sourceName" type="text" value="Junkpile 38" maxlength="96"></label>
+        <label><span>Direct3D adapter</span><select id="adapterIndex"><option value="-1" selected>Automatic</option><option value="0">Adapter 0</option><option value="1">Adapter 1</option><option value="2">Adapter 2</option></select></label>
+        <label><span>Resolution</span><select id="resolution"><option value="1280x720">1280 × 720</option><option value="1920x1080" selected>1920 × 1080</option><option value="2560x1440">2560 × 1440</option><option value="3840x2160">3840 × 2160</option></select></label>
+        <label><span>Frame rate</span><select id="frameRate"><option value="60/1" selected>60 fps</option><option value="30/1">30 fps</option><option value="24/1">24 fps</option></select></label>
+        <label class="check-control"><input id="verticalFlip" type="checkbox"><span>Vertical flip</span></label>
+      </div>
+      <p class="field-note">Automatic adapter selection is preferred. Select a numbered adapter only when the Spout receiver runs on a different GPU. Vertical flip is off because wgpu readback is already top-left.</p>
+      <div class="toolbar embedded-toolbar"><button id="startButton" class="primary">Start Spout</button><button id="stopButton">Stop Spout</button><button id="resetButton">Reset metrics</button><button id="fullscreenButton">Renderer fullscreen</button></div>
+    </section>
+
+    <section class="contract-grid">
+      <article class="card source-card"><header><span>source contract</span><strong>Authoritative wgpu Frame</strong></header><p id="frameDimensions" class="dimensions">—</p><dl><div><dt>Pixel format</dt><dd id="pixelFormat">—</dd></div><div><dt>Frame origin</dt><dd id="origin">—</dd></div><div><dt>Color space</dt><dd id="colorSpace">—</dd></div><div><dt>Nominal FPS</dt><dd id="nominalFps">—</dd></div><div><dt>Spout upload</dt><dd>BGRA · Direct3D 11</dd></div></dl></article>
+      <article class="card diagram-card"><p class="eyebrow">routing model</p><div class="route spout-route"><div class="node source">Authoritative<br>wgpu Texture</div><div class="bus"></div><div class="destinations"><div class="node cyan">Window preview</div><div class="node amber">3-slot GPU readback</div><div class="node purple">RGBA → BGRA buffers</div><div class="node green">SpoutDX sender</div></div></div><p id="contractSummary" class="summary">—</p></article>
+    </section>
+
+    <section class="telemetry card">
+      <div class="section-heading"><div><p class="eyebrow">Spout sink</p><h2>Real-time diagnostics</h2></div><span id="spoutState" class="badge">idle</span></div>
+      <div class="telemetry-grid spout-metrics">
+        <div><span>Source</span><strong id="activeName">—</strong></div><div><span>Format</span><strong id="activeFormat">—</strong></div><div><span>Adapter selection</span><strong id="activeAdapter">—</strong></div><div><span>Raw frame bandwidth</span><strong id="rawBandwidth">—</strong></div><div><span>Capture requests</span><strong id="captureRequests">0</strong></div><div><span>GPU readbacks</span><strong id="readbacks">0</strong></div><div><span>Spout frames sent</span><strong id="framesSent">0</strong></div><div><span>GPU drops</span><strong id="gpuDrops">0</strong></div><div><span>CPU pool drops</span><strong id="cpuDrops">0</strong></div><div><span>Worker drops</span><strong id="workerDrops">0</strong></div><div><span>Worker pending</span><strong id="pendingWorker">0 / 2</strong></div><div><span>CPU buffers free</span><strong id="cpuBuffers">3 / 3</strong></div><div><span>Readback slots busy</span><strong id="readbackBusy">0 / 3</strong></div>
+      </div>
+      <div id="spoutLog" class="log-box">Spout sender has not started.</div>
+    </section>
+
+    <section class="telemetry card"><div class="section-heading"><div><p class="eyebrow">renderer</p><h2>Native telemetry</h2></div><span id="rendererState" class="badge">starting</span></div><div class="telemetry-grid"><div><span>Backend</span><strong id="backend">—</strong></div><div><span>Adapter</span><strong id="adapter">—</strong></div><div><span>Surface</span><strong id="surface">—</strong></div><div><span>Window</span><strong id="windowSize">—</strong></div><div><span>Measured FPS</span><strong id="measuredFps">—</strong></div><div><span>Frame time</span><strong id="frameTime">—</strong></div></div></section>
+
+    <section class="card note-card"><p><strong>Windows-only:</strong> the normal build compiles a vendored Spout2 Direct3D 11 bridge with CMake and MSVC. Visual Studio Build Tools with the Desktop development with C++ workload and CMake are required. Other operating systems can run <code>npm run dev:no-spout</code> to inspect the renderer and interface.</p></section>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

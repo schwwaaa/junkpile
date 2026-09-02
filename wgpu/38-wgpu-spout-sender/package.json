@@ -1,0 +1,13 @@
+{
+  "name": "junkpile-38-wgpu-spout-sender",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "cargo tauri dev --features spout",
+    "dev:no-spout": "cargo tauri dev",
+    "build": "cargo tauri build --features spout"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.8.5"
+  }
+}

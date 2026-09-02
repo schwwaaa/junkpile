@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Junkpile 36 · Runtime Output Router</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main>
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Junkpile native wgpu · example 36</p>
+        <h1>Runtime Output Router</h1>
+        <p class="lede">One authoritative GPU texture feeds preview, NDI, and FFmpeg recording through independent bounded sinks. Profiles define complete routes; a sink can fail or stop without taking down the renderer or the other outputs.</p>
+      </div>
+      <div class="hero-status"><span id="statusDot" class="dot"></span><strong id="statusText">starting</strong><span id="frameCounter">frame 0</span></div>
+    </header>
+
+    <section class="card">
+      <div class="section-heading"><div><p class="eyebrow">route authority</p><h2>Select and arm a profile</h2></div><span id="activeBadge" class="badge">loading</span></div>
+      <div class="control-grid">
+        <label class="wide"><span>Available routes</span><select id="profileSelect"></select></label>
+        <button id="armButton" class="primary">Arm selected route</button>
+        <button id="startAllButton" class="record">Start active outputs</button>
+        <button id="stopAllButton" class="danger">Stop all outputs</button>
+      </div>
+      <div class="button-grid">
+        <button id="startRecordButton">Start recording only</button>
+        <button id="stopRecordButton">Stop recording</button>
+        <button id="startNdiButton">Start NDI only</button>
+        <button id="stopNdiButton">Stop NDI</button>
+        <button id="showPreviewButton">Show preview</button>
+        <button id="fullscreenButton">Fullscreen preview</button>
+        <button id="resetMetricsButton">Reset NDI metrics</button>
+      </div>
+      <p id="profileDescription" class="description"></p>
+      <p id="hotkeyNotice" class="notice"></p>
+      <p id="actionMessage" class="notice"></p>
+    </section>
+
+    <section class="card route-card">
+      <div class="section-heading"><div><p class="eyebrow">authoritative frame</p><h2>Live output graph</h2></div><span id="routeBadge" class="badge">idle</span></div>
+      <div class="route">
+        <div class="node source"><small>WGPU TEXTURE</small><strong id="sourceNode">—</strong><span>render once</span></div>
+        <span class="arrow">→</span>
+        <div class="branch three">
+          <div id="previewNode" class="node preview"><small>GPU PRESENT</small><strong>Preview</strong><span id="previewDetail">—</span></div>
+          <div id="ndiNode" class="node ndi"><small>CPU / NETWORK</small><strong>NDI</strong><span id="ndiDetail">—</span></div>
+          <div id="recordNode" class="node file"><small>CPU / FILE</small><strong>Recording</strong><span id="recordDetail">—</span></div>
+        </div>
+      </div>
+      <p id="contractSummary" class="summary"></p>
+    </section>
+
+    <section class="grid two">
+      <article class="card">
+        <div class="section-heading"><div><p class="eyebrow">NDI sink</p><h2>Network video</h2></div><span id="ndiBadge" class="badge">idle</span></div>
+        <dl>
+          <div><dt>Source</dt><dd id="ndiName">—</dd></div>
+          <div><dt>Format</dt><dd id="ndiFormat">—</dd></div>
+          <div><dt>Capture requests</dt><dd id="ndiRequests">0</dd></div>
+          <div><dt>GPU readbacks</dt><dd id="ndiReadbacks">0</dd></div>
+          <div><dt>Frames sent</dt><dd id="ndiSent">0</dd></div>
+          <div><dt>GPU drops</dt><dd id="ndiGpuDrops">0</dd></div>
+          <div><dt>CPU-pool drops</dt><dd id="ndiCpuDrops">0</dd></div>
+          <div><dt>Worker drops</dt><dd id="ndiWorkerDrops">0</dd></div>
+          <div><dt>Queue pending</dt><dd id="ndiPending">0</dd></div>
+          <div><dt>Raw traffic</dt><dd id="ndiTraffic">0 MiB/s</dd></div>
+        </dl>
+        <p id="ndiError" class="error-text"></p>
+        <p id="ndiLog" class="notice"></p>
+      </article>
+
+      <article class="card">
+        <div class="section-heading"><div><p class="eyebrow">file sink</p><h2>FFmpeg recording</h2></div><span id="recordingBadge" class="badge">idle</span></div>
+        <dl>
+          <div><dt>Format</dt><dd id="recordingFormat">—</dd></div>
+          <div><dt>Encoded frames</dt><dd id="encodedFrames">0</dd></div>
+          <div><dt>GPU / packer / worker drops</dt><dd id="recordDrops">0 / 0 / 0</dd></div>
+          <div><dt>Timeline delivery</dt><dd id="delivery">0%</dd></div>
+          <div><dt>Capture jitter p95</dt><dd id="jitter">0 ms</dd></div>
+          <div><dt>Queue pressure</dt><dd id="recordQueue">0%</dd></div>
+          <div><dt>Output path</dt><dd id="outputPath" class="path-value">—</dd></div>
+        </dl>
+        <p id="recordingError" class="error-text"></p>
+      </article>
+    </section>
+
+    <section class="grid two">
+      <article class="card">
+        <div class="section-heading"><div><p class="eyebrow">output destination</p><h2>Recording folder</h2></div><span id="ffmpegBadge" class="badge">checking</span></div>
+        <p id="outputDirectory" class="path-box">—</p>
+        <div class="button-grid">
+          <button id="chooseOutputFolderButton" class="primary">Choose output folder</button>
+          <button id="recordingsButton">Open output folder</button>
+          <button id="resetOutputFolderButton">Use system default</button>
+        </div>
+        <p id="ffmpegError" class="error-text"></p>
+      </article>
+
+      <article class="card">
+        <div class="section-heading"><div><p class="eyebrow">profile configuration</p><h2>Last-known-good JSON</h2></div><span id="watcherBadge" class="badge">watching</span></div>
+        <dl>
+          <div><dt>Generation</dt><dd id="configGeneration">0</dd></div>
+          <div><dt>Schema</dt><dd id="schemaVersion">—</dd></div>
+          <div><dt>Profiles</dt><dd id="profileCount">0</dd></div>
+          <div><dt>Last event</dt><dd id="lastConfigEvent">—</dd></div>
+          <div><dt>Config path</dt><dd id="configPath" class="path-value">—</dd></div>
+        </dl>
+        <div class="button-grid">
+          <button id="reloadButton">Reload JSON</button>
+          <button id="restoreButton">Restore built-ins</button>
+          <button id="configFolderButton">Open config folder</button>
+        </div>
+        <p id="configError" class="error-text"></p>
+      </article>
+    </section>
+
+    <section class="card">
+      <div class="section-heading"><div><p class="eyebrow">renderer</p><h2>Failure boundary</h2></div><span id="rendererBadge" class="badge">starting</span></div>
+      <div class="metric-grid">
+        <div><span>GPU</span><strong id="adapter">—</strong></div>
+        <div><span>Backend</span><strong id="backend">—</strong></div>
+        <div><span>Authoritative frame</span><strong id="sourceResolution">—</strong></div>
+        <div><span>Renderer FPS</span><strong id="rendererFps">0</strong></div>
+        <div><span>Frame time</span><strong id="frameTime">0 ms</strong></div>
+        <div><span>Texture limit</span><strong id="gpuLimit">—</strong></div>
+      </div>
+      <p id="rendererError" class="error-text"></p>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

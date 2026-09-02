@@ -1,0 +1,6 @@
+node_modules/
+src-tauri/target/
+.DS_Store
+*.log
+recordings/
+src-tauri/recordings/

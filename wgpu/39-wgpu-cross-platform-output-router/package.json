@@ -1,0 +1,14 @@
+{
+  "name": "junkpile-39-wgpu-cross-platform-output-router",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "cargo tauri dev --features ndi,platform-share",
+    "dev:no-ndi": "cargo tauri dev --features platform-share",
+    "dev:renderer-only": "cargo tauri dev",
+    "build": "cargo tauri build --features ndi,platform-share"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.8.5"
+  }
+}

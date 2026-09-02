@@ -24,7 +24,7 @@ The visual remains the original domain-warped fractional Brownian motion study. 
 
 Example 02 keeps controls and raw WebGL in one WebView. Example 03 adds one architectural variable: the controls and renderer now live in independent windows and communicate through a local WebSocket relay.
 
-This pattern is useful for learning how an application can keep a dedicated output window independent from its control surface. It also demonstrates the basic message-routing idea later used by larger Junkpile and Scheng systems.
+This pattern is useful for learning how an application can keep a dedicated output window independent from its control surface. It also demonstrates the basic message-routing idea later used by larger Junkpile and shared component layer systems.
 
 ## Signal flow
 

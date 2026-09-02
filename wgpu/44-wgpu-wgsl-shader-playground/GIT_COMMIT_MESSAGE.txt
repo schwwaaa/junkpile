@@ -1,0 +1,9 @@
+feat: add native wgpu WGSL shader playground
+
+- add an in-app WGSL editor with manual and debounced live compilation
+- preserve the last-known-good GPU pipeline after compiler failures
+- add native open, save, and save-as workflows without changing presets
+- include twelve shader presets with generated uniform and stress controls
+- make spin control angular velocity and add pause/reset shader time
+- add native fullscreen output and high-resolution PNG still export
+- report GPU, frame-time, pipeline, and compiler diagnostics

@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "startupProfile": "headless-shared-1080p60",
+  "autoStartOutputs": false,
+  "controlsVisible": true,
+  "previewPolicy": "profile",
+  "heartbeatMs": 1000,
+  "statusFile": "appliance-status.json",
+  "exitAfterSeconds": null
+}

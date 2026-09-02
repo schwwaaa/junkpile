@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Junkpile · AV Recorder</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main>
+    <header class="hero">
+      <div>
+        <p class="eyebrow">native wgpu · audio + video capture</p>
+        <h1>AV Recorder</h1>
+        <p class="lede">Record the native GPU output with no audio, a live microphone, or an existing audio file. Video is encoded first; audio is muxed during finalization without re-encoding the finished video stream.</p>
+      </div>
+      <span id="stateBadge" class="badge">idle</span>
+    </header>
+
+    <section class="grid two">
+      <article class="card">
+        <div class="section-heading"><div><p class="eyebrow">video</p><h2>Recording format</h2></div></div>
+        <label>Codec
+          <select id="codec">
+            <option value="h264">H.264 / MP4</option>
+            <option value="prores">ProRes 422 HQ / MOV</option>
+          </select>
+        </label>
+        <label>Resolution
+          <select id="resolution">
+            <option value="1920x1080">1920 × 1080</option>
+            <option value="2560x1440">2560 × 1440</option>
+            <option value="3840x2160">3840 × 2160 · 4K</option>
+            <option value="5120x2880">5120 × 2880 · 5K</option>
+            <option value="7680x4320">7680 × 4320 · 8K</option>
+          </select>
+        </label>
+        <label>Frame rate
+          <select id="fps">
+            <option value="24">24 fps</option>
+            <option value="30" selected>30 fps</option>
+            <option value="60">60 fps</option>
+          </select>
+        </label>
+        <label>Artificial writer delay
+          <select id="workerDelay">
+            <option value="0">0 ms · normal</option>
+            <option value="10">10 ms</option>
+            <option value="35">35 ms · pressure test</option>
+          </select>
+        </label>
+      </article>
+
+      <article class="card">
+        <div class="section-heading"><div><p class="eyebrow">audio</p><h2>Audio source</h2></div></div>
+        <div class="segmented" id="audioMode">
+          <button class="mode active" data-mode="none">None</button>
+          <button class="mode" data-mode="microphone">Microphone</button>
+          <button class="mode" data-mode="file">Audio file</button>
+        </div>
+
+        <div id="micPanel" class="source-panel hidden">
+          <label>Microphone
+            <select id="microphone"></select>
+          </label>
+          <button id="refreshMics">Refresh microphones</button>
+          <p class="hint">Microphone audio is captured to a temporary 32-bit float WAV and muxed after the video encoder closes.</p>
+        </div>
+
+        <div id="filePanel" class="source-panel hidden">
+          <button id="chooseAudio">Choose audio file</button>
+          <p id="audioFilePath" class="path">No file selected.</p>
+          <dl class="compact">
+            <div><dt>Codec</dt><dd id="audioFileCodec">—</dd></div>
+            <div><dt>Rate</dt><dd id="audioFileRate">—</dd></div>
+            <div><dt>Channels</dt><dd id="audioFileChannels">—</dd></div>
+            <div><dt>Duration</dt><dd id="audioFileDuration">—</dd></div>
+          </dl>
+          <p class="hint">File audio loops automatically when shorter than the recording; video duration remains authoritative.</p>
+        </div>
+
+        <p id="audioDescription" class="notice">Video only.</p>
+      </article>
+    </section>
+
+    <section class="card controls-card">
+      <div class="button-row primary-row">
+        <button id="startButton" class="primary">Start AV recording</button>
+        <button id="stopButton" disabled>Stop + finalize</button>
+      </div>
+      <div class="button-row">
+        <button id="chooseOutputFolder">Choose output folder</button>
+        <button id="openOutputFolder">Open output folder</button>
+        <button id="resetOutputFolder">Use system default</button>
+        <button id="fullscreen">Toggle renderer fullscreen</button>
+      </div>
+      <p><strong>Output folder:</strong> <span id="outputDirectory" class="path">—</span></p>
+      <p id="error" class="error"></p>
+    </section>
+
+    <section class="grid two">
+      <article class="card">
+        <div class="section-heading"><div><p class="eyebrow">AV session</p><h2>Finalization</h2></div><span id="avBadge" class="badge">idle</span></div>
+        <dl>
+          <div><dt>Audio mode</dt><dd id="sessionAudioMode">None</dd></div>
+          <div><dt>Audio source</dt><dd id="sessionAudioDescription">Video only</dd></div>
+          <div><dt>Video intermediate</dt><dd id="videoIntermediate" class="path">—</dd></div>
+          <div><dt>Final output</dt><dd id="finalOutput" class="path">—</dd></div>
+          <div><dt>Mux result</dt><dd id="muxResult">—</dd></div>
+        </dl>
+      </article>
+
+      <article class="card">
+        <div class="section-heading"><div><p class="eyebrow">microphone</p><h2>Capture diagnostics</h2></div><span id="micBadge" class="badge">idle</span></div>
+        <dl>
+          <div><dt>Device</dt><dd id="micDevice">—</dd></div>
+          <div><dt>Format</dt><dd id="micFormat">—</dd></div>
+          <div><dt>Elapsed</dt><dd id="micElapsed">0.00 s</dd></div>
+          <div><dt>Samples written</dt><dd id="micSamples">0</dd></div>
+          <div><dt>Callback chunks dropped</dt><dd id="micDrops">0</dd></div>
+        </dl>
+        <p id="micError" class="error"></p>
+      </article>
+    </section>
+
+    <section class="card">
+      <div class="section-heading"><div><p class="eyebrow">video pipeline</p><h2>Real-time recording diagnostics</h2></div><span id="videoBadge" class="badge">idle</span></div>
+      <div class="metrics">
+        <div><span>Target</span><strong id="targetFps">0 fps</strong></div>
+        <div><span>Scheduled</span><strong id="captureFps">0 fps</strong></div>
+        <div><span>GPU readback</span><strong id="readbackFps">0 fps</strong></div>
+        <div><span>FFmpeg ingest</span><strong id="encodeFps">0 fps</strong></div>
+        <div><span>GPU drops</span><strong id="gpuDrops">0</strong></div>
+        <div><span>Packer drops</span><strong id="packerDrops">0</strong></div>
+        <div><span>Worker drops</span><strong id="workerDrops">0</strong></div>
+        <div><span>Delivery</span><strong id="delivery">0%</strong></div>
+        <div><span>Capture jitter p95</span><strong id="jitter">0 ms</strong></div>
+        <div><span>Queue pressure</span><strong id="queue">0%</strong></div>
+        <div><span>Raw throughput</span><strong id="throughput">0 MiB/s</strong></div>
+        <div><span>Output size</span><strong id="outputBytes">0 B</strong></div>
+      </div>
+      <p id="diagnosticDetail" class="hint">Start recording to analyze the selected format.</p>
+    </section>
+
+    <section class="card">
+      <div class="section-heading"><div><p class="eyebrow">system</p><h2>Renderer + FFmpeg</h2></div></div>
+      <dl class="system-grid">
+        <div><dt>GPU</dt><dd id="gpu">—</dd></div>
+        <div><dt>Backend</dt><dd id="backend">—</dd></div>
+        <div><dt>Renderer FPS</dt><dd id="rendererFps">—</dd></div>
+        <div><dt>GPU texture limit</dt><dd id="gpuLimit">—</dd></div>
+        <div><dt>FFmpeg</dt><dd id="ffmpeg">checking</dd></div>
+      </dl>
+    </section>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

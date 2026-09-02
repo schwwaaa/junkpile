@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Junkpile · WGSL Shader Playground</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">JP</span>
+        <div>
+          <p>JUNKPILE · NATIVE WGPU</p>
+          <h1>WGSL Shader Playground</h1>
+        </div>
+      </div>
+      <div class="runtime-strip">
+        <span><b id="gpuName">GPU starting…</b></span>
+        <span><b id="rendererFps">— FPS</b></span>
+        <span><b id="frameTime">— ms</b></span>
+        <span id="compileBadge" class="badge neutral">READY</span>
+      </div>
+    </header>
+
+    <nav class="toolbar" aria-label="Shader document actions">
+      <button id="openButton">Open</button>
+      <button id="saveButton">Save</button>
+      <button id="saveAsButton">Save As</button>
+      <button id="restorePresetButton">Restore preset</button>
+      <span class="toolbar-divider"></span>
+      <button id="compileButton" class="primary">Compile <kbd>⌘↵</kbd></button>
+      <label class="switch"><input id="autoCompile" type="checkbox" checked><span></span>Auto compile</label>
+      <span class="toolbar-divider"></span>
+      <button id="pauseButton">Pause time</button>
+      <button id="resetTimeButton">Reset time</button>
+      <button id="fullscreenButton">Fullscreen output</button>
+    </nav>
+
+    <main class="workspace">
+      <aside class="sidebar left-sidebar">
+        <section class="sidebar-section presets-section">
+          <div class="section-heading">
+            <div><span>PRESETS</span><strong>12 native shaders</strong></div>
+            <button id="openAssetsButton" class="icon-button" title="Open runtime asset folder">↗</button>
+          </div>
+          <div id="presetList" class="preset-list"></div>
+        </section>
+
+        <section class="sidebar-section">
+          <div class="section-heading"><div><span>PROFILE</span><strong id="activeProfile">—</strong></div></div>
+          <div class="profile-controls">
+            <button id="previousProfileButton">←</button>
+            <div id="profileList" class="profile-list"></div>
+            <button id="nextProfileButton">→</button>
+          </div>
+        </section>
+
+        <section class="sidebar-section parameter-section">
+          <div class="section-heading"><div><span>UNIFORMS</span><strong>Generated controls</strong></div></div>
+          <div id="parameterControls"></div>
+        </section>
+      </aside>
+
+      <section class="editor-column">
+        <div class="document-bar">
+          <div class="document-identity">
+            <span id="dirtyDot" class="dirty-dot"></span>
+            <strong id="documentLabel">Loading shader…</strong>
+            <span id="documentMode" class="document-mode">PRESET</span>
+          </div>
+          <code id="documentPath">—</code>
+        </div>
+        <div class="editor-wrap">
+          <pre id="lineNumbers" aria-hidden="true">1</pre>
+          <textarea id="shaderEditor" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="WGSL source editor"></textarea>
+        </div>
+        <div class="editor-status">
+          <span id="cursorPosition">Ln 1, Col 1</span>
+          <span id="sourceStats">0 lines · 0 bytes</span>
+          <span>WGSL · UTF-8</span>
+          <span id="autoCompileState">Auto compile on</span>
+        </div>
+
+        <section class="console-panel">
+          <div class="console-heading">
+            <div><span>COMPILER</span><strong id="consoleTitle">Last-known-good pipeline active</strong></div>
+            <div class="console-actions">
+              <button id="copyDiagnosticsButton">Copy diagnostics</button>
+              <button id="clearConsoleButton">Clear</button>
+            </div>
+          </div>
+          <pre id="compilerConsole">Editor ready. Compile changes with ⌘/Ctrl + Enter. Invalid WGSL will never replace the running shader.</pre>
+        </section>
+      </section>
+
+      <aside class="sidebar right-sidebar">
+        <section class="sidebar-section output-section">
+          <div class="section-heading"><div><span>HIGH-RES STILL</span><strong>Native PNG export</strong></div></div>
+          <label class="field-label" for="exportPreset">Resolution</label>
+          <select id="exportPreset">
+            <option value="1920x1080">1920 × 1080</option>
+            <option value="2560x1440">2560 × 1440</option>
+            <option value="3840x2160" selected>3840 × 2160 · 4K</option>
+            <option value="5120x2880">5120 × 2880 · 5K</option>
+            <option value="7680x4320">7680 × 4320 · 8K</option>
+            <option value="custom">Custom</option>
+          </select>
+          <div id="customResolution" class="resolution-grid hidden">
+            <label>Width<input id="exportWidth" type="number" min="1" max="16384" value="3840"></label>
+            <label>Height<input id="exportHeight" type="number" min="1" max="16384" value="2160"></label>
+          </div>
+          <button id="exportButton" class="primary full-width">Export PNG</button>
+          <p class="hint">Exports the current compiled pipeline at the selected native resolution and current shader time.</p>
+        </section>
+
+        <section class="sidebar-section diagnostics-section">
+          <div class="section-heading"><div><span>RUNTIME</span><strong>Pipeline diagnostics</strong></div></div>
+          <dl class="metrics">
+            <div><dt>Preset</dt><dd id="activePreset">—</dd></div>
+            <div><dt>Pipeline generation</dt><dd id="pipelineGeneration">—</dd></div>
+            <div><dt>Successful compiles</dt><dd id="successfulReloads">0</dd></div>
+            <div><dt>Rejected compiles</dt><dd id="failedReloads">0</dd></div>
+            <div><dt>Shader time</dt><dd id="shaderTime">0.00 s</dd></div>
+            <div><dt>Time state</dt><dd id="timeState">RUNNING</dd></div>
+            <div><dt>Native surface</dt><dd id="surfaceSize">—</dd></div>
+          </dl>
+          <button id="resetMetricsButton" class="full-width">Reset compile counters</button>
+        </section>
+
+        <section class="sidebar-section contract-section">
+          <div class="section-heading"><div><span>EDITOR CONTRACT</span><strong>Stable live coding</strong></div></div>
+          <ul>
+            <li>Saving never changes the active preset.</li>
+            <li>Compile failures preserve the previous GPU pipeline.</li>
+            <li><b>Spin</b> is angular velocity; zero stops rotation.</li>
+            <li>Presets and external files use the same uniform contract.</li>
+          </ul>
+        </section>
+      </aside>
+    </main>
+
+    <footer class="footer-bar">
+      <span id="actionMessage">Initializing runtime assets and native renderer…</span>
+      <span id="assetRoot">—</span>
+    </footer>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

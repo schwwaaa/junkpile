@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "frag_variants": [
+    "shaders/01-kaleido-reactor.wgsl",
+    "shaders/02-plasma-warp.wgsl",
+    "shaders/03-infinite-tunnel.wgsl",
+    "shaders/04-voronoi-storm.wgsl",
+    "shaders/05-fractal-nebula.wgsl",
+    "shaders/06-mandelbrot-reactor.wgsl",
+    "shaders/07-raymarch-lattice.wgsl",
+    "shaders/08-caustic-engine.wgsl",
+    "shaders/09-hyperbolic-grid.wgsl",
+    "shaders/10-interference-array.wgsl",
+    "shaders/11-volumetric-storm.wgsl",
+    "shaders/12-recursive-glyph-field.wgsl"
+  ],
+  "active_frag": "shaders/01-kaleido-reactor.wgsl",
+  "frag_hotkeys": {
+    "next": [
+      "Quote",
+      "Period",
+      "Backquote"
+    ],
+    "prev": [
+      "Semicolon",
+      "Comma",
+      "IntlBackslash"
+    ]
+  }
+}

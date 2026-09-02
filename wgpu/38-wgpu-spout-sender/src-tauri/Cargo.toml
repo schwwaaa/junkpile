@@ -1,0 +1,21 @@
+[package]
+name = "junkpile_38_wgpu_spout_sender"
+version = "0.1.0"
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+cmake = "0.1"
+
+[dependencies]
+bytemuck = { version = "1.24", features = ["derive"] }
+pollster = "0.4"
+serde = { version = "1", features = ["derive"] }
+tauri = { version = "2", features = ["unstable"] }
+wgpu = "29.0.3"
+
+[features]
+default = []
+spout = []
+
+[workspace]

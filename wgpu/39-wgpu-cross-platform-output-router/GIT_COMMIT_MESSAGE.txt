@@ -1,0 +1,8 @@
+feat: add cross-platform wgpu output router
+
+- route one authoritative texture to preview, NDI, recording, and platform sharing
+- use Syphon on macOS and Spout on Windows behind one profile contract
+- add simultaneous output profiles, hotkeys, rollback, and independent sink controls
+- preserve bounded queues, drop telemetry, custom recording folders, and hot reload
+- vendor Syphon and Spout native bridges with platform-aware build integration
+- exclude the unresolved FFmpeg network-streaming implementation

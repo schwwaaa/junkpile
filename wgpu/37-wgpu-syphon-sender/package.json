@@ -1,0 +1,13 @@
+{
+  "name": "junkpile-37-wgpu-syphon-sender",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "cargo tauri dev --features syphon",
+    "dev:no-syphon": "cargo tauri dev",
+    "build": "cargo tauri build --features syphon"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.8.5"
+  }
+}
