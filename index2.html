@@ -1,123 +1,329 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Standalone Tauri and native wgpu projects for creative graphics, media, recording, routing, and GPU application development." />
-  <meta name="theme-color" content="#07080B" />
-  <title>Junkpile · Creative graphics systems laboratory</title>
-  <link href="assets/icons/favicon-32x32.png" rel="icon" sizes="32x32" />
-  <link href="assets/site/site.css" rel="stylesheet" />
-  <script defer src="assets/site/site.js"></script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Working examples for building standalone creative graphics and media applications with Tauri, WebGL, Rust, wgpu, recording, routing, and native I/O." />
+    <meta name="theme-color" content="#07080B" />
+    <title>Junkpile · Working examples for creative graphics applications</title>
+    <link href="assets/icons/favicon-32x32.png" rel="icon" sizes="32x32" />
+    <link href="assets/site/site.css" rel="stylesheet" />
+    <script defer src="assets/site/site.js"></script>
 </head>
 <style>
-.schwwaaa-footer{position:relative;z-index:1;width:100%;padding:28px 0 36px;text-align:center}.schwwaaa-footer-logo{display:inline-flex;align-items:center;justify-content:center;text-decoration:none}.schwwaaa-footer-image{display:block;width:min(168px,44vw);height:auto;object-fit:contain;opacity:.9;filter:drop-shadow(0 0 12px rgba(255,255,255,.22)) drop-shadow(0 0 22px rgba(13,110,253,.18));transition:opacity .3s ease,transform .3s ease,filter .3s ease}.schwwaaa-footer-logo:hover .schwwaaa-footer-image{opacity:1;transform:translateY(-1px);filter:drop-shadow(0 0 14px rgba(255,255,255,.35)) drop-shadow(0 0 28px rgba(13,110,253,.32))}
+    .schwwaaa-footer {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        padding: 28px 0 36px;
+        text-align: center
+    }
+    
+    .schwwaaa-footer-logo {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none
+    }
+    
+    .schwwaaa-footer-image {
+        display: block;
+        width: min(168px, 44vw);
+        height: auto;
+        object-fit: contain;
+        opacity: .9;
+        filter: drop-shadow(0 0 12px rgba(255, 255, 255, .22)) drop-shadow(0 0 22px rgba(13, 110, 253, .18));
+        transition: opacity .3s ease, transform .3s ease, filter .3s ease
+    }
+    
+    .schwwaaa-footer-logo:hover .schwwaaa-footer-image {
+        opacity: 1;
+        transform: translateY(-1px);
+        filter: drop-shadow(0 0 14px rgba(255, 255, 255, .35)) drop-shadow(0 0 28px rgba(13, 110, 253, .32))
+    }
+    
+    .software-preview {
+        grid-column: 1 / -1;
+        margin: 4px 0 0;
+    }
+    
+    .software-preview-frame {
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: #090b10;
+        aspect-ratio: 16 / 9;
+    }
+    
+    .software-preview-image {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .software-preview figcaption {
+        margin-top: 12px;
+        color: var(--muted);
+        font: 11px/1.55 var(--mono);
+    }
+    
+    .software-preview figcaption strong {
+        color: #fff;
+    }
 </style>
+
 <body>
-<a class="skip-link" href="#main">Skip to content</a>
-<header class="site-header">
-  <div class="header-inner">
-    <a class="brand" href="index.html"><img alt="" aria-hidden="true" class="brand-symbol" src="assets/brand/junkpile-amorphous-icon.png" /><span>junkpile<small>creative graphics systems</small></span></a>
-    <button aria-controls="site-nav" aria-expanded="false" class="nav-toggle" data-nav-toggle>Menu</button>
-    <nav aria-label="Primary navigation" class="site-nav" data-site-nav id="site-nav">
-      <a href="index.html" data-primary-nav="overview" aria-current="page">Overview</a>
-      <a href="docs.html" data-primary-nav="docs">Documentation</a>
-      <a href="docs.html#installation-build" data-primary-nav="install">Install</a>
-      <a href="docs.html#example-catalog" data-primary-nav="examples">Examples</a>
-      <a href="https://github.com/schwwaaa/junkpile">GitHub</a>
-    </nav>
-  </div>
-</header>
-<main id="main">
-<section class="hero"><div class="container hero-grid"><div class="hero-art"><img class="hero-mark" alt="Junkpile amorphous shader-form logo" src="assets/brand/junkpile-amorphous-icon.png" /></div><div class="hero-copy">
-  <p class="eyebrow">Coding templates for live visual art</p>
-  <h1 class="display">Run it.<br/><span class="outline">Understand it.</span><br/>Build from it.</h1>
-  <p class="lede">Junkpile is a laboratory of standalone creative-graphics applications. WebView and native GPU paths are documented side by side so you can start with the simplest useful architecture and move lower-level only when the application actually benefits from it.</p>
-  <div class="hero-actions"><a class="button primary" href="docs.html#installation-build">Install &amp; run</a><a class="button blue" href="docs.html#example-catalog">Browse examples</a><a class="button ghost" href="docs.html#architecture">Understand the architecture</a></div>
-</div><div aria-label="Core technical paths" class="stat-strip"><div class="stat"><strong>WebView</strong><span>p5.js · WebGL · GLSL</span></div><div class="stat"><strong>Desktop</strong><span>Tauri v1 · Tauri v2</span></div><div class="stat"><strong>Native GPU</strong><span>Rust · wgpu · WGSL</span></div><div class="stat"><strong>Media I/O</strong><span>capture · record · route · share</span></div></div></div></section>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+        <div class="header-inner">
+            <a class="brand" href="index.html">
+                <img alt="" aria-hidden="true" class="brand-symbol" src="assets/brand/junkpile-amorphous-icon.png" />
+                <span class="brand-name">junkpile</span>
+            </a>
+            <button aria-controls="site-nav" aria-expanded="false" class="nav-toggle" data-nav-toggle>Menu</button>
+            <nav aria-label="Primary navigation" class="site-nav" data-site-nav id="site-nav">
+                <a href="index.html" data-primary-nav="overview" aria-current="page">Overview</a>
+                <a href="docs.html" data-primary-nav="docs" target="_blank" rel="noopener noreferrer">Documentation</a>
+                <a href="docs.html#installation-build" data-primary-nav="install" target="_blank" rel="noopener noreferrer">Install</a>
+                <a href="docs.html#example-catalog" data-primary-nav="examples" target="_blank" rel="noopener noreferrer">Examples</a>
+                <a href="https://github.com/schwwaaa/junkpile">GitHub</a>
+            </nav>
+        </div>
+    </header>
+    <main id="main">
+        <section class="hero">
+            <div class="container hero-grid">
+                <div class="hero-title">
+                    <!-- <p class="eyebrow">Coding templates for live visual art</p> -->
+                    <div class="hero-brand-lockup"><img class="hero-brand-mark" alt="Junkpile amorphous shader-form logo" src="assets/brand/junkpile-amorphous-icon.png" />
+                        <h1 class="hero-brand-name">junkpile</h1>
+                    </div>
+                </div>
+                <div class="hero-copy">
+                    <p class="lede"><i>Junkpile</i> gives developers working examples for building standalone creative graphics and media applications without having to solve the same rendering, input, recording, routing, and desktop-integration problems from scratch.
+                        Pick the example closest to what you need, run it, study how it works, and adapt it into your own tool.</p>
+                    <div class="hero-actions"><a class="button primary" href="docs.html#installation-build" target="_blank" rel="noopener noreferrer">Install &amp; run</a><a class="button blue" href="docs.html#example-catalog" target="_blank" rel="noopener noreferrer">Browse examples</a>
+                        <a class="button ghost" href="docs.html#architecture" target="_blank" rel="noopener noreferrer">Understand the architecture</a>
+                    </div>
+                </div>
+                <div aria-label="Core technical paths" class="stat-strip">
+                    <div class="stat"><strong>WebView</strong><span>p5.js · WebGL · GLSL</span></div>
+                    <div class="stat"><strong>Desktop</strong><span>Tauri v1 · Tauri v2</span></div>
+                    <div class="stat"><strong>Native GPU</strong><span>Rust · wgpu · WGSL</span></div>
+                    <div class="stat"><strong>Media I/O</strong><span>capture · record · route · share</span></div>
+                </div>
 
-<section class="section-dark section"><div class="container"><p class="eyebrow">Three repository tracks</p><h2 class="section-heading">Similar goals. Different render ownership.</h2><p class="section-intro">Tauri generation, renderer choice, and media I/O are separate decisions. The current repository organizes examples as Tauri v1 WebView, Tauri v2 WebView, and Tauri 2 + native wgpu, but native transports are not inherently exclusive to the wgpu renderer.</p><div class="path-grid" style="margin-top:36px">
-<article class="card"><div class="card-number">V1</div><h3>Tauri v1 WebView</h3><p>HTML, JavaScript, p5.js, raw WebGL, GLSL, browser media, and Rust bridges using the first-generation Tauri configuration model.</p><a class="card-link" href="docs.html#v1-track">Explore v1 →</a></article>
-<article class="card"><div class="card-number">V2</div><h3>Tauri v2 WebView</h3><p>The accessible browser graphics path with current Tauri capabilities, file workflows, window APIs, and standalone application patterns.</p><a class="card-link" href="docs.html#v2-track">Explore v2 →</a></article>
-<article class="card"><div class="card-number">GPU</div><h3>Native Rust/wgpu</h3><p>WGSL, compute, explicit GPU resources, native media paths, high-resolution render/record, and the repository's current dedicated NDI, Syphon, Spout, and output-routing examples.</p><a class="card-link" href="docs.html#wgpu-track">Explore wgpu →</a></article>
-</div></div></section>
+                <figure class="software-preview">
+                    <div class="software-preview-frame">
+                        <img class="software-preview-image" src="assets/junkpile-app.png" alt="Junkpile standalone software example" loading="lazy" />
+                    </div>
+                    <figcaption><strong>Working software, not isolated code snippets.</strong> Junkpile examples are runnable standalone applications meant to be studied, modified, and built into your own tools.</figcaption>
+                </figure>
+            </div>
+        </section>
 
-<section class="section"><div class="container"><div class="truth-card"><p class="eyebrow">Architectural truth</p><h2 class="section-heading">Framework, renderer, and I/O are separate concerns.</h2><div class="truth-grid"><div class="truth-pane"><h3>Rendering path</h3><p><strong>WebView / WebGL</strong> or <strong>Rust / wgpu</strong><br/>determines who owns the pixels and GPU resources.</p></div><div class="truth-pane"><h3>Native services / I/O</h3><p><strong>files · MIDI · OSC · FFmpeg · NDI · Syphon · Spout</strong><br/>are application integrations whose bridge depends on the renderer and platform.</p></div></div><p>Tauri generation selects the desktop application framework and brings its own window/API constraints. Renderer ownership is a separate implementation decision, while external output transports are another layer again. An output transport should not be described as wgpu-only simply because Junkpile's current dedicated sender example uses wgpu.</p></div></div></section>
+        <section class="section-dark section">
+            <div class="container">
+                <p class="eyebrow">Choose a starting point</p>
+                <h2 class="section-heading">Start with the simplest path that fits the job.</h2>
+                <p class="section-intro">You do not need to begin with the lowest-level stack. Junkpile keeps accessible WebView projects and native GPU projects side by side so you can start with the approach that already matches your application, then move lower-level only
+                    when you need more control or performance.</p>
+                <div class="path-grid" style="margin-top:36px">
+                    <article class="card">
+                        <div class="card-number">V1</div>
+                        <h3>Tauri v1 WebView</h3>
+                        <p>Use this track for straightforward p5.js, WebGL, shader, camera, media, MIDI, OSC, and desktop experiments built around the Tauri v1 WebView model.</p><a class="card-link" href="docs.html#v1-track" target="_blank" rel="noopener noreferrer">Explore v1 →</a></article>
+                    <article class="card">
+                        <div class="card-number">V2</div>
+                        <h3>Tauri v2 WebView</h3>
+                        <p>Use this track when you want the familiar browser graphics workflow with current Tauri permissions, dialogs, window APIs, file handling, and application packaging.</p><a class="card-link" href="docs.html#v2-track" target="_blank"
+                            rel="noopener noreferrer">Explore v2 →</a></article>
+                    <article class="card">
+                        <div class="card-number">GPU</div>
+                        <h3>Native Rust/wgpu</h3>
+                        <p>Use this track when the application benefits from direct GPU ownership, compute, high-resolution rendering and recording, native media pipelines, or explicit output routing.</p><a class="card-link" href="docs.html#wgpu-track" target="_blank"
+                            rel="noopener noreferrer">Explore wgpu →</a></article>
+                </div>
+            </div>
+        </section>
 
-<section class="section-signal section"><div class="container"><p class="eyebrow">Application stack</p><h2 class="section-heading">From pixels to complete media tools.</h2><div class="diagram"><p class="diagram-title">Junkpile development layers</p><div class="flow"><div class="flow-node signal"><strong>Foundations</strong><small>surface · shader · controls</small></div><div class="flow-arrow">→</div><div class="flow-node"><strong>Media</strong><small>image · camera · video · audio</small></div><div class="flow-arrow">→</div><div class="flow-node blue"><strong>Processing</strong><small>feedback · compute · compositing</small></div><div class="flow-arrow">→</div><div class="flow-node orange"><strong>I/O</strong><small>record · NDI · Syphon · Spout</small></div><div class="flow-arrow">→</div><div class="flow-node dark"><strong>Applications</strong><small>focused standalone creative tools</small></div></div></div></div></section>
+        <section class="section">
+            <div class="container">
+                <div class="truth-card">
+                    <p class="eyebrow">Understand the pieces</p>
+                    <h2 class="section-heading">Choose how you render. Add the inputs and outputs you need.</h2>
+                    <div class="truth-grid">
+                        <div class="truth-pane">
+                            <h3>Rendering path</h3>
+                            <p><strong>WebView / WebGL</strong> or <strong>Rust / wgpu</strong><br/>determines who owns the pixels and GPU resources.</p>
+                        </div>
+                        <div class="truth-pane">
+                            <h3>Native services / I/O</h3>
+                            <p><strong>files · MIDI · OSC · FFmpeg · NDI · Syphon · Spout</strong><br/>are application integrations whose bridge depends on the renderer and platform.</p>
+                        </div>
+                    </div>
+                    <p>This separation lets you reason about the application one problem at a time. Tauri defines the desktop shell, the renderer owns the pixels, and media services connect the application to files, controllers, cameras, recorders, and external
+                        video systems. A transport is not tied to wgpu simply because the current Junkpile reference happens to use it.</p>
+                </div>
+            </div>
+        </section>
 
-<section class="section"><div class="container"><p class="eyebrow">Current wgpu I/O references</p><h2 class="section-heading">One authoritative frame. Independent outputs.</h2><p class="section-intro">The newer wgpu series demonstrates one explicit output-contract architecture for recording and external sharing. This is the current Junkpile reference implementation, not a claim that FFmpeg, NDI, Syphon, or Spout require wgpu.</p><div class="diagram" style="margin-top:30px"><div class="flow"><div class="flow-node signal"><strong>Native renderer</strong><small>authoritative GPU texture</small></div><div class="flow-arrow">→</div><div class="flow-node"><strong>Frame/output contract</strong><small>cadence · dimensions · timestamps</small></div><div class="flow-arrow">→</div><div class="flow-node blue"><strong>Bounded sinks</strong><small>preview · record · NDI · share</small></div><div class="flow-arrow">→</div><div class="flow-node orange"><strong>Diagnostics</strong><small>drops · pressure · errors</small></div></div></div><div class="hero-actions"><a class="button blue" href="docs.html#native-io">I/O architecture</a><a class="button ghost" href="docs.html#av-recorder">A/V recorder</a></div></div></section>
+        <section class="section-signal section">
+            <div class="container">
+                <p class="eyebrow">Build an application</p>
+                <h2 class="section-heading">Start with one capability. Combine them when you need more.</h2>
+                <div class="diagram">
+                    <p class="diagram-title">Junkpile development layers</p>
+                    <div class="flow">
+                        <div class="flow-node signal"><strong>Foundations</strong><small>surface · shader · controls</small></div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-node"><strong>Media</strong><small>image · camera · video · audio</small></div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-node blue"><strong>Processing</strong><small>feedback · compute · compositing</small></div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-node orange"><strong>I/O</strong><small>record · NDI · Syphon · Spout</small></div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-node dark"><strong>Applications</strong><small>focused standalone creative tools</small></div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-<section class="section-dark section"><div class="container"><p class="eyebrow">Representative examples</p><h2 class="section-heading">The library is now an application laboratory.</h2><p class="section-intro">These projects show the span from an approachable p5.js baseline through media playback, native compositing, high-resolution recording, multi-output routing, A/V capture, and live WGSL tooling.</p><div class="example-grid" style="margin-top:30px"><article class="example-card" data-example-card data-version="v1" data-family="p5">
-      <div class="example-card-head"><span class="badge">Tauri v1 00</span><span class="card-tag status">Current</span></div>
-      <div class="example-card-body">
-        <h3>Tauri v1 p5.js Single Window</h3><code>00-p5-tauri-single-template</code>
-        <p>A focused foundation for running a p5.js WebGL shader and its HTML controls inside one Tauri v1 WebView.</p>
-        <div class="example-meta"><span>p5</span><span>single-window</span></div>
-        
-        <div class="example-actions"><a class="mini-button" href="v1/00-p5-tauri-single-template/README.md">Local README</a><a class="mini-button" href="v1/00-p5-tauri-single-template/">Project folder</a></div>
-      </div>
-    </article><article class="example-card" data-example-card data-version="v2" data-family="video">
-      <div class="example-card-head"><span class="badge">Tauri v2 12</span><span class="card-tag status">Current</span></div>
-      <div class="example-card-body">
-        <h3>Tauri v2 Video Texture Player</h3><code>12-tauri-v2-video-texture-player</code>
-        <p>A standalone Tauri v2 example for loading local video, decoding it in the WebView, uploading newly presented frames into a WebGL texture, applying GLSL processing, retaining temporal feedback, and exporting PNG snapshots.</p>
-        <div class="example-meta"><span>video</span><span>single-window</span></div>
-        
-        <div class="example-actions"><a class="mini-button" href="v2/12-tauri-v2-video-texture-player/README.md">Local README</a><a class="mini-button" href="v2/12-tauri-v2-video-texture-player/">Project folder</a></div>
-      </div>
-    </article><article class="example-card" data-example-card data-version="wgpu" data-family="compositing">
-      <div class="example-card-head"><span class="badge">Native wgpu 20</span><span class="card-tag status">Current</span></div>
-      <div class="example-card-body">
-        <h3>Multi-Input Compositor</h3><code>20-wgpu-multi-input-compositor</code>
-        <p>A standalone Tauri 2 + Rust/wgpu convergence example that combines the input systems developed in examples 14–19 into one native render graph.</p>
-        <div class="example-meta"><span>compositing</span><span>hybrid-controls-native-renderer</span></div>
-        
-        <div class="example-actions"><a class="mini-button" href="wgpu/20-wgpu-multi-input-compositor/README.md">Local README</a><a class="mini-button" href="wgpu/20-wgpu-multi-input-compositor/">Project folder</a></div>
-      </div>
-    </article><article class="example-card" data-example-card data-version="wgpu" data-family="recording">
-      <div class="example-card-head"><span class="badge">Native wgpu 30</span><span class="card-tag status">Current</span></div>
-      <div class="example-card-body">
-        <h3>High-Resolution Recording</h3><code>30-wgpu-high-resolution-record</code>
-        <p>A native wgpu + Tauri 2 teaching example for recording procedural GPU output at a resolution independent from the visible preview window.</p>
-        <div class="example-meta"><span>recording</span><span>hybrid-controls-native-renderer</span></div>
-        
-        <div class="example-actions"><a class="mini-button" href="wgpu/30-wgpu-high-resolution-record/README.md">Local README</a><a class="mini-button" href="wgpu/30-wgpu-high-resolution-record/">Project folder</a></div>
-      </div>
-    </article><article class="example-card" data-example-card data-version="wgpu" data-family="routing">
-      <div class="example-card-head"><span class="badge">Native wgpu 39</span><span class="card-tag status">Current</span></div>
-      <div class="example-card-body">
-        <h3>Cross-Platform Output Router</h3><code>39-wgpu-cross-platform-output-router</code>
-        <p>A native Tauri 2 + wgpu reference application that renders one authoritative GPU texture and routes it at runtime to multiple independent output sinks:</p>
-        <div class="example-meta"><span>routing</span><span>hybrid-controls-native-renderer</span></div>
-        
-        <div class="example-actions"><a class="mini-button" href="wgpu/39-wgpu-cross-platform-output-router/README.md">Local README</a><a class="mini-button" href="wgpu/39-wgpu-cross-platform-output-router/">Project folder</a></div>
-      </div>
-    </article><article class="example-card" data-example-card data-version="wgpu" data-family="recording">
-      <div class="example-card-head"><span class="badge">Native wgpu 43</span><span class="card-tag status">Working baseline</span></div>
-      <div class="example-card-body">
-        <h3>AV Recorder</h3><code>43-wgpu-av-recorder</code>
-        <p>Focused native Tauri 2 + wgpu recorder with selectable audio source.</p>
-        <div class="example-meta"><span>recording</span><span>hybrid-controls-native-renderer</span></div>
-        
-        <div class="example-actions"><a class="mini-button" href="wgpu/43-wgpu-av-recorder/README.md">Local README</a><a class="mini-button" href="wgpu/43-wgpu-av-recorder/">Project folder</a></div>
-      </div>
-    </article><article class="example-card" data-example-card data-version="wgpu" data-family="shader-tooling">
-      <div class="example-card-head"><span class="badge">Native wgpu 44</span><span class="card-tag status">Current</span></div>
-      <div class="example-card-body">
-        <h3>WGSL Shader Playground</h3><code>44-wgpu-wgsl-shader-playground</code>
-        <p>A native Tauri 2 + wgpu counterpart to Junkpile&#x27;s WebView shader playground workflow.</p>
-        <div class="example-meta"><span>shader-tooling</span><span>native-window</span></div>
-        
-        <div class="example-actions"><a class="mini-button" href="wgpu/44-wgpu-wgsl-shader-playground/README.md">Local README</a><a class="mini-button" href="wgpu/44-wgpu-wgsl-shader-playground/">Project folder</a></div>
-      </div>
-    </article></div><div class="hero-actions"><a class="button primary" href="docs.html#example-catalog">Open the searchable catalog</a></div></div></section>
+        <section class="section">
+            <div class="container">
+                <p class="eyebrow">Recording and output</p>
+                <h2 class="section-heading">Render once. Send the frame where it needs to go.</h2>
+                <p class="section-intro">The current native examples show how one rendered frame can feed preview, recording, NDI, and platform-specific sharing without making every output part of the render loop. The same transport concepts can be integrated into other application
+                    architectures; these are simply Junkpile's current reference implementations.</p>
+                <div class="diagram" style="margin-top:30px">
+                    <div class="flow">
+                        <div class="flow-node signal"><strong>Native renderer</strong><small>authoritative GPU texture</small></div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-node"><strong>Frame/output contract</strong><small>cadence · dimensions · timestamps</small></div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-node blue"><strong>Bounded sinks</strong><small>preview · record · NDI · share</small></div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-node orange"><strong>Diagnostics</strong><small>drops · pressure · errors</small></div>
+                    </div>
+                </div>
+                <div class="hero-actions"><a class="button blue" href="docs.html#native-io" target="_blank" rel="noopener noreferrer">I/O architecture</a><a class="button ghost" href="docs.html#av-recorder" target="_blank" rel="noopener noreferrer">A/V recorder</a></div>
+            </div>
+        </section>
 
-<section class="section"><div class="container"><p class="eyebrow">Working method</p><h2 class="section-heading">Preserve the baseline. Change one boundary.</h2><div class="principle-grid"><article class="card"><h3>Run first</h3><p>Prove the untouched example before debugging your modification.</p></article><article class="card"><h3>Keep ownership visible</h3><p>Know whether JavaScript, Rust, the GPU, or an external worker owns the failing state.</p></article><article class="card"><h3>Bound external work</h3><p>Recording and network/media workers should expose pressure rather than silently block the renderer.</p></article><article class="card"><h3>Document evidence</h3><p>Source presence, static review, runtime validation, and cross-platform verification are different claims.</p></article></div></div></section>
-</main>
-<footer class="schwwaaa-footer" aria-label="schwwaaa footer logo">
-  <a class="schwwaaa-footer-logo" href="https://linktr.ee/schwwaaa" target="_blank" rel="noopener noreferrer">
-    <img class="schwwaaa-footer-image" src="./assets/schwwaaa-logo.png" alt="schwwaaa" />
-  </a>
-</footer>
-</body></html>
+        <section class="section-dark section">
+            <div class="container">
+                <p class="eyebrow">Find a working starting point</p>
+                <h2 class="section-heading">Start from something that already does part of the job.</h2>
+                <p class="section-intro">Need video playback, a camera texture, feedback, recording, compositing, high-resolution output, A/V capture, or shader tooling? Start with the closest working project instead of rebuilding that infrastructure before you can work on your
+                    own idea.</p>
+                <div class="example-grid" style="margin-top:30px">
+                    <article class="example-card" data-example-card data-version="v1" data-family="p5">
+                        <div class="example-card-head"><span class="badge">Tauri v1 00</span><span class="card-tag status">Current</span></div>
+                        <div class="example-card-body">
+                            <h3>Tauri v1 p5.js Single Window</h3><code>00-p5-tauri-single-template</code>
+                            <p>A focused foundation for running a p5.js WebGL shader and its HTML controls inside one Tauri v1 WebView.</p>
+                            <div class="example-meta"><span>p5</span><span>single-window</span></div>
+
+                            <div class="example-actions"><a class="mini-button" href="v1/00-p5-tauri-single-template/README.md">Local README</a><a class="mini-button" href="v1/00-p5-tauri-single-template/">Project folder</a></div>
+                        </div>
+                    </article>
+                    <article class="example-card" data-example-card data-version="v2" data-family="video">
+                        <div class="example-card-head"><span class="badge">Tauri v2 12</span><span class="card-tag status">Current</span></div>
+                        <div class="example-card-body">
+                            <h3>Tauri v2 Video Texture Player</h3><code>12-tauri-v2-video-texture-player</code>
+                            <p>A standalone Tauri v2 example for loading local video, decoding it in the WebView, uploading newly presented frames into a WebGL texture, applying GLSL processing, retaining temporal feedback, and exporting PNG snapshots.</p>
+                            <div class="example-meta"><span>video</span><span>single-window</span></div>
+
+                            <div class="example-actions"><a class="mini-button" href="v2/12-tauri-v2-video-texture-player/README.md">Local README</a><a class="mini-button" href="v2/12-tauri-v2-video-texture-player/">Project folder</a></div>
+                        </div>
+                    </article>
+                    <article class="example-card" data-example-card data-version="wgpu" data-family="compositing">
+                        <div class="example-card-head"><span class="badge">Native wgpu 20</span><span class="card-tag status">Current</span></div>
+                        <div class="example-card-body">
+                            <h3>Multi-Input Compositor</h3><code>20-wgpu-multi-input-compositor</code>
+                            <p>A standalone Tauri 2 + Rust/wgpu convergence example that combines the input systems developed in examples 14–19 into one native render graph.</p>
+                            <div class="example-meta"><span>compositing</span><span>hybrid-controls-native-renderer</span></div>
+
+                            <div class="example-actions"><a class="mini-button" href="wgpu/20-wgpu-multi-input-compositor/README.md">Local README</a><a class="mini-button" href="wgpu/20-wgpu-multi-input-compositor/">Project folder</a></div>
+                        </div>
+                    </article>
+                    <article class="example-card" data-example-card data-version="wgpu" data-family="recording">
+                        <div class="example-card-head"><span class="badge">Native wgpu 30</span><span class="card-tag status">Current</span></div>
+                        <div class="example-card-body">
+                            <h3>High-Resolution Recording</h3><code>30-wgpu-high-resolution-record</code>
+                            <p>A native wgpu + Tauri 2 teaching example for recording procedural GPU output at a resolution independent from the visible preview window.</p>
+                            <div class="example-meta"><span>recording</span><span>hybrid-controls-native-renderer</span></div>
+
+                            <div class="example-actions"><a class="mini-button" href="wgpu/30-wgpu-high-resolution-record/README.md">Local README</a><a class="mini-button" href="wgpu/30-wgpu-high-resolution-record/">Project folder</a></div>
+                        </div>
+                    </article>
+                    <article class="example-card" data-example-card data-version="wgpu" data-family="routing">
+                        <div class="example-card-head"><span class="badge">Native wgpu 39</span><span class="card-tag status">Current</span></div>
+                        <div class="example-card-body">
+                            <h3>Cross-Platform Output Router</h3><code>39-wgpu-cross-platform-output-router</code>
+                            <p>A native Tauri 2 + wgpu reference application that renders one authoritative GPU texture and routes it at runtime to multiple independent output sinks:</p>
+                            <div class="example-meta"><span>routing</span><span>hybrid-controls-native-renderer</span></div>
+
+                            <div class="example-actions"><a class="mini-button" href="wgpu/39-wgpu-cross-platform-output-router/README.md">Local README</a><a class="mini-button" href="wgpu/39-wgpu-cross-platform-output-router/">Project folder</a></div>
+                        </div>
+                    </article>
+                    <article class="example-card" data-example-card data-version="wgpu" data-family="recording">
+                        <div class="example-card-head"><span class="badge">Native wgpu 43</span><span class="card-tag status">Working baseline</span></div>
+                        <div class="example-card-body">
+                            <h3>AV Recorder</h3><code>43-wgpu-av-recorder</code>
+                            <p>Focused native Tauri 2 + wgpu recorder with selectable audio source.</p>
+                            <div class="example-meta"><span>recording</span><span>hybrid-controls-native-renderer</span></div>
+
+                            <div class="example-actions"><a class="mini-button" href="wgpu/43-wgpu-av-recorder/README.md">Local README</a><a class="mini-button" href="wgpu/43-wgpu-av-recorder/">Project folder</a></div>
+                        </div>
+                    </article>
+                    <article class="example-card" data-example-card data-version="wgpu" data-family="shader-tooling">
+                        <div class="example-card-head"><span class="badge">Native wgpu 44</span><span class="card-tag status">Current</span></div>
+                        <div class="example-card-body">
+                            <h3>WGSL Shader Playground</h3><code>44-wgpu-wgsl-shader-playground</code>
+                            <p>A native Tauri 2 + wgpu counterpart to Junkpile&#x27;s WebView shader playground workflow.</p>
+                            <div class="example-meta"><span>shader-tooling</span><span>native-window</span></div>
+
+                            <div class="example-actions"><a class="mini-button" href="wgpu/44-wgpu-wgsl-shader-playground/README.md">Local README</a><a class="mini-button" href="wgpu/44-wgpu-wgsl-shader-playground/">Project folder</a></div>
+                        </div>
+                    </article>
+                </div>
+                <div class="hero-actions"><a class="button primary" href="docs.html#example-catalog" target="_blank" rel="noopener noreferrer">Open the searchable catalog</a></div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="container">
+                <p class="eyebrow">Working method</p>
+                <h2 class="section-heading">Run it. Study it. Change one thing at a time.</h2>
+                <div class="principle-grid">
+                    <article class="card">
+                        <h3>Run first</h3>
+                        <p>Prove the untouched example before debugging your modification.</p>
+                    </article>
+                    <article class="card">
+                        <h3>Keep ownership visible</h3>
+                        <p>Know whether JavaScript, Rust, the GPU, or an external worker owns the failing state.</p>
+                    </article>
+                    <article class="card">
+                        <h3>Bound external work</h3>
+                        <p>Recording and network/media workers should expose pressure rather than silently block the renderer.</p>
+                    </article>
+                    <article class="card">
+                        <h3>Document evidence</h3>
+                        <p>Source presence, static review, runtime validation, and cross-platform verification are different claims.</p>
+                    </article>
+                </div>
+            </div>
+        </section>
+    </main>
+    <footer class="schwwaaa-footer" aria-label="schwwaaa footer logo">
+        <a class="schwwaaa-footer-logo" href="https://linktr.ee/schwwaaa" target="_blank" rel="noopener noreferrer">
+            <img class="schwwaaa-footer-image" src="./assets/schwwaaa-logo.png" alt="schwwaaa" />
+        </a>
+    </footer>
+</body>
+
+</html>

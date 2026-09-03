@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Technical documentation for Junkpile WebView and native wgpu creative-application examples." />
+    <meta name="description" content="Developer documentation for building standalone creative graphics and media applications from working Junkpile examples." />
     <meta name="theme-color" content="#07080B" />
     <title>Junkpile technical documentation</title>
     <link href="assets/icons/favicon-32x32.png" rel="icon" sizes="32x32" />
@@ -70,9 +70,9 @@
         </aside>
         <div class="docs-main">
             <section class="docs-hero">
-                <p class="eyebrow">Junkpile technical reference</p>
-                <h1>Choose the renderer.<br/>Attach the services you need.</h1>
-                <p class="lede">The documentation follows the actual repository while keeping three decisions separate: Tauri generation, pixel/render ownership, and native media/I/O integration.</p>
+                <p class="eyebrow">Junkpile developer guide</p>
+                <h1>Start with a working example.<br/>Build the tool you need.</h1>
+                <p class="lede">Junkpile gives you runnable desktop projects for common creative-media problems—rendering, camera and video input, audio, MIDI and OSC, recording, GPU processing, export, and output routing. Use the smallest example that already solves part of your problem, understand its boundaries, then adapt or combine it into your own application.</p>
                 <div class="hero-actions"><a class="button primary" href="#installation-build">Install &amp; run</a><a class="button blue" href="#example-catalog">Examples</a><a class="button ghost" href="#native-io">I/O architecture</a></div>
                 <div class="docs-search-wrap"><label class="search-field"><span>⌕</span><input data-doc-search type="search" placeholder="Search documentation…" aria-label="Search documentation" /></label>
                     <div class="docs-search-status">Search hides sections that do not match.</div>
@@ -80,29 +80,31 @@
             </section>
 
             <section class="doc-section" id="orientation" data-doc-section><span class="doc-kicker">Orientation</span>
-                <h2>What Junkpile is <a class="anchor-link" href="#orientation">#</a></h2>
-                <p>Junkpile is a growing set of standalone desktop projects for creative graphics, live media, native GPU work, recording, routing, automation, and reusable application architecture.</p>
+                <h2>What Junkpile does <a class="anchor-link" href="#orientation">#</a></h2>
+                <p>Junkpile removes repeated setup work from creative desktop development. Instead of starting with an empty Tauri project and rebuilding graphics, media input, recording, control, and output plumbing yourself, you can begin with a working example that already owns the part of the application you need.</p>
+                <p>The examples are meant to be run, read, modified, and combined. They range from approachable WebView/WebGL projects to native Rust/wgpu projects for workloads that need more direct GPU or media control.</p>
                 <div class="grid-3">
                     <div class="card">
-                        <h3>Tauri generation</h3>
-                        <p>v1 and v2 determine framework configuration, permissions, plugins, window APIs, IPC conventions, and some window-integration constraints.</p>
+                        <h3>Desktop application shell</h3>
+                        <p>Tauri v1 and v2 package the project as a desktop application and determine configuration, permissions, plugins, window APIs, IPC conventions, and some window-integration constraints.</p>
                     </div>
                     <div class="card">
-                        <h3>Render ownership</h3>
-                        <p>In the current collections, WebView/WebGL or Tauri 2 + native Rust/wgpu determines who owns the pixels, textures, render loop, and GPU resources.</p>
+                        <h3>Where the graphics run</h3>
+                        <p>WebView/WebGL is the more accessible browser-style path. Native Rust/wgpu gives Rust direct ownership of pixels, textures, the render loop, and GPU resources when the application needs that control.</p>
                     </div>
                     <div class="card">
-                        <h3>Media + I/O</h3>
-                        <p>Camera, audio, files, MIDI, OSC, FFmpeg, NDI, Syphon, Spout, and other transports are integrations layered onto an application architecture; they are not synonymous with one renderer.</p>
+                        <h3>Connect the application</h3>
+                        <p>Camera, audio, files, MIDI, OSC, FFmpeg, NDI, Syphon, Spout, and other services connect the application to media, controllers, recorders, and external systems. They are integration layers, not synonyms for one renderer.</p>
                     </div>
                 </div>
                 <div class="callout info"><strong>No fixed public total.</strong>The library is designed to grow. Documentation is organized around architectural tracks and capabilities rather than an advertised example count.</div>
             </section>
 
             <section class="doc-section" id="quick-start" data-doc-section><span class="doc-kicker">Quick start</span>
-                <h2>Run one project first <a class="anchor-link" href="#quick-start">#</a></h2>
+                <h2>Run one project before you change anything <a class="anchor-link" href="#quick-start">#</a></h2>
+                <p>The fastest way into Junkpile is to find the example closest to your goal and prove that it works unchanged. That gives you a known-good baseline before your own code enters the picture.</p>
                 <ol class="number-list">
-                    <li>Choose the smallest example that already owns the input/render/output boundary you need.</li>
+                    <li>Choose the smallest example that already does the input, processing, or output job you need.</li>
                     <li>Enter that project directory.</li>
                     <li>Run <code>npm install</code> once for the project.</li>
                     <li>Run <code>npm run dev</code>.</li>
@@ -139,7 +141,8 @@ npm run build</code></pre></div>
             </section>
 
             <section class="doc-section" id="choose-track" data-doc-section><span class="doc-kicker">Choose a track</span>
-                <h2>Choose by ownership, then add I/O <a class="anchor-link" href="#choose-track">#</a></h2>
+                <h2>Choose the simplest starting point for the job <a class="anchor-link" href="#choose-track">#</a></h2>
+                <p>Do not choose a track because one sounds more advanced. Choose it based on what your application actually needs. WebView projects are often faster to understand and modify; native wgpu becomes useful when direct GPU ownership, compute, high-resolution rendering, or tighter native-media integration matters.</p>
                 <div class="table-wrap">
                     <table class="compare-table">
                         <thead>
@@ -179,7 +182,8 @@ npm run build</code></pre></div>
             </section>
 
             <section class="doc-section" id="technical-comparison" data-doc-section><span class="doc-kicker">Technical comparison</span>
-                <h2>Implementation-level differences <a class="anchor-link" href="#technical-comparison">#</a></h2>
+                <h2>What changes when you choose a different path <a class="anchor-link" href="#technical-comparison">#</a></h2>
+                <p>The tracks can produce similar kinds of applications, but they place responsibility in different places. This table shows what you take ownership of when moving from a WebView renderer toward native wgpu.</p>
                 <div class="table-wrap">
                     <table class="compare-table">
                         <thead>
@@ -247,7 +251,8 @@ npm run build</code></pre></div>
             </section>
 
             <section class="doc-section" id="software-stack" data-doc-section><span class="doc-kicker">Software stack</span>
-                <h2>From reusable layers to standalone tools <a class="anchor-link" href="#software-stack">#</a></h2>
+                <h2>Turn reusable pieces into a standalone tool <a class="anchor-link" href="#software-stack">#</a></h2>
+                <p>A creative application usually needs more than a shader. Junkpile separates input, state, rendering, and output so you can reuse the pieces you need without adopting one giant application framework.</p>
                 <div class="diagram">
                     <div class="flow">
                         <div class="flow-node signal"><strong>Inputs</strong><small>UI · files · camera · audio · MIDI · OSC</small></div>
@@ -265,7 +270,8 @@ npm run build</code></pre></div>
             </section>
 
             <section class="doc-section" id="architecture" data-doc-section><span class="doc-kicker">Architecture</span>
-                <h2>Repository tracks and independent I/O layers <a class="anchor-link" href="#architecture">#</a></h2>
+                <h2>See where each part of the application lives <a class="anchor-link" href="#architecture">#</a></h2>
+                <p>When something breaks, it helps to know who owns it. These three diagrams show the main execution boundary in each repository track before native services and external outputs are added.</p>
                 <div class="grid-3">
                     <div class="diagram">
                         <p class="diagram-title">V1 WebView</p>
@@ -302,22 +308,20 @@ npm run build</code></pre></div>
             </section>
 
             <section class="doc-section" id="v1-track" data-doc-section><span class="doc-kicker">Tauri v1 WebView</span>
-                <h2>Accessible first-generation WebView baselines <a class="anchor-link" href="#v1-track">#</a></h2>
-                <p>The v1 directory covers p5.js, raw WebGL, external GLSL, webcam, feedback, MIDI, OSC, media playback, recording, compositing, projection, sequences, audio-file analysis, and automation. Use it when maintaining Tauri 1 code or when the
-                    older application model is part of the lesson.</p>
+                <h2>Use familiar browser graphics inside a desktop application <a class="anchor-link" href="#v1-track">#</a></h2>
+                <p>Use the v1 examples when you want a direct, readable WebView/WebGL starting point or need to maintain a Tauri 1 application. The collection covers p5.js, raw WebGL, external GLSL, webcam, feedback, MIDI, OSC, media playback, recording, compositing, projection, sequences, audio-file analysis, and automation.</p>
                 <div class="callout info"><strong>Repository-location note</strong>The current tree contains <code>v1/25-wgpu-ultra-resolution-export</code>. The catalog preserves the actual folder and README rather than pretending it is a WebView project with a different implementation.</div>
             </section>
 
             <section class="doc-section" id="v2-track" data-doc-section><span class="doc-kicker">Tauri v2 WebView</span>
-                <h2>Current WebView application path <a class="anchor-link" href="#v2-track">#</a></h2>
-                <p>The v2 collection modernizes the same accessible graphics/media ideas around the Tauri 2 application model: capabilities, current window APIs, native dialogs and file workflows, and current IPC/event behavior.</p>
+                <h2>Use the browser graphics workflow with current Tauri APIs <a class="anchor-link" href="#v2-track">#</a></h2>
+                <p>Use the v2 examples when WebGL or browser media already fits the graphics problem but you want the current Tauri application model for permissions, windows, dialogs, files, IPC, and packaging.</p>
                 <div class="callout"><strong>Renderer boundary</strong>These projects still render through the embedded browser/WebView. Tauri 2 changes the application framework; it does not automatically replace WebGL with wgpu.</div>
             </section>
 
             <section class="doc-section" id="wgpu-track" data-doc-section><span class="doc-kicker">Tauri 2 + native Rust/wgpu</span>
-                <h2>Native GPU progression <a class="anchor-link" href="#wgpu-track">#</a></h2>
-                <p>The native collection now spans fundamentals, compute, 3D, native media, high-resolution export, recording, I/O contracts, external outputs, runtime infrastructure, and application-facing counterparts. These are the repository's current
-                    implementations; their presence here does not make every attached transport exclusive to wgpu.</p>
+                <h2>Use native wgpu when the renderer needs more direct control <a class="anchor-link" href="#wgpu-track">#</a></h2>
+                <p>Use the native collection when the application benefits from Rust owning the render loop and GPU resources directly—for example compute workloads, 3D, high-resolution rendering, native video paths, recording, or explicit multi-output routing. The collection also includes application-facing counterparts to several WebView ideas. These are the repository's current implementations; their presence here does not make every attached transport exclusive to wgpu.</p>
                 <div class="grid-3">
                     <div class="card">
                         <h3>Foundations</h3>
@@ -336,9 +340,8 @@ npm run build</code></pre></div>
             </section>
 
             <section class="doc-section" id="native-io" data-doc-section><span class="doc-kicker">Current wgpu I/O architecture</span>
-                <h2>Frame contracts, backpressure, and output independence <a class="anchor-link" href="#native-io">#</a></h2>
-                <p>The wgpu I/O series begins with configuration and a shared frame/output contract, then replaces simulated workers with real FFmpeg recording and adds higher-resolution profiles and external sinks. It demonstrates one reusable architecture
-                    for a Rust-owned renderer; it is not a statement that the external transports require wgpu.</p>
+                <h2>Keep recording and external outputs from blocking the renderer <a class="anchor-link" href="#native-io">#</a></h2>
+                <p>Once an application has to record, stream, or share frames, the renderer should not wait for every external system to finish its work. The current wgpu I/O series solves that problem with a shared frame contract, bounded workers, and independent output sinks. It is one reusable architecture for a Rust-owned renderer; it is not a statement that the external transports require wgpu.</p>
                 <div class="diagram">
                     <p class="diagram-title">Authoritative-frame architecture</p>
                     <div class="flow">
@@ -367,8 +370,8 @@ npm run build</code></pre></div>
             </section>
 
             <section class="doc-section" id="av-recorder" data-doc-section><span class="doc-kicker">Native A/V Recorder</span>
-                <h2>Video recording plus selectable audio <a class="anchor-link" href="#av-recorder">#</a></h2>
-                <p><code>wgpu/43-wgpu-av-recorder</code> builds on the native high-resolution recorder and adds three audio modes: none, microphone, and local audio file.</p>
+                <h2>Record the GPU output and finish with a usable A/V file <a class="anchor-link" href="#av-recorder">#</a></h2>
+                <p><code>wgpu/43-wgpu-av-recorder</code> is the focused starting point when your application needs native video recording with optional audio. It builds on the high-resolution recorder and adds three audio modes: none, microphone, and local audio file, then muxes the finished streams into the final file.</p>
                 <div class="diagram">
                     <div class="flow">
                         <div class="flow-node signal"><strong>wgpu video</strong><small>H.264 or ProRes path</small></div>
@@ -394,9 +397,8 @@ npm run build</code></pre></div>
             </section>
 
             <section class="doc-section" id="output-routing" data-doc-section><span class="doc-kicker">Current output-routing references</span>
-                <h2>Preview, NDI, recording, Syphon, and Spout <a class="anchor-link" href="#output-routing">#</a></h2>
-                <p>The diagram below describes the current <code>wgpu/</code> sender/router implementations. NDI, Syphon, Spout, and FFmpeg are external/native I/O systems, not wgpu features. A WebView application can still use native Rust/platform integrations,
-                    but the handoff from WebView-rendered pixels is a separate application-specific bridge and is not represented by dedicated sender examples in the current v1/v2 folders.</p>
+                <h2>Send one rendered image to the outputs your application needs <a class="anchor-link" href="#output-routing">#</a></h2>
+                <p>The current router examples show how preview, recording, NDI, Syphon, and Spout can be treated as independent destinations instead of being tangled into one render path. The diagram below describes the current <code>wgpu/</code> implementations. NDI, Syphon, Spout, and FFmpeg are external/native I/O systems, not wgpu features. A WebView application can still use native Rust/platform integrations, but the handoff from WebView-rendered pixels is a separate application-specific bridge and is not represented by dedicated sender examples in the current v1/v2 folders.</p>
                 <div class="diagram">
                     <div class="flow">
                         <div class="flow-node signal"><strong>Authoritative wgpu texture</strong></div>
@@ -421,7 +423,8 @@ npm run build</code></pre></div>
             </section>
 
             <section class="doc-section" id="validation" data-doc-section><span class="doc-kicker">Status &amp; validation</span>
-                <h2>Evidence should stay explicit <a class="anchor-link" href="#validation">#</a></h2>
+                <h2>Know what was actually tested before you build on it <a class="anchor-link" href="#validation">#</a></h2>
+                <p>Junkpile separates “the source exists” from “this path was actually exercised.” Use these status levels to decide whether an example is a stable starting point, a platform-specific reference, or still research.</p>
                 <div class="table-wrap">
                     <table class="data-table">
                         <thead>
@@ -458,8 +461,8 @@ npm run build</code></pre></div>
             </section>
 
             <section class="doc-section" id="example-catalog" data-doc-section data-example-filter><span class="doc-kicker">Repository catalog</span>
-                <h2>Search the actual project tree <a class="anchor-link" href="#example-catalog">#</a></h2>
-                <p>The catalog is generated from <code>docs/examples.json</code>. Historical repair copies can remain in the source tree without being treated as separate public examples.</p>
+                <h2>Find the example closest to the problem you are solving <a class="anchor-link" href="#example-catalog">#</a></h2>
+                <p>Search by capability, technology, or project name. The goal is not to read the repository in order; it is to find the smallest working project that already handles part of your application. The catalog is generated from <code>docs/examples.json</code>, and historical repair copies can remain in the source tree without being treated as separate public examples.</p>
                 <div class="filter-panel">
                     <div><label class="search-field"><span>⌕</span><input data-example-search type="search" placeholder="Search title, folder, capability…" aria-label="Search examples" /></label>
                         <div class="filter-group" style="margin-top:12px"><span class="filter-label">Track</span><button class="filter-button is-active" aria-pressed="true" data-filter-key="version" data-filter-value="all">All</button><button class="filter-button" aria-pressed="false" data-filter-key="version"
@@ -2613,7 +2616,8 @@ npm run dev</code></pre></div>
             </section>
 
             <section class="doc-section" id="development" data-doc-section><span class="doc-kicker">Development</span>
-                <h2>Work from a known baseline <a class="anchor-link" href="#development">#</a></h2>
+                <h2>Change the example without losing the working reference <a class="anchor-link" href="#development">#</a></h2>
+                <p>A working example is most useful when you can tell whether your change caused the failure. Keep the original behavior easy to reproduce, then change one boundary at a time.</p>
                 <ol class="number-list">
                     <li>Launch the untouched example.</li>
                     <li>Confirm its documented input/render/output path.</li>
@@ -2626,7 +2630,8 @@ npm run dev</code></pre></div>
             </section>
 
             <section class="doc-section" id="troubleshooting" data-doc-section><span class="doc-kicker">Troubleshooting</span>
-                <h2>Diagnose the owner of the failure <a class="anchor-link" href="#troubleshooting">#</a></h2>
+                <h2>Find which layer actually failed <a class="anchor-link" href="#troubleshooting">#</a></h2>
+                <p>Do not debug the entire application at once. First decide whether the problem belongs to the WebView, the native GPU path, or an external I/O worker, then inspect the tools and state owned by that layer.</p>
                 <div class="grid-3">
                     <div class="card">
                         <h3>WebView</h3>
